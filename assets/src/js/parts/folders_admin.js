@@ -247,6 +247,23 @@
             }
         }
 
+        document.addEventListener('click',function(e) {
+            let clickedFolder = e.target.closest('.folder_open_context_menu');
+            if (clickedFolder) {
+                var evt = new MouseEvent('contextmenu', {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window,
+                    buttons: 2,
+                    clientX: clickedFolder.getBoundingClientRect().x,
+                    clientY: clickedFolder.getBoundingClientRect().y
+                });
+                clickedFolder.dispatchEvent(evt);
+            }
+        });
+        
+
+
         function folderNavigate(folder)
         {
             window.location = folder.querySelectorAll('a')[0].href;

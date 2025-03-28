@@ -10,6 +10,9 @@
         border: 3px solid var(--main_color);
         border-radius: 8px;
         color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
 
         &.folder_up,
         &.folder_root
@@ -103,5 +106,24 @@
                 color: white !important;
             }
         }
-}
+
+        .folder_open_context_menu {
+            cursor: pointer;
+
+            i {
+                opacity: .5;
+                padding: 0 5px;
+            }
+
+            &:hover,
+            &:active,
+            &:focus
+            {
+                i {
+                    opacity: 1;
+                    color: #e8ddba;
+                }
+            }
+        }
+    }
 }

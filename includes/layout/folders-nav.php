@@ -46,6 +46,9 @@
                         <i class="fa fa-folder-o" aria-hidden="true"></i>
                         <span><?php echo $folder->name; ?></span>
                     </a>
+                    <div class="folder_open_context_menu">
+                        <i class="fa fa-ellipsis-v" aria-hidden="true"></i>
+                    </div>
                 </div>
     <?php
             }
