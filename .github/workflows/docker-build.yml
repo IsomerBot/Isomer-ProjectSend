@@ -25,7 +25,7 @@ jobs:
           password: ${{ secrets.GHCR_Token }}
 
       - name: Set up image name
-        run: echo "IMAGE_NAME=ghcr.io/${{ github.repository }}" >> $GITHUB_ENV
+        run: echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
 
       - name: Build Docker image
         run: docker build -t $IMAGE_NAME:latest .
