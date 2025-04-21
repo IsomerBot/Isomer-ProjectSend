@@ -13,7 +13,7 @@ require_once ABS_PARENT . '/bootstrap.php';
 $page_id = 'make_config';
 
 /** Config file exists. Do not continue and show the message */
-if (file_exists(CONFIG_FILE)) {
+if (file_exists('/config/sys.config.php')) {
     ps_redirect(BASE_URI . 'install/config-file-exists.php');
 }
 
