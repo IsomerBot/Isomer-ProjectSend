@@ -13,7 +13,7 @@ require_once ABS_PARENT . '/bootstrap.php';
 $page_id = 'make_config';
 
 /** Config file exists. Do not continue and show the message */
-if (file_exists('/config/sys.config.php')) {
+if (file_exists(CONFIG_FILE)) {
     ps_redirect(BASE_URI . 'install/config-file-exists.php');
 }
 
@@ -90,7 +90,7 @@ $langs = get_available_languages();
 $lang_ok = array_key_exists($post_vars['lang'], $langs);
 
 // check file & folders are writable
-$config_file = file_exists('/config') ? '/config/sys.config.php' : CONFIG_FILE;
+$config_file = CONFIG_FILE;
 $config_file_writable = is_writable($config_file) || is_writable(dirname($config_file));
 $upload_dir = ROOT_DIR . '/upload';
 $upload_files_dir = ROOT_DIR . '/upload/files';
