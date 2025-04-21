@@ -4,7 +4,7 @@
  */
 define('ROOT_DIR', dirname(__FILE__));
 define('DS', DIRECTORY_SEPARATOR);
-define('CONFIG_FILE_NAME', file_exists('/config/sys.config.php') ? '/config/sys.config.php' : '/includes/sys.config.php');
+define('CONFIG_FILE_NAME', '/includes/sys.config.php');
 define('CONFIG_FILE', ROOT_DIR.CONFIG_FILE_NAME);
 
 // Composer autoload
