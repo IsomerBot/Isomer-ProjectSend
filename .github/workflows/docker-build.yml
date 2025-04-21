@@ -2,7 +2,6 @@ name: Build and Push Docker image to GHCR
 
 on:
   workflow_dispatch:
-  # Uncomment below if you also want it to build automatically on push
   # push:
   #   branches:
   #     - main
@@ -31,11 +30,13 @@ jobs:
       - name: Set up image name (force lowercase)
         run: echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}" >> $GITHUB_ENV
 
-      - name: Build and Push multi-arch image
+      - name: Build and Push with Cache
         uses: docker/build-push-action@v5
         with:
           context: .
           platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
           provenance: false
