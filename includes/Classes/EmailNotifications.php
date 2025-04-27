@@ -3,9 +3,12 @@
  * Prepare and send email notifications
  * @todo: completely remake this class. Right now It's just a cleaner port of upload-send-notifications.php
  */
+
+ /**importing PDO for database interactions */
 namespace ProjectSend\Classes;
 use \PDO;
 
+/**private properties of EmailNotifications  */
 class EmailNotifications
 {
     private $notifications_sent;
