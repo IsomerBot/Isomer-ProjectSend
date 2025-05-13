@@ -59,13 +59,13 @@ class Emails
                 ];
                 break;
             case 'new_files_by_user':
-                // Strings for the "New file uploaded" BY A SYSTEM USER e-mail
+                // Strings for the "New file uploaded" BY A SYSTEM USER e-mail--this is the current outbound email template 
                 $strings = array(
-                    'subject' => (get_option('email_new_file_by_user_subject_customize') == 1 && !empty(get_option('email_new_file_by_user_subject'))) ? get_option('email_new_file_by_user_subject') : __('New files uploaded for you', 'cftp_admin'),
-                    'body' => __('The following files are now available for you to download.', 'cftp_admin'),
-                    'body2' => __("If you prefer not to be notified about new files, please go to My Account and deactivate the notifications checkbox.", 'cftp_admin'),
-                    'body3' => __('You can access a list of all your files or upload your own', 'cftp_admin'),
-                    'body4' => __('by logging in here', 'cftp_admin')
+                    'subject' => (get_option('email_new_file_by_user_subject_customize') == 1 && !empty(get_option('email_new_file_by_user_subject'))) ? get_option('email_new_file_by_user_subject') : __('Isomer Transmittal Available for Download', 'cftp_admin'),
+                    'body' => __('The following deliverables have been transmitted from Isomer Project Group.', 'cftp_admin'),
+                    // 'body2' => __("If you prefer not to be notified about new files, please go to My Account and deactivate the notifications checkbox.", 'cftp_admin'),
+                    'body3' => __('To access the files pertaining to this transmittal,', 'cftp_admin'),
+                    'body4' => __('please login here', 'cftp_admin')
                 );
                 $options = [
                     'title' => __('New file by user', 'cftp_admin'),
