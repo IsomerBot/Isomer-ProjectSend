@@ -1,3 +1,30 @@
+<?php // Load existing transmittal data for editing
+
+$existing_transmittal_data = [];
+if (!empty($editable) && !isset($_GET["saved"])) {
+    // Get transmittal data from the first file
+    $first_file_id = $editable[0];
+    global $dbh;
+    $query = "SELECT transmittal_number, project_name, package_description, 
+                     issue_status, discipline, deliverable_type, document_title
+              FROM tbl_files 
+              WHERE id = :file_id";
+    $statement = $dbh->prepare($query);
+    $statement->execute([":file_id" => $first_file_id]);
+    $existing_transmittal_data = $statement->fetch(PDO::FETCH_ASSOC); // If no data found, initialize empty array
+    if (!$existing_transmittal_data) {
+        $existing_transmittal_data = [
+            "transmittal_number" => "",
+            "project_name" => "",
+            "package_description" => "",
+            "issue_status" => "",
+            "discipline" => "",
+            "deliverable_type" => "",
+            "document_title" => "",
+        ];
+    }
+}
+?>
 <form action="files-edit.php?ids=<?php
 echo html_output($_GET["ids"]);
 if (isset($_GET["confirm"])) {
@@ -18,10 +45,11 @@ if (isset($_GET["confirm"])) {
                         "Transmittal Number",
                         "cftp_admin"
                     ); ?>*</label>
-                    <input type="text" name="transmittal_number" id="transmittal_number" class="form-control" placeholder="<?php _e(
-                        "AAA###",
-                        "cftp_admin"
-                    ); ?>" required />   
+                    <input type="text" name="transmittal_number" id="transmittal_number" class="form-control" 
+       value="<?php echo htmlspecialchars(
+           $existing_transmittal_data["transmittal_number"] ?? ""
+       ); ?>"
+       placeholder="<?php _e("AAA###", "cftp_admin"); ?>" required />
                 </div>
 
                 <!-- Project Name Manual Field -->
@@ -30,10 +58,14 @@ if (isset($_GET["confirm"])) {
                         "Project Name",
                         "cftp_admin"
                     ); ?>*</label>
-                    <input type="text" name="project_name" id="project_name" class="form-control" placeholder="<?php _e(
-                        "Enter Project Name",
-                        "cftp_admin"
-                    ); ?>" required />   
+                    <input type="text" name="project_name" id="project_name" class="form-control" 
+       value="<?php echo htmlspecialchars(
+           $existing_transmittal_data["project_name"] ?? ""
+       ); ?>"
+       placeholder="<?php _e(
+           "Enter Project Name",
+           "cftp_admin"
+       ); ?>" required />
                 </div>
 
                 <!--Package Description Manual Field -->
@@ -42,10 +74,14 @@ if (isset($_GET["confirm"])) {
                         "Package Description",
                         "cftp_admin"
                     ); ?>*</label>
-                    <input type="text" name="package_description" id="package_description" class="form-control" placeholder="<?php _e(
-                        "Enter Package Description",
-                        "cftp_admin"
-                    ); ?>" required />
+                    <input type="text" name="package_description" id="package_description" class="form-control" 
+       value="<?php echo htmlspecialchars(
+           $existing_transmittal_data["package_description"] ?? ""
+       ); ?>"
+       placeholder="<?php _e(
+           "Enter Package Description",
+           "cftp_admin"
+       ); ?>" required />
                 </div>
 
                 <!-- Issue_Status Dropdown Field -->
@@ -65,9 +101,19 @@ if (isset($_GET["confirm"])) {
                                 "issue_status"
                             );
                             foreach ($statuses as $status) {
+                                $selected =
+                                    $status ==
+                                    ($existing_transmittal_data[
+                                        "issue_status"
+                                    ] ??
+                                        "")
+                                        ? " selected"
+                                        : "";
                                 echo '<option value="' .
                                     htmlspecialchars($status) .
-                                    '">' .
+                                    '"' .
+                                    $selected .
+                                    ">" .
                                     htmlspecialchars($status) .
                                     "</option>";
                             }
@@ -95,7 +141,7 @@ if (isset($_GET["confirm"])) {
                             $helper = new \ProjectSend\Classes\TransmittalHelper();
                             echo $helper->generateDropdownHtmlWithAbbr(
                                 "discipline",
-                                "",
+                                $existing_transmittal_data["discipline"] ?? "",
                                 true,
                                 true
                             );
@@ -114,11 +160,46 @@ if (isset($_GET["confirm"])) {
                         "cftp_admin"
                     ); ?> *</label>
                     <select id="deliverable_type" name="deliverable_type" class="form-select deliverable-type" required>
-                        <option value=""><?php _e(
-                            "Select Discipline First",
-                            "cftp_admin"
-                        ); ?></option>
-                    </select>
+    <option value=""><?php _e(
+        "Select Discipline First",
+        "cftp_admin"
+    ); ?></option>
+    <?php // If we have existing data, populate deliverable types
+
+if (
+        !empty($existing_transmittal_data["discipline"]) &&
+        !empty($existing_transmittal_data["deliverable_type"])
+    ) {
+        try {
+            $helper = new \ProjectSend\Classes\TransmittalHelper();
+            $deliverable_types = $helper->getDeliverableTypesByDiscipline(
+                $existing_transmittal_data["discipline"]
+            );
+            foreach ($deliverable_types as $type) {
+                $selected =
+                    $type["deliverable_type"] ==
+                    $existing_transmittal_data["deliverable_type"]
+                        ? " selected"
+                        : "";
+                $display_text = !empty($type["abbreviation"])
+                    ? $type["deliverable_type"] .
+                        " (" .
+                        $type["abbreviation"] .
+                        ")"
+                    : $type["deliverable_type"];
+                echo '<option value="' .
+                    htmlspecialchars($type["deliverable_type"]) .
+                    '"' .
+                    $selected .
+                    ">" .
+                    htmlspecialchars($display_text) .
+                    "</option>";
+            }
+        } catch (Exception $e) {
+            error_log("Error loading deliverable types: " . $e->getMessage());
+        }
+    } ?>
+</select>
                 </div>
 
                 <div class="divider"></div>
@@ -134,7 +215,6 @@ if (isset($_GET["confirm"])) {
             $clients = file_editor_get_all_clients();
             $groups = file_editor_get_all_groups();
         }
-
         foreach ($editable as $file_id) {
             clearstatcache();
             $file = new ProjectSend\Classes\Files($file_id);
@@ -232,8 +312,9 @@ if (isset($_GET["confirm"])) {
                                             </div>
                                         </div>
 
-                                        <?php
-                                        // The following options are available to users or client if clients_can_set_expiration_date set
+                                        <?php // The following options are available to users or client if clients_can_set_expiration_date set
+
+
                                         if (
                                             CURRENT_USER_LEVEL != 0 ||
                                             get_option(
@@ -349,9 +430,7 @@ EOL;
                                                         <?php } ?>
                                                     </div>
                                                 </div>
-                                        <?php }
-
-                                        // Only show the CLIENTS select field if the current uploader is a system user, and not a client.
+                                        <?php } // Only show the CLIENTS select field if the current uploader is a system user, and not a client.
                                         if (CURRENT_USER_LEVEL != 0) { ?>
                                                 <div class="col assigns">
                                                     <div class="file_data">
@@ -550,10 +629,8 @@ EOL;
                                                         }
                                                     }
                                                 }
-
                                                 $folders = new \ProjectSend\Classes\Folders();
                                                 $folders_arranged = $folders->getAllArranged();
-
                                                 if (
                                                     CURRENT_USER_LEVEL == 0 &&
                                                     get_option(
@@ -631,7 +708,6 @@ EOL;
                                                 ],
                                             ];
                                         }
-
                                         if (CURRENT_USER_LEVEL != 0) {
                                             // Selected clients
                                             $copy_buttons["clients"] = [
@@ -646,7 +722,6 @@ EOL;
                                                         "clients_" . $file->id,
                                                 ],
                                             ];
-
                                             // Selected groups
                                             $copy_buttons["groups"] = [
                                                 "label" => __(
@@ -660,7 +735,6 @@ EOL;
                                                         "groups_" . $file->id,
                                                 ],
                                             ];
-
                                             // Hidden status
                                             $copy_buttons["hidden"] = [
                                                 "label" => __(
@@ -675,7 +749,6 @@ EOL;
                                                 ],
                                             ];
                                         }
-
                                         if (
                                             CURRENT_USER_LEVEL != 0 ||
                                             get_option(
@@ -697,7 +770,6 @@ EOL;
                                                 ],
                                             ];
                                         }
-
                                         if (CURRENT_USER_LEVEL != 0) {
                                             // Folders
                                             $copy_buttons["folder"] = [
@@ -713,7 +785,6 @@ EOL;
                                                 ],
                                             ];
                                         }
-
                                         if (count($copy_buttons) > 0) { ?>
                                                 <footer>
                                                     <div class="row">
@@ -776,58 +847,63 @@ EOL;
     </div>
 
     <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const disciplineSelect = document.getElementById('discipline');
-        const deliverableTypeSelect = document.getElementById('deliverable_type');
+document.addEventListener('DOMContentLoaded', function() {
+    const disciplineSelect = document.getElementById('discipline');
+    const deliverableTypeSelect = document.getElementById('deliverable_type');
+    
+    if (!disciplineSelect || !deliverableTypeSelect) {
+        console.error('Required form elements not found');
+        return;
+    }
+    
+    disciplineSelect.addEventListener('change', function() {
+        const selectedDiscipline = this.value;
         
-        if (!disciplineSelect || !deliverableTypeSelect) {
-            console.error('Required form elements not found');
+        // Clear deliverable type dropdown
+        deliverableTypeSelect.innerHTML = '<option value="">Loading...</option>';
+        deliverableTypeSelect.disabled = true;
+        
+        if (!selectedDiscipline) {
+            deliverableTypeSelect.innerHTML = '<option value="">Select Discipline First</option>';
+            deliverableTypeSelect.disabled = false;
             return;
         }
         
-        disciplineSelect.addEventListener('change', function() {
-            const selectedDiscipline = this.value;
-            
-            // Clear deliverable type dropdown
-            deliverableTypeSelect.innerHTML = '<option value="">Loading...</option>';
-            deliverableTypeSelect.disabled = true;
-            
-            if (!selectedDiscipline) {
-                deliverableTypeSelect.innerHTML = '<option value="">Select Discipline First</option>';
+        // Fetch deliverable types for selected discipline
+        fetch(`get_deliverable_types.php?discipline=${encodeURIComponent(selectedDiscipline)}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                deliverableTypeSelect.innerHTML = '<option value="">Select Deliverable Type</option>';
+                
+                if (Array.isArray(data) && data.length > 0) {
+                    data.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item.value;
+                        option.textContent = item.text;
+                        deliverableTypeSelect.appendChild(option);
+                    });
+                } else {
+                    deliverableTypeSelect.innerHTML = '<option value="">No types available</option>';
+                }
+                
                 deliverableTypeSelect.disabled = false;
-                return;
-            }
-            
-            // Fetch deliverable types for selected discipline
-            fetch(`get_deliverable_types.php?discipline=${encodeURIComponent(selectedDiscipline)}`)
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return response.json();
-                })
-                .then(data => {
-                    deliverableTypeSelect.innerHTML = '<option value="">Select Deliverable Type</option>';
-                    
-                    if (Array.isArray(data) && data.length > 0) {
-                        data.forEach(item => {
-                            const option = document.createElement('option');
-                            option.value = item.value;
-                            option.textContent = item.text;
-                            deliverableTypeSelect.appendChild(option);
-                        });
-                    } else {
-                        deliverableTypeSelect.innerHTML = '<option value="">No types available</option>';
-                    }
-                    
-                    deliverableTypeSelect.disabled = false;
-                })
-                .catch(error => {
-                    console.error('Error fetching deliverable types:', error);
-                    deliverableTypeSelect.innerHTML = '<option value="">Error loading types</option>';
-                    deliverableTypeSelect.disabled = false;
-                });
-        });
+            })
+            .catch(error => {
+                console.error('Error fetching deliverable types:', error);
+                deliverableTypeSelect.innerHTML = '<option value="">Error loading types</option>';
+                deliverableTypeSelect.disabled = false;
+            });
     });
-    </script>
+    
+    // Trigger change event on page load if discipline is already selected (for editing existing data)
+    if (disciplineSelect.value) {
+        disciplineSelect.dispatchEvent(new Event('change'));
+    }
+});
+</script>
 </form>
