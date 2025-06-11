@@ -35,7 +35,7 @@ class TransmittalHelper
         $field_map = [
             "issue_status" => "status_name",
             "discipline" => "discipline_name",
-            "deliverable_type" => "type_name",
+            "deliverable_type" => "deliverable_type", // FIXED: was "type_name"
             "transmittal_status" => "status_name",
         ];
 
@@ -81,9 +81,11 @@ class TransmittalHelper
      */
     public function getDeliverableTypesByDiscipline($discipline_name)
     {
+        // Join with discipline table to match by discipline name
         $query = "SELECT dt.deliverable_type, dt.abbreviation 
               FROM tbl_deliverable_type dt
-              WHERE dt.deliverable_category = :discipline_name 
+              JOIN tbl_discipline d ON dt.discipline_id = d.id
+              WHERE d.discipline_name = :discipline_name 
               AND dt.active = 1 
               ORDER BY dt.deliverable_type ASC";
 
@@ -151,13 +153,15 @@ class TransmittalHelper
     }
 
     /**
-     * Get unique deliverable categories
+     * Get unique deliverable categories (from files table)
      * @return array - Array of category names
      */
     public function getDeliverableCategories()
     {
-        $query = "SELECT DISTINCT deliverable_category FROM tbl_deliverable_type 
-                  WHERE active = 1 ORDER BY deliverable_category ASC";
+        // Get unique deliverable_category values from the files table
+        $query = "SELECT DISTINCT deliverable_category FROM tbl_files 
+                  WHERE deliverable_category IS NOT NULL AND deliverable_category != ''
+                  ORDER BY deliverable_category ASC";
 
         $statement = $this->dbh->prepare($query);
         $statement->execute();
@@ -165,19 +169,36 @@ class TransmittalHelper
     }
 
     /**
-     * Get deliverable types by category (for AJAX dropdowns)
-     * @param string $category - The deliverable category
+     * Get deliverable types by category (discipline)
+     * @param string $category - The discipline name (deliverable_category)
      * @return array - Array of deliverable types with abbreviations
      */
     public function getDeliverableTypesByCategory($category)
     {
-        $query = "SELECT deliverable_type, abbreviation FROM tbl_deliverable_type 
-                  WHERE deliverable_category = :category AND active = 1 
-                  ORDER BY deliverable_type ASC";
+        // Join with discipline table to get deliverable types by discipline name
+        $query = "SELECT dt.deliverable_type, dt.abbreviation FROM tbl_deliverable_type dt
+                  JOIN tbl_discipline d ON dt.discipline_id = d.id
+                  WHERE d.discipline_name = :category AND dt.active = 1 
+                  ORDER BY dt.deliverable_type ASC";
 
         $statement = $this->dbh->prepare($query);
         $statement->execute([":category" => $category]);
         return $statement->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Get discipline ID by name (helper method)
+     * @param string $discipline_name - The discipline name
+     * @return int|null - Discipline ID or null if not found
+     */
+    public function getDisciplineIdByName($discipline_name)
+    {
+        $query =
+            "SELECT id FROM tbl_discipline WHERE discipline_name = :discipline_name AND active = 1";
+        $statement = $this->dbh->prepare($query);
+        $statement->execute([":discipline_name" => $discipline_name]);
+        $result = $statement->fetch(PDO::FETCH_ASSOC);
+        return $result ? $result["id"] : null;
     }
 
     /**

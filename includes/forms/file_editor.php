@@ -9,108 +9,122 @@ if (isset($_GET["confirm"])) {
     <div class="container-fluid">
         <?php $i = 1; ?>
         <div class="row">
-    <div class="col-md-6">
-        <h3><?php _e("Transmittal Information", "cftp_admin"); ?></h3>
-        
-        <!-- Transmittal Number Manual Field -->
-        <div class="form-group">
-            <label for="transmittal_number"><?php _e(
-                "Transmittal Number",
-                "cftp_admin"
-            ); ?>*</label>
-            <input type="text" name="transmittal_number" id="transmittal_number" class="form-control" placeholder="<?php _e(
-                "AAA###",
-                "cftp_admin"
-            ); ?>" required />   
-        </div>
+            <div class="col-md-6">
+                <h3><?php _e("Transmittal Information", "cftp_admin"); ?></h3>
+                
+                <!-- Transmittal Number Manual Field -->
+                <div class="form-group">
+                    <label for="transmittal_number"><?php _e(
+                        "Transmittal Number",
+                        "cftp_admin"
+                    ); ?>*</label>
+                    <input type="text" name="transmittal_number" id="transmittal_number" class="form-control" placeholder="<?php _e(
+                        "AAA###",
+                        "cftp_admin"
+                    ); ?>" required />   
+                </div>
 
-        <!-- Project Name Manual Field -->
-        <div class="form-group">
-            <label for="project_name"><?php _e(
-                "Project Name",
-                "cftp_admin"
-            ); ?>*</label>
-            <input type="text" name="project_name" id="project_name" class="form-control" placeholder="<?php _e(
-                "Enter Project Name",
-                "cftp_admin"
-            ); ?>" required />   
-        </div>
+                <!-- Project Name Manual Field -->
+                <div class="form-group">
+                    <label for="project_name"><?php _e(
+                        "Project Name",
+                        "cftp_admin"
+                    ); ?>*</label>
+                    <input type="text" name="project_name" id="project_name" class="form-control" placeholder="<?php _e(
+                        "Enter Project Name",
+                        "cftp_admin"
+                    ); ?>" required />   
+                </div>
 
-        <!--Package Description Manual Field -->
-        <div class="form-group">
-            <label for="package_description"><?php _e(
-                "Package Description",
-                "cftp_admin"
-            ); ?>*</label>
-            <input type="text" name="package_description" id="package_description" class="form-control" placeholder="<?php _e(
-                "Enter Package Description",
-                "cftp_admin"
-            ); ?>" required />
-        </div>
+                <!--Package Description Manual Field -->
+                <div class="form-group">
+                    <label for="package_description"><?php _e(
+                        "Package Description",
+                        "cftp_admin"
+                    ); ?>*</label>
+                    <input type="text" name="package_description" id="package_description" class="form-control" placeholder="<?php _e(
+                        "Enter Package Description",
+                        "cftp_admin"
+                    ); ?>" required />
+                </div>
 
-
-
-        <!-- Issue_Status Dropdown Field -->
-        <div class="form-group">
-            <label for="issue_status"><?php _e(
-                "Issue Status",
-                "cftp_admin"
-            ); ?>*</label>
-            <select id="issue_status" name="issue_status" class="form-select" required>
-                <option value=""><?php _e(
-                    "Select Issue Status",
-                    "cftp_admin"
-                ); ?></option>
-                <?php
-                $helper = new \ProjectSend\Classes\TransmittalHelper();
-                $statuses = $helper->getDropdownOptions("issue_status");
-                foreach ($statuses as $status) {
-                    echo '<option value="' .
-                        htmlspecialchars($status) .
-                        '">' .
-                        htmlspecialchars($status) .
-                        "</option>";
-                }
-                ?>
-            </select>
-        </div>
-    </div>
-    
-    <div class="col-md-6">
-        <h3><?php _e("Transmittal Details", "cftp_admin"); ?></h3>
-        
-        <div class="form-group">
-    <label for="discipline"><?php _e("Discipline", "cftp_admin"); ?> *</label>
-    <select id="discipline" name="discipline" class="form-select" required>
-        <?php
-        $helper = new \ProjectSend\Classes\TransmittalHelper();
-        echo $helper->generateDropdownHtmlWithAbbr(
-            "discipline",
-            "",
-            true,
-            true
-        );
-        ?>
-    </select>
-</div>
-
-<div class="form-group">
-    <label for="deliverable_type"><?php _e(
-        "Deliverable Type",
-        "cftp_admin"
-    ); ?> *</label>
-    <select id="deliverable_type" name="deliverable_type" class="form-select deliverable-type" required>
-        <option value=""><?php _e(
-            "Select Discipline First",
-            "cftp_admin"
-        ); ?></option>
-    </select>
-</div>
-
-                    <div class="divider"></div>
+                <!-- Issue_Status Dropdown Field -->
+                <div class="form-group">
+                    <label for="issue_status"><?php _e(
+                        "Issue Status",
+                        "cftp_admin"
+                    ); ?>*</label>
+                    <select id="issue_status" name="issue_status" class="form-select" required>
+                        <option value=""><?php _e(
+                            "Select Issue Status",
+                            "cftp_admin"
+                        ); ?></option>
+                        <?php try {
+                            $helper = new \ProjectSend\Classes\TransmittalHelper();
+                            $statuses = $helper->getDropdownOptions(
+                                "issue_status"
+                            );
+                            foreach ($statuses as $status) {
+                                echo '<option value="' .
+                                    htmlspecialchars($status) .
+                                    '">' .
+                                    htmlspecialchars($status) .
+                                    "</option>";
+                            }
+                        } catch (Exception $e) {
+                            error_log(
+                                "Error loading issue statuses: " .
+                                    $e->getMessage()
+                            );
+                            echo '<option value="">Error loading statuses</option>';
+                        } ?>
+                    </select>
                 </div>
             </div>
+            
+            <div class="col-md-6">
+                <h3><?php _e("Transmittal Details", "cftp_admin"); ?></h3>
+                
+                <div class="form-group">
+                    <label for="discipline"><?php _e(
+                        "Discipline",
+                        "cftp_admin"
+                    ); ?> *</label>
+                    <select id="discipline" name="discipline" class="form-select" required>
+                        <?php try {
+                            $helper = new \ProjectSend\Classes\TransmittalHelper();
+                            echo $helper->generateDropdownHtmlWithAbbr(
+                                "discipline",
+                                "",
+                                true,
+                                true
+                            );
+                        } catch (Exception $e) {
+                            error_log(
+                                "Error loading disciplines: " . $e->getMessage()
+                            );
+                            echo '<option value="">Error loading disciplines</option>';
+                        } ?>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="deliverable_type"><?php _e(
+                        "Deliverable Type",
+                        "cftp_admin"
+                    ); ?> *</label>
+                    <select id="deliverable_type" name="deliverable_type" class="form-select deliverable-type" required>
+                        <option value=""><?php _e(
+                            "Select Discipline First",
+                            "cftp_admin"
+                        ); ?></option>
+                    </select>
+                </div>
+
+                <div class="divider"></div>
+            </div>
         </div>
+        
         <?php
         $me = new \ProjectSend\Classes\Users(CURRENT_USER_ID);
         if ($me->shouldLimitUploadTo() && !empty($me->limit_upload_to)) {
@@ -128,7 +142,6 @@ if (isset($_GET["confirm"])) {
                 if ($file->existsOnDisk()) { ?>
                         <div class="file_editor_wrapper">
                             <div class="row">
-
                                 <div class="col-12">
                                     <div class="file_title">
                                         <button type="button" class="btn btn-md btn-secondary toggle_file_editor">
@@ -150,17 +163,19 @@ if (isset($_GET["confirm"])) {
                                                 <input type="hidden" name="file[<?php echo $i; ?>][id]" value="<?php echo $file->id; ?>" />
                                                 <input type="hidden" name="file[<?php echo $i; ?>][original]" value="<?php echo $file->filename_original; ?>" />
                                                 <input type="hidden" name="file[<?php echo $i; ?>][file]" value="<?php echo $file->filename_on_disk; ?>" />
-                                        <!-- Revision Number Manual Field -->
-                                        <div class="form-group">
-    <label for="revision_number"><?php _e(
-        "Revision Number",
-        "cftp_admin"
-    ); ?> *</label>
-    <input type="text" name="revision_number" id="revision_number" class="form-control" placeholder="<?php _e(
-        "Enter Revision Number",
-        "cftp_admin"
-    ); ?>" required />   
-</div>
+                                                
+                                                <!-- Revision Number Manual Field -->
+                                                <div class="form-group">
+                                                    <label for="revision_number_<?php echo $i; ?>"><?php _e(
+    "Revision Number",
+    "cftp_admin"
+); ?> *</label>
+                                                    <input type="text" name="file[<?php echo $i; ?>][revision_number]" id="revision_number_<?php echo $i; ?>" class="form-control" placeholder="<?php _e(
+    "Enter Revision Number",
+    "cftp_admin"
+); ?>" required />   
+                                                </div>
+                                                
                                                 <div class="form-group">
                                                     <label><?php _e(
                                                         "Title",
@@ -187,30 +202,32 @@ if (isset($_GET["confirm"])) {
  ); ?>"><?php if (!empty($file->description)) {
     echo $file->description;
 } ?></textarea>
- <div class="form-group">
-            <label for="document_title"><?php _e(
-                "Document Title",
-                "cftp_admin"
-            ); ?></label>
-            <input type="text" id="document_title" name="document_title" class="form-control" placeholder="<?php _e(
-                "Enter Document Title",
-                "cftp_admin"
-            ); ?>" />
-        </div>
-<div class="form-group">
-    <label for="document_description_<?php echo $i; ?>"><?php _e(
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label for="document_title_<?php echo $i; ?>"><?php _e(
+    "Document Title",
+    "cftp_admin"
+); ?></label>
+                                                    <input type="text" id="document_title_<?php echo $i; ?>" name="file[<?php echo $i; ?>][document_title]" class="form-control" placeholder="<?php _e(
+    "Enter Document Title",
+    "cftp_admin"
+); ?>" />
+                                                </div>
+
+                                                <div class="form-group">
+                                                    <label for="document_description_<?php echo $i; ?>"><?php _e(
     "Document Description",
     "cftp_admin"
 ); ?></label>
-    <textarea id="document_description_<?php echo $i; ?>" 
-              name="file[<?php echo $i; ?>][document_description]" 
-              class="form-control" 
-              rows="3"
-              placeholder="<?php _e(
-                  "Enter Document Description",
-                  "cftp_admin"
-              ); ?>"></textarea>
-</div>
+                                                    <textarea id="document_description_<?php echo $i; ?>" 
+                                                              name="file[<?php echo $i; ?>][document_description]" 
+                                                              class="form-control" 
+                                                              rows="3"
+                                                              placeholder="<?php _e(
+                                                                  "Enter Document Description",
+                                                                  "cftp_admin"
+                                                              ); ?>"></textarea>
                                                 </div>
                                             </div>
                                         </div>
@@ -759,42 +776,58 @@ EOL;
     </div>
 
     <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const disciplineSelect = document.getElementById('discipline');
-    const deliverableTypeSelect = document.getElementById('deliverable_type');
-    
-    disciplineSelect.addEventListener('change', function() {
-        const selectedDiscipline = this.value;
+    document.addEventListener('DOMContentLoaded', function() {
+        const disciplineSelect = document.getElementById('discipline');
+        const deliverableTypeSelect = document.getElementById('deliverable_type');
         
-        // Clear deliverable type dropdown
-        deliverableTypeSelect.innerHTML = '<option value="">Loading...</option>';
-        
-        if (!selectedDiscipline) {
-            deliverableTypeSelect.innerHTML = '<option value="">Select Discipline First</option>';
+        if (!disciplineSelect || !deliverableTypeSelect) {
+            console.error('Required form elements not found');
             return;
         }
         
-        // Fetch deliverable types for selected discipline
-        fetch(`get_deliverable_types.php?discipline=${encodeURIComponent(selectedDiscipline)}`)
-            .then(response => response.json())
-            .then(data => {
-                deliverableTypeSelect.innerHTML = '<option value="">Select Deliverable Type</option>';
-                
-                data.forEach(item => {
-                    const option = document.createElement('option');
-                    option.value = item.value;
-                    option.textContent = item.text;
-                    deliverableTypeSelect.appendChild(option);
+        disciplineSelect.addEventListener('change', function() {
+            const selectedDiscipline = this.value;
+            
+            // Clear deliverable type dropdown
+            deliverableTypeSelect.innerHTML = '<option value="">Loading...</option>';
+            deliverableTypeSelect.disabled = true;
+            
+            if (!selectedDiscipline) {
+                deliverableTypeSelect.innerHTML = '<option value="">Select Discipline First</option>';
+                deliverableTypeSelect.disabled = false;
+                return;
+            }
+            
+            // Fetch deliverable types for selected discipline
+            fetch(`get_deliverable_types.php?discipline=${encodeURIComponent(selectedDiscipline)}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    deliverableTypeSelect.innerHTML = '<option value="">Select Deliverable Type</option>';
+                    
+                    if (Array.isArray(data) && data.length > 0) {
+                        data.forEach(item => {
+                            const option = document.createElement('option');
+                            option.value = item.value;
+                            option.textContent = item.text;
+                            deliverableTypeSelect.appendChild(option);
+                        });
+                    } else {
+                        deliverableTypeSelect.innerHTML = '<option value="">No types available</option>';
+                    }
+                    
+                    deliverableTypeSelect.disabled = false;
+                })
+                .catch(error => {
+                    console.error('Error fetching deliverable types:', error);
+                    deliverableTypeSelect.innerHTML = '<option value="">Error loading types</option>';
+                    deliverableTypeSelect.disabled = false;
                 });
-            })
-            .catch(error => {
-                console.error('Error fetching deliverable types:', error);
-                deliverableTypeSelect.innerHTML = '<option value="">Error loading types</option>';
-            });
-            console.log("deliverableTypeSelect", deliverableTypeSelect);
-
+        });
     });
-});
-</script>
     </script>
 </form>
