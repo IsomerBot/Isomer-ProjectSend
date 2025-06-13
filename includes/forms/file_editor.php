@@ -6,7 +6,8 @@ if (!empty($editable) && !isset($_GET["saved"])) {
     $first_file_id = $editable[0];
     global $dbh;
     $query = "SELECT transmittal_number, project_name, package_description, 
-                     issue_status, discipline, deliverable_type, document_title
+                     issue_status, discipline, deliverable_type, document_title,
+                     document_description, revision_number
               FROM tbl_files 
               WHERE id = :file_id";
     $statement = $dbh->prepare($query);
@@ -21,6 +22,8 @@ if (!empty($editable) && !isset($_GET["saved"])) {
             "discipline" => "",
             "deliverable_type" => "",
             "document_title" => "",
+            "document_description" => "",
+            "revision_number" => "",
         ];
     }
 }
@@ -250,12 +253,16 @@ if (
     "Revision Number",
     "cftp_admin"
 ); ?> *</label>
-                                                    <input type="text" name="file[<?php echo $i; ?>][revision_number]" id="revision_number_<?php echo $i; ?>" class="form-control" placeholder="<?php _e(
+ <input type="text" name="file[<?php echo $i; ?>][revision_number]" id="revision_number_<?php echo $i; ?>" class="form-control"
+   value="<?php echo htmlspecialchars(
+       $file->revision_number ?? ""
+   ); ?>" placeholder="<?php _e(
     "Enter Revision Number",
     "cftp_admin"
-); ?>" required />   
+); ?>" required /> 
                                                 </div>
                                                 
+                                                <!-- File Title -->
                                                 <div class="form-group">
                                                     <label><?php _e(
                                                         "Title",
@@ -266,7 +273,7 @@ if (
     "cftp_admin"
 ); ?>" />
                                                 </div>
-
+                                                <!-- File Description -->
                                                 <div class="form-group">
                                                     <label><?php _e(
                                                         "Description",
@@ -283,31 +290,33 @@ if (
     echo $file->description;
 } ?></textarea>
                                                 </div>
-
+                                                <!-- Document Title-->
                                                 <div class="form-group">
                                                     <label for="document_title_<?php echo $i; ?>"><?php _e(
     "Document Title",
     "cftp_admin"
 ); ?></label>
-                                                    <input type="text" id="document_title_<?php echo $i; ?>" name="file[<?php echo $i; ?>][document_title]" class="form-control" placeholder="<?php _e(
-    "Enter Document Title",
-    "cftp_admin"
-); ?>" />
+<input type="text" id="document_title_<?php echo $i; ?>" name="file[<?php echo $i; ?>][document_title]" class="form-control"
+   value="<?php echo htmlspecialchars($file->document_title ?? ""); ?>"   
+   placeholder="<?php _e("Enter Document Title", "cftp_admin"); ?>" />
                                                 </div>
 
+                                                <!-- Document Description -->
                                                 <div class="form-group">
                                                     <label for="document_description_<?php echo $i; ?>"><?php _e(
     "Document Description",
     "cftp_admin"
 ); ?></label>
-                                                    <textarea id="document_description_<?php echo $i; ?>" 
-                                                              name="file[<?php echo $i; ?>][document_description]" 
-                                                              class="form-control" 
-                                                              rows="3"
-                                                              placeholder="<?php _e(
-                                                                  "Enter Document Description",
-                                                                  "cftp_admin"
-                                                              ); ?>"></textarea>
+                                                    <textarea id="document_description_<?php echo $i; ?>"
+                                          name="file[<?php echo $i; ?>][document_description]"
+                                          class="form-control"
+                                          rows="3"
+                                          placeholder="<?php _e(
+                                              "Enter Document Description",
+                                              "cftp_admin"
+                                          ); ?>"><?php echo htmlspecialchars(
+    $file->document_description ?? ""
+); ?></textarea>  
                                                 </div>
                                             </div>
                                         </div>

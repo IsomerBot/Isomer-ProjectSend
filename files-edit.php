@@ -85,31 +85,48 @@ if (isset($_POST["save"])) {
             global $dbh;
 
             // Update each file with transmittal information
-            foreach ($_POST["file"] as $file) {
-                if (isset($file["id"]) && is_numeric($file["id"])) {
-                    $query = "UPDATE tbl_files SET 
-                            transmittal_number = :transmittal_number,
-                            project_name = :project_name,
-                            package_description = :package_description,
-                            issue_status = :issue_status,
-                            discipline = :discipline,
-                            deliverable_type = :deliverable_type,
-                            document_title = :document_title,
-                            deliverable_category = :deliverable_category
-                          WHERE id = :file_id";
+            // Get the global transmittal data that applies to all files being edited
+            $global_transmittal_number = $_POST["transmittal_number"] ?? "";
+            $global_project_name = $_POST["project_name"] ?? "";
+            $global_package_description = $_POST["package_description"] ?? "";
+            $global_issue_status = $_POST["issue_status"] ?? "";
+            $global_discipline = $_POST["discipline"] ?? "";
+            $global_deliverable_type = $_POST["deliverable_type"] ?? "";
+
+            // Update each file with transmittal information
+            foreach ($_POST["file"] as $file_data_from_post) {
+                // Renamed $file to $file_data_from_post for clarity
+                if (
+                    isset($file_data_from_post["id"]) &&
+                    is_numeric($file_data_from_post["id"])
+                ) {
+                    $query = "UPDATE tbl_files SET
+                           transmittal_number = :transmittal_number,
+                           project_name = :project_name,
+                           package_description = :package_description,
+                           issue_status = :issue_status,
+                           discipline = :discipline,
+                           deliverable_type = :deliverable_type,
+                           document_title = :document_title,
+                           document_description = :document_description,
+                           revision_number = :revision_number
+                         WHERE id = :file_id";
 
                     $statement = $dbh->prepare($query);
                     $statement->execute([
-                        ":file_id" => $file["id"],
-                        ":transmittal_number" => $_POST["transmittal_number"],
-                        ":project_name" => $_POST["project_name"] ?? "",
-                        ":package_description" =>
-                            $_POST["package_description"] ?? "",
-                        ":issue_status" => $_POST["issue_status"] ?? "",
-                        ":discipline" => $_POST["discipline"] ?? "",
-                        ":deliverable_type" => $_POST["deliverable_type"] ?? "",
-                        ":document_title" => $_POST["document_title"] ?? "",
-                        ":deliverable_category" => $_POST["discipline"] ?? "",
+                        ":file_id" => $file_data_from_post["id"], // Correctly access file ID from the iterated array
+                        ":transmittal_number" => $global_transmittal_number, // Use the global value
+                        ":project_name" => $global_project_name, // Use the global value
+                        ":package_description" => $global_package_description, // Use the global value
+                        ":issue_status" => $global_issue_status, // Use the global value
+                        ":discipline" => $global_discipline, // Use the global value
+                        ":deliverable_type" => $global_deliverable_type, // Use the global value
+                        ":document_title" =>
+                            $file_data_from_post["document_title"] ?? "", // Correctly access file-specific value
+                        ":document_description" =>
+                            $file_data_from_post["document_description"] ?? "", // Correctly access file-specific value
+                        ":revision_number" =>
+                            $file_data_from_post["revision_number"] ?? "", // Correctly access file-specific value
                     ]);
                 }
             }

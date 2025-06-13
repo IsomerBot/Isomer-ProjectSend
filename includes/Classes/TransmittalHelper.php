@@ -28,7 +28,6 @@ class TransmittalHelper
             "issue_status" => "tbl_issue_status",
             "discipline" => "tbl_discipline",
             "deliverable_type" => "tbl_deliverable_type",
-            "transmittal_status" => "tbl_transmittal_status",
         ];
 
         // Map dropdown types to their column names
@@ -36,7 +35,6 @@ class TransmittalHelper
             "issue_status" => "status_name",
             "discipline" => "discipline_name",
             "deliverable_type" => "deliverable_type", // FIXED: was "type_name"
-            "transmittal_status" => "status_name",
         ];
 
         // Check if the requested type exists in our mapping
@@ -150,40 +148,6 @@ class TransmittalHelper
         }
 
         return $html;
-    }
-
-    /**
-     * Get unique deliverable categories (from files table)
-     * @return array - Array of category names
-     */
-    public function getDeliverableCategories()
-    {
-        // Get unique deliverable_category values from the files table
-        $query = "SELECT DISTINCT deliverable_category FROM tbl_files 
-                  WHERE deliverable_category IS NOT NULL AND deliverable_category != ''
-                  ORDER BY deliverable_category ASC";
-
-        $statement = $this->dbh->prepare($query);
-        $statement->execute();
-        return $statement->fetchAll(PDO::FETCH_COLUMN);
-    }
-
-    /**
-     * Get deliverable types by category (discipline)
-     * @param string $category - The discipline name (deliverable_category)
-     * @return array - Array of deliverable types with abbreviations
-     */
-    public function getDeliverableTypesByCategory($category)
-    {
-        // Join with discipline table to get deliverable types by discipline name
-        $query = "SELECT dt.deliverable_type, dt.abbreviation FROM tbl_deliverable_type dt
-                  JOIN tbl_discipline d ON dt.discipline_id = d.id
-                  WHERE d.discipline_name = :category AND dt.active = 1 
-                  ORDER BY dt.deliverable_type ASC";
-
-        $statement = $this->dbh->prepare($query);
-        $statement->execute([":category" => $category]);
-        return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**
@@ -316,7 +280,7 @@ class TransmittalHelper
     {
         $query = "SELECT f.id, f.filename, f.original_url, f.description,
                          f.transmittal_number, f.issue_status, f.discipline, 
-                         f.deliverable_category, f.deliverable_type, f.abbreviation,
+                        f.deliverable_type, f.abbreviation,
                          f.document_title, f.project_name
                   FROM tbl_files f 
                   WHERE f.transmittal_number = :transmittal_number 
@@ -361,10 +325,11 @@ class TransmittalHelper
                     package_description = :package_description,
                     issue_status = :issue_status,
                     discipline = :discipline,
-                    deliverable_category = :deliverable_category,
                     deliverable_type = :deliverable_type,
                     abbreviation = :abbreviation,
-                    document_title = :document_title
+                    document_title = :document_title,
+                    document_description = :document_description,
+                    revision_number = :revision_number
                   WHERE id = :file_id";
 
         $statement = $this->dbh->prepare($query);
@@ -376,11 +341,12 @@ class TransmittalHelper
                 $transmittal_data["package_description"] ?? "",
             ":issue_status" => $transmittal_data["issue_status"] ?? "",
             ":discipline" => $transmittal_data["discipline"] ?? "",
-            ":deliverable_category" =>
-                $transmittal_data["deliverable_category"] ?? "",
             ":deliverable_type" => $transmittal_data["deliverable_type"] ?? "",
             ":abbreviation" => $transmittal_data["abbreviation"] ?? "",
             ":document_title" => $transmittal_data["document_title"] ?? "",
+            ":document_description" =>
+                $transmittal_data["document_description"] ?? "",
+            ":revision_number" => $transmittal_data["revision_number"] ?? 1,
         ]);
     }
 }
