@@ -52,6 +52,8 @@ class Files
     public $document_title;
     public $document_description;
     public $revision_number;
+    public $comments;
+    public $project_number;
 
     private $use_date_folder;
     private $is_filetype_allowed;
@@ -189,6 +191,16 @@ class Files
         $this->revision_number = !empty($arguments["revision_number"])
             ? encode_html($arguments["revision_number"])
             : null;
+        $this->revision_number = !empty($arguments["revision_number"])
+            ? encode_html($arguments["revision_number"])
+            : null;
+        $this->comments = !empty($arguments["comments"])
+            ? encode_html($arguments["comments"])
+            : null;
+        $this->project_number = !empty($arguments["project_number"])
+            ? encode_html($arguments["project_number"])
+            : null;
+
         // Assignations
         $this->assignations_groups = !empty($arguments["assignations_groups"])
             ? to_array_if_not($arguments["assignations_groups"])
@@ -279,6 +291,8 @@ class Files
                 $row["document_description"] ?? ""
             );
             $this->revision_number = html_output($row["revision_number"] ?? "");
+            $this->comments = htmlentities_allowed($row["comments"] ?? "");
+            $this->project_number = html_output($row["project_number"] ?? "");
         }
 
         $this->full_path = $this->getFilePath();
@@ -977,6 +991,19 @@ class Files
         $public = get_option("files_default_public");
         $this->public = !empty($public) ? $public : 0;
         $this->expiry_date = date("Y-m-d", strtotime("+$expire_days days"));
+
+        // Initialize all transmittal fields to empty strings to avoid SQL errors
+        $this->transmittal_number = "";
+        $this->project_name = "";
+        $this->package_description = "";
+        $this->issue_status = "";
+        $this->discipline = "";
+        $this->deliverable_type = "";
+        $this->document_title = "";
+        $this->document_description = "";
+        $this->revision_number = "";
+        $this->comments = "";
+        $this->project_number = "";
     }
 
     /**
@@ -996,12 +1023,26 @@ class Files
             ? (int) $this->date_folder_month
             : null;
 
+        // Make sure all transmittal fields are initialized
+        $this->transmittal_number = $this->transmittal_number ?? "";
+        $this->project_name = $this->project_name ?? "";
+        $this->package_description = $this->package_description ?? "";
+        $this->issue_status = $this->issue_status ?? "";
+        $this->discipline = $this->discipline ?? "";
+        $this->deliverable_type = $this->deliverable_type ?? "";
+        $this->document_title = $this->document_title ?? "";
+        $this->document_description = $this->document_description ?? "";
+        $this->revision_number = $this->revision_number ?? "";
+        $this->comments = $this->comments ?? "";
+        $this->project_number = $this->project_number ?? "";
+
         $statement = $this->dbh->prepare(
             "INSERT INTO " .
                 TABLE_FILES .
-                " (user_id, url, original_url, filename, description, uploader, expires, expiry_date, public_allow, public_token, disk_folder_year, disk_folder_month)" .
-                "VALUES (:user_id, :url, :original_url, :title, :description, :uploader, :expires, :expiry_date, :public, :public_token, :disk_folder_year, :disk_folder_month)"
+                " (user_id, url, original_url, filename, description, uploader, expires, expiry_date, public_allow, public_token, disk_folder_year, disk_folder_month, transmittal_number, project_name, package_description, issue_status, discipline, deliverable_type, document_title, document_description, revision_number, comments, project_number)" .
+                " VALUES (:user_id, :url, :original_url, :title, :description, :uploader, :expires, :expiry_date, :public, :public_token, :disk_folder_year, :disk_folder_month, :transmittal_number, :project_name, :package_description, :issue_status, :discipline, :deliverable_type, :document_title, :document_description, :revision_number, :comments, :project_number)"
         );
+
         $statement->bindParam(":user_id", $this->uploader_id, PDO::PARAM_INT);
         $statement->bindParam(":url", $this->filename_on_disk);
         $statement->bindParam(":original_url", $this->filename_original);
@@ -1022,33 +1063,6 @@ class Files
             $this->disk_folder_month,
             PDO::PARAM_INT
         );
-        $statement = $this->dbh->prepare(
-            "INSERT INTO " .
-                TABLE_FILES .
-                " (user_id, url, original_url, filename, description, uploader, expires, expiry_date, public_allow, public_token, disk_folder_year, disk_folder_month, transmittal_number, project_name, package_description, issue_status, discipline, deliverable_type, document_title, document_description, revision_number)" . // ADD YOUR NEW COLUMN NAMES HERE
-                "VALUES (:user_id, :url, :original_url, :title, :description, :uploader, :expires, :expiry_date, :public, :public_token, :disk_folder_year, :disk_folder_month, :transmittal_number, :project_name, :package_description, :issue_status, :discipline, :deliverable_type, :document_title, :document_description, :revision_number)"
-        ); // ADD YOUR NEW BIND PARAMETERS HERE
-        $statement->bindParam(":user_id", $this->uploader_id, PDO::PARAM_INT);
-        $statement->bindParam(":url", $this->filename_on_disk);
-        $statement->bindParam(":original_url", $this->filename_original);
-        $statement->bindParam(":title", $this->title);
-        $statement->bindParam(":description", $this->description);
-        $statement->bindParam(":uploader", $this->uploader);
-        $statement->bindParam(":expires", $this->expires, PDO::PARAM_INT);
-        $statement->bindParam(":expiry_date", $this->expiry_date);
-        $statement->bindParam(":public", $this->public, PDO::PARAM_INT);
-        $statement->bindParam(":public_token", $this->public_token);
-        $statement->bindParam(
-            ":disk_folder_year",
-            $this->disk_folder_year,
-            PDO::PARAM_INT
-        );
-        $statement->bindParam(
-            ":disk_folder_month",
-            $this->disk_folder_month,
-            PDO::PARAM_INT
-        );
-        // ADD THESE NEW LINES FOR BINDING PARAMETERS
         $statement->bindParam(":transmittal_number", $this->transmittal_number);
         $statement->bindParam(":project_name", $this->project_name);
         $statement->bindParam(
@@ -1064,7 +1078,9 @@ class Files
             $this->document_description
         );
         $statement->bindParam(":revision_number", $this->revision_number);
-        // END NEW LINES
+        $statement->bindParam(":comments", $this->comments);
+        $statement->bindParam(":project_number", $this->project_number);
+
         $statement->execute();
 
         $this->file_id = $this->dbh->lastInsertId();
@@ -1188,7 +1204,10 @@ class Files
             deliverable_type = :deliverable_type,
             document_title = :document_title,
             document_description = :document_description,
-            revision_number = :revision_number
+            revision_number = :revision_number,
+            comments = :comments,
+            project_number = :project_number
+
             WHERE id = :id
         "
         );
@@ -1214,6 +1233,8 @@ class Files
             $this->document_description
         );
         $statement->bindParam(":revision_number", $this->revision_number);
+        $statement->bindParam(":comments", $this->comments);
+        $statement->bindParam(":project_number", $this->project_number);
         $statement->bindParam(":id", $this->id, PDO::PARAM_INT);
         $statement->execute();
         $hidden =

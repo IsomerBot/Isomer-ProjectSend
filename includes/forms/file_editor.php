@@ -1,13 +1,13 @@
-<?php // Load existing transmittal data for editing
+<?php // Load existing transmittal data for editingMore actions
 
 $existing_transmittal_data = [];
 if (!empty($editable) && !isset($_GET["saved"])) {
     // Get transmittal data from the first file
     $first_file_id = $editable[0];
     global $dbh;
-    $query = "SELECT transmittal_number, project_name, package_description, 
+    $query = "SELECT transmittal_number, project_name, project_number, package_description, 
                      issue_status, discipline, deliverable_type, document_title,
-                     document_description, revision_number
+                     document_description, revision_number, comments
               FROM tbl_files 
               WHERE id = :file_id";
     $statement = $dbh->prepare($query);
@@ -17,6 +17,7 @@ if (!empty($editable) && !isset($_GET["saved"])) {
         $existing_transmittal_data = [
             "transmittal_number" => "",
             "project_name" => "",
+            "project_number" => "",
             "package_description" => "",
             "issue_status" => "",
             "discipline" => "",
@@ -24,6 +25,7 @@ if (!empty($editable) && !isset($_GET["saved"])) {
             "document_title" => "",
             "document_description" => "",
             "revision_number" => "",
+            "comments" => "",
         ];
     }
 }
@@ -41,7 +43,7 @@ if (isset($_GET["confirm"])) {
         <div class="row">
             <div class="col-md-6">
                 <h3><?php _e("Transmittal Information", "cftp_admin"); ?></h3>
-                
+
                 <!-- Transmittal Number Manual Field -->
                 <div class="form-group">
                     <label for="transmittal_number"><?php _e(
@@ -52,7 +54,7 @@ if (isset($_GET["confirm"])) {
        value="<?php echo htmlspecialchars(
            $existing_transmittal_data["transmittal_number"] ?? ""
        ); ?>"
-       placeholder="<?php _e("AAA###", "cftp_admin"); ?>" required />
+       placeholder="<?php _e("TBD", "cftp_admin"); ?>" required />
                 </div>
 
                 <!-- Project Name Manual Field -->
@@ -70,6 +72,21 @@ if (isset($_GET["confirm"])) {
            "cftp_admin"
        ); ?>" required />
                 </div>
+
+                <div class="form-group">
+    <label for="project_number"><?php _e(
+        "Project Number",
+        "cftp_admin"
+    ); ?>*</label>
+    <input type="text" name="project_number" id="project_number" class="form-control" 
+           value="<?php echo htmlspecialchars(
+               $existing_transmittal_data["project_number"] ?? ""
+           ); ?>"
+           placeholder="<?php _e(
+               "Enter Project Number",
+               "cftp_admin"
+           ); ?>" required />
+</div>
 
                 <!--Package Description Manual Field -->
                 <div class="form-group">
@@ -130,10 +147,10 @@ if (isset($_GET["confirm"])) {
                     </select>
                 </div>
             </div>
-            
+
             <div class="col-md-6">
                 <h3><?php _e("Transmittal Details", "cftp_admin"); ?></h3>
-                
+
                 <div class="form-group">
                     <label for="discipline"><?php _e(
                         "Discipline",
@@ -208,7 +225,7 @@ if (
                 <div class="divider"></div>
             </div>
         </div>
-        
+
         <?php
         $me = new \ProjectSend\Classes\Users(CURRENT_USER_ID);
         if ($me->shouldLimitUploadTo() && !empty($me->limit_upload_to)) {
@@ -246,7 +263,7 @@ if (
                                                 <input type="hidden" name="file[<?php echo $i; ?>][id]" value="<?php echo $file->id; ?>" />
                                                 <input type="hidden" name="file[<?php echo $i; ?>][original]" value="<?php echo $file->filename_original; ?>" />
                                                 <input type="hidden" name="file[<?php echo $i; ?>][file]" value="<?php echo $file->filename_on_disk; ?>" />
-                                                
+
                                                 <!-- Revision Number Manual Field -->
                                                 <div class="form-group">
                                                     <label for="revision_number_<?php echo $i; ?>"><?php _e(
@@ -261,7 +278,7 @@ if (
     "cftp_admin"
 ); ?>" required /> 
                                                 </div>
-                                                
+
                                                 <!-- File Title -->
                                                 <div class="form-group">
                                                     <label><?php _e(
@@ -299,12 +316,13 @@ if (
 <input type="text" id="document_title_<?php echo $i; ?>" name="file[<?php echo $i; ?>][document_title]" class="form-control"
    value="<?php echo htmlspecialchars($file->document_title ?? ""); ?>"   
    placeholder="<?php _e("Enter Document Title", "cftp_admin"); ?>" />
+
                                                 </div>
 
                                                 <!-- Document Description -->
                                                 <div class="form-group">
                                                     <label for="document_description_<?php echo $i; ?>"><?php _e(
-    "Document Description",
+    "Optionally, enter here a description for the Document.",
     "cftp_admin"
 ); ?></label>
                                                     <textarea id="document_description_<?php echo $i; ?>"
@@ -317,6 +335,23 @@ if (
                                           ); ?>"><?php echo htmlspecialchars(
     $file->document_description ?? ""
 ); ?></textarea>  
+                                                </div> 
+                                                <!-- Comments Field -->
+                                                <div class="form-group">
+                                                    <label for="comments_<?php echo $i; ?>"><?php _e(
+    "Comments",
+    "cftp_admin"
+); ?></label>
+                                                    <textarea id="comments_<?php echo $i; ?>"
+                                          name="file[<?php echo $i; ?>][comments]"
+                                          class="form-control"
+                                          rows="3"
+                                          placeholder="<?php _e(
+                                              "Enter any additional comments",
+                                              "cftp_admin"
+                                          ); ?>"><?php echo htmlspecialchars(
+    $file->comments ?? ""
+); ?></textarea>
                                                 </div>
                                             </div>
                                         </div>
@@ -859,25 +894,25 @@ EOL;
 document.addEventListener('DOMContentLoaded', function() {
     const disciplineSelect = document.getElementById('discipline');
     const deliverableTypeSelect = document.getElementById('deliverable_type');
-    
+
     if (!disciplineSelect || !deliverableTypeSelect) {
         console.error('Required form elements not found');
         return;
     }
-    
+
     disciplineSelect.addEventListener('change', function() {
         const selectedDiscipline = this.value;
-        
+
         // Clear deliverable type dropdown
         deliverableTypeSelect.innerHTML = '<option value="">Loading...</option>';
         deliverableTypeSelect.disabled = true;
-        
+
         if (!selectedDiscipline) {
             deliverableTypeSelect.innerHTML = '<option value="">Select Discipline First</option>';
             deliverableTypeSelect.disabled = false;
             return;
         }
-        
+
         // Fetch deliverable types for selected discipline
         fetch(`get_deliverable_types.php?discipline=${encodeURIComponent(selectedDiscipline)}`)
             .then(response => {
@@ -888,7 +923,7 @@ document.addEventListener('DOMContentLoaded', function() {
             })
             .then(data => {
                 deliverableTypeSelect.innerHTML = '<option value="">Select Deliverable Type</option>';
-                
+
                 if (Array.isArray(data) && data.length > 0) {
                     data.forEach(item => {
                         const option = document.createElement('option');
@@ -899,7 +934,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 } else {
                     deliverableTypeSelect.innerHTML = '<option value="">No types available</option>';
                 }
-                
+
                 deliverableTypeSelect.disabled = false;
             })
             .catch(error => {
@@ -908,11 +943,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 deliverableTypeSelect.disabled = false;
             });
     });
-    
+
     // Trigger change event on page load if discipline is already selected (for editing existing data)
     if (disciplineSelect.value) {
         disciplineSelect.dispatchEvent(new Event('change'));
     }
 });
 </script>
-</form>

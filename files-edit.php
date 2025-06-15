@@ -88,6 +88,7 @@ if (isset($_POST["save"])) {
             // Get the global transmittal data that applies to all files being edited
             $global_transmittal_number = $_POST["transmittal_number"] ?? "";
             $global_project_name = $_POST["project_name"] ?? "";
+            $global_project_number = $_POST["project_number"] ?? "";
             $global_package_description = $_POST["package_description"] ?? "";
             $global_issue_status = $_POST["issue_status"] ?? "";
             $global_discipline = $_POST["discipline"] ?? "";
@@ -103,13 +104,15 @@ if (isset($_POST["save"])) {
                     $query = "UPDATE tbl_files SET
                            transmittal_number = :transmittal_number,
                            project_name = :project_name,
+                           project_number = :project_number,
                            package_description = :package_description,
                            issue_status = :issue_status,
                            discipline = :discipline,
                            deliverable_type = :deliverable_type,
                            document_title = :document_title,
                            document_description = :document_description,
-                           revision_number = :revision_number
+                           revision_number = :revision_number,
+                           comments = :comments
                          WHERE id = :file_id";
 
                     $statement = $dbh->prepare($query);
@@ -127,6 +130,8 @@ if (isset($_POST["save"])) {
                             $file_data_from_post["document_description"] ?? "", // Correctly access file-specific value
                         ":revision_number" =>
                             $file_data_from_post["revision_number"] ?? "", // Correctly access file-specific value
+                        ":comments" => $file_data_from_post["comments"] ?? "", // Correctly access file-specific value
+                        ":project_number" => $global_project_number, // ADD THIS LINE
                     ]);
                 }
             }

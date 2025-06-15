@@ -113,6 +113,7 @@ class EmailNotifications
                     // Add transmittal fields
                     "transmittal_number" => $file->transmittal_number ?? "",
                     "project_name" => $file->project_name ?? "",
+                    "project_number" => $file->project_number ?? "",
                     "package_description" => $file->package_description ?? "",
                     "issue_status" => $file->issue_status ?? "",
                     "discipline" => $file->discipline ?? "",
@@ -120,6 +121,7 @@ class EmailNotifications
                     "document_title" => $file->document_title ?? "",
                     "document_description" => $file->document_description ?? "",
                     "revision_number" => $file->revision_number ?? "",
+                    "comments" => $file->comments ?? "",
                 ];
             }
 
@@ -349,6 +351,12 @@ class EmailNotifications
                     htmlspecialchars($file_data["project_name"]) .
                     "</li>";
             }
+            if (!empty($file_data["project_number"])) {
+                $html .=
+                    "<li><strong>Project Number:</strong> " .
+                    htmlspecialchars($file_data["project_number"]) .
+                    "</li>";
+            }
             if (!empty($file_data["package_description"])) {
                 $html .=
                     "<li><strong>Package Description:</strong> " .
@@ -393,6 +401,23 @@ class EmailNotifications
                 $html .=
                     "<li><strong>Revision Number:</strong> " .
                     htmlspecialchars($file_data["revision_number"]) .
+                    "</li>";
+            }
+
+            if (!empty($file_data["revision_number"])) {
+                $html .=
+                    "<li><strong>Revision Number:</strong> " .
+                    htmlspecialchars($file_data["revision_number"]) .
+                    "</li>";
+            }
+            if (!empty($file_data["comments"])) {
+                $comments_output =
+                    strpos($file_data["comments"], "<p>") !== false
+                        ? $file_data["comments"]
+                        : htmlspecialchars($file_data["comments"]);
+                $html .=
+                    "<li><strong>Comments:</strong> " .
+                    $comments_output .
                     "</li>";
             }
 

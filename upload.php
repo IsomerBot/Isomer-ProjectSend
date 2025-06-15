@@ -6,36 +6,50 @@
  * is redirected to step 2, and prompted to enter the name,
  * description and client for each uploaded file.
  */
-require_once 'bootstrap.php';
+require_once "bootstrap.php";
 
-$active_nav = 'files';
+$active_nav = "files";
 
-$page_title = __('Upload files', 'cftp_admin');
+$page_title = __("Upload files", "cftp_admin");
 
-$page_id = 'upload_form';
+$page_id = "upload_form";
 
-$allowed_levels = array(9, 8, 7);
-if (get_option('clients_can_upload') == 1) {
+$allowed_levels = [9, 8, 7];
+if (get_option("clients_can_upload") == 1) {
     $allowed_levels[] = 0;
 }
 log_in_required($allowed_levels);
 
-if (LOADED_LANG != 'en') {
-    $plupload_lang_file = 'vendor/moxiecode/plupload/js/i18n/' . LOADED_LANG . '.js';
+if (LOADED_LANG != "en") {
+    $plupload_lang_file =
+        "vendor/moxiecode/plupload/js/i18n/" . LOADED_LANG . ".js";
     if (file_exists(ROOT_DIR . DS . $plupload_lang_file)) {
-        add_asset('js', 'plupload_language', BASE_URI . '/' . $plupload_lang_file, '3.1.5', 'footer');
+        add_asset(
+            "js",
+            "plupload_language",
+            BASE_URI . "/" . $plupload_lang_file,
+            "3.1.5",
+            "footer"
+        );
     }
 }
 
 message_no_clients();
 
-if (defined('UPLOAD_MAX_FILESIZE')) {
-    $msg = __('Click on Add files to select all the files that you want to upload, and then click continue. On the next step, you will be able to set a name and description for each uploaded file. Remember that the maximum allowed file size (in mb.) is ', 'cftp_admin') . ' <strong>' . UPLOAD_MAX_FILESIZE . '</strong>';
+if (defined("UPLOAD_MAX_FILESIZE")) {
+    $msg =
+        __(
+            "Click on Add files to select all the files that you want to upload, and then click continue. On the next step, you will be able to set a name and description for each uploaded file. Remember that the maximum allowed file size (in mb.) is ",
+            "cftp_admin"
+        ) .
+        " <strong>" .
+        UPLOAD_MAX_FILESIZE .
+        "</strong>";
     $flash->info($msg);
 }
 
-include_once ADMIN_VIEWS_DIR . DS . 'header.php';
-$chunk_size = get_option('upload_chunk_size');
+include_once ADMIN_VIEWS_DIR . DS . "header.php";
+$chunk_size = get_option("upload_chunk_size");
 ?>
 <div class="row">
     <div class="col-12">
@@ -44,22 +58,42 @@ $chunk_size = get_option('upload_chunk_size');
                 $("#uploader").pluploadQueue({
                     runtimes: 'html5',
                     url: 'includes/upload.process.php',
-                    chunk_size: '<?php echo (!empty($chunk_size)) ? $chunk_size : '1'; ?>mb',
+                    chunk_size: '<?php echo !empty($chunk_size)
+                        ? $chunk_size
+                        : "1"; ?>mb',
                     rename: true,
                     dragdrop: true,
                     multipart: true,
+                    init: {
+        BeforeUpload: function(up, file) {
+            console.log('About to upload file:', file);
+            console.log('File name:', file.name);
+            console.log('Upload URL:', up.settings.url);
+        },
+        UploadProgress: function(up, file) {
+            console.log('Progress:', file.name, file.percent + '%');
+        },
+        Error: function(up, err) {
+            console.log('Upload error:', err);
+            console.log('Error details:', err.message, err.details);
+        },
+        FileUploaded: function(up, file, response) {
+            console.log('Upload complete:', file.name);
+            console.log('Server response:', response.response);
+        }
+    },
                     filters: {
                         max_file_size: '<?php echo UPLOAD_MAX_FILESIZE; ?>mb'
-                        <?php
-                        if (!user_can_upload_any_file_type(CURRENT_USER_ID)) {
-                        ?>,
+                        <?php if (
+                            !user_can_upload_any_file_type(CURRENT_USER_ID)
+                        ) { ?>,
                             mime_types: [{
                                 title: "Allowed files",
-                                extensions: "<?php echo get_option('allowed_file_types'); ?>"
+                                extensions: "<?php echo get_option(
+                                    "allowed_file_types"
+                                ); ?>"
                             }]
-                        <?php
-                        }
-                        ?>
+                        <?php } ?>
                     },
                     //flash_swf_url: 'vendor/moxiecode/plupload/js/Moxie.swf',
                     //silverlight_xap_url: 'vendor/moxiecode/plupload/js/Moxie.xap',
@@ -73,8 +107,7 @@ $chunk_size = get_option('upload_chunk_size');
             });
         </script>
 
-        <?php include_once FORMS_DIR . DS . 'upload.php'; ?>
+        <?php include_once FORMS_DIR . DS . "upload.php"; ?>
     </div>
 </div>
-<?php
-include_once ADMIN_VIEWS_DIR . DS . 'footer.php';
+<?php include_once ADMIN_VIEWS_DIR . DS . "footer.php";
