@@ -79,11 +79,8 @@ class Emails
                         ) == 1 &&
                         !empty(get_option("email_new_file_by_user_subject"))
                             ? get_option("email_new_file_by_user_subject")
-                            : __("New files uploaded for you", "cftp_admin"),
-                    "body" => __(
-                        "The following deliverables have been transmitted from Isomer Project Group.",
-                        "cftp_admin"
-                    ),
+                            : "Isomer Transmittal", // Changed from "New files uploaded for you"
+                    "body" => "", // Removed "The following deliverables have been transmitted from Isomer Project Group."
                     // 'body2' => __("If you prefer not to be notified about new files, please go to My Account and deactivate the notifications checkbox.", 'cftp_admin'),
                     "body3" => __(
                         "To access the files pertinent to this transmittal, ",

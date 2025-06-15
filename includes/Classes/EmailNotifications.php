@@ -309,121 +309,200 @@ class EmailNotifications
     {
         $html = "";
 
-        if (!empty($uploader_username)) {
-            $html .=
-                '<li style="font-size:15px; font-weight:bold; margin-bottom:5px;">' .
-                $uploader_username .
-                "</li>";
-        }
+        // Header section similar to Isomer design
+        $html .=
+            '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #fff; border: 1px solid #ddd;">';
 
         foreach ($files as $file) {
             $file_data = $this->files_data[$file["file_id"]];
 
-            $html .= '<li style="margin-bottom:11px;">';
+            // Company header with logo placeholder and transmittal info
             $html .=
-                '<p style="font-weight:bold; margin:0 0 5px 0; font-size:14px;">' .
-                $file_data["title"] .
-                "<br>(" .
-                $file_data["filename"] .
-                ")</p>";
+                '<div style="background: #f8f9fa; padding: 15px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">';
 
-            if (!empty($file_data["description"])) {
-                if (strpos($file_data["description"], "<p>") !== false) {
-                    $html .= $file_data["description"];
-                } else {
-                    $html .= "<p>" . $file_data["description"] . "</p>";
-                }
-            }
-
-            // Add transmittal information
+            // Left side - Logo placeholder
             $html .=
-                '<ul style="list-style:disc; margin:5px 0 0 20px; padding:0; font-size:13px;">';
+                '<div style="width: 40px; height: 40px; background: #ff6600; border-radius: 4px; display: flex; align-items: center; justify-content: center;">';
+            $html .=
+                '<div style="width: 20px; height: 20px; background: #fff; border-radius: 2px;"></div>';
+            $html .= "</div>";
 
-            if (!empty($file_data["transmittal_number"])) {
-                $html .=
-                    "<li><strong>Transmittal Number:</strong> " .
-                    htmlspecialchars($file_data["transmittal_number"]) .
-                    "</li>";
-            }
+            // Right side - Transmittal header
+            $html .=
+                '<div style="font-weight: bold; font-size: 16px;">TRANSMITTAL ' .
+                htmlspecialchars(
+                    $file_data["transmittal_number"] ?? "AAANNNN-T-XXX"
+                ) .
+                "</div>";
+
+            $html .= "</div>";
+
+            // Project information section
+            $html .=
+                '<div style="padding: 15px; border-bottom: 1px solid #eee;">';
+
+            // Two-column layout for project info
+            $html .=
+                '<div style="display: flex; justify-content: space-between;">';
+
+            // Left column
+            $html .= '<div style="flex: 1; margin-right: 30px;">';
+
             if (!empty($file_data["project_name"])) {
                 $html .=
-                    "<li><strong>Project Name:</strong> " .
+                    '<div style="margin-bottom: 8px;"><strong>Project Name:</strong> ' .
                     htmlspecialchars($file_data["project_name"]) .
-                    "</li>";
+                    "</div>";
             }
+
+            // Add transmittal date (you may need to get this from notification timestamp)
+            $html .=
+                '<div style="margin-bottom: 8px;"><strong>Transmittal Date:</strong> ' .
+                date("Y-m-d") .
+                "</div>";
+
+            $html .=
+                '<div style="margin-bottom: 8px;"><strong>To:</strong> All Recipients List Here -- NO BC or CC</div>';
+
+            $html .= "</div>";
+
+            // Right column
+            $html .= '<div style="flex: 1;">';
+
             if (!empty($file_data["project_number"])) {
                 $html .=
-                    "<li><strong>Project Number:</strong> " .
+                    '<div style="margin-bottom: 8px;"><strong>Project No:</strong> ' .
                     htmlspecialchars($file_data["project_number"]) .
-                    "</li>";
-            }
-            if (!empty($file_data["package_description"])) {
-                $html .=
-                    "<li><strong>Package Description:</strong> " .
-                    htmlspecialchars($file_data["package_description"]) .
-                    "</li>";
-            }
-            if (!empty($file_data["issue_status"])) {
-                $html .=
-                    "<li><strong>Issue Status:</strong> " .
-                    htmlspecialchars($file_data["issue_status"]) .
-                    "</li>";
-            }
-            if (!empty($file_data["discipline"])) {
-                $html .=
-                    "<li><strong>Discipline:</strong> " .
-                    htmlspecialchars($file_data["discipline"]) .
-                    "</li>";
-            }
-            if (!empty($file_data["deliverable_type"])) {
-                $html .=
-                    "<li><strong>Deliverable Type:</strong> " .
-                    htmlspecialchars($file_data["deliverable_type"]) .
-                    "</li>";
-            }
-            if (!empty($file_data["document_title"])) {
-                $html .=
-                    "<li><strong>Document Title:</strong> " .
-                    htmlspecialchars($file_data["document_title"]) .
-                    "</li>";
-            }
-            if (!empty($file_data["document_description"])) {
-                $description_output =
-                    strpos($file_data["document_description"], "<p>") !== false
-                        ? $file_data["document_description"]
-                        : htmlspecialchars($file_data["document_description"]);
-                $html .=
-                    "<li><strong>Document Description:</strong> " .
-                    $description_output .
-                    "</li>";
-            }
-            if (!empty($file_data["revision_number"])) {
-                $html .=
-                    "<li><strong>Revision Number:</strong> " .
-                    htmlspecialchars($file_data["revision_number"]) .
-                    "</li>";
+                    "</div>";
             }
 
-            if (!empty($file_data["revision_number"])) {
+            // Add uploader info as "From" - FIXED: using $uploader_username instead of $file_data["uploader"]
+            if (!empty($uploader_username)) {
                 $html .=
-                    "<li><strong>Revision Number:</strong> " .
-                    htmlspecialchars($file_data["revision_number"]) .
-                    "</li>";
+                    '<div style="margin-bottom: 8px;"><strong>From:</strong> ' .
+                    htmlspecialchars($uploader_username) .
+                    "</div>";
             }
+
+            $html .= "</div>";
+
+            $html .= "</div>"; // End two-column layout
+            $html .= "</div>"; // End project info section
+
+            // Description section
+            if (!empty($file_data["description"])) {
+                $html .= '<div style="padding: 15px; margin-bottom: 15px;">';
+                $html .=
+                    '<div style="font-weight: bold; margin-bottom: 5px;">Description:</div>';
+                if (strpos($file_data["description"], "<p>") !== false) {
+                    $html .=
+                        '<div style="color: #666;">' .
+                        $file_data["description"] .
+                        "</div>";
+                } else {
+                    $html .=
+                        '<div style="color: #666;">' .
+                        htmlspecialchars($file_data["description"]) .
+                        "</div>";
+                }
+                $html .= "</div>";
+            }
+
+            // FIXED: Added proper container and styling for the download section
+            $html .= '<div style="padding: 15px;">';
+
+            // Table header for deliverables (matching Isomer design)
+            $html .=
+                '<div style="background: #f8f9fa; padding: 10px; border: 1px solid #ddd; margin-bottom: 0; text-align: center; font-weight: bold;">Isomer Transmittal Available for Download</div>';
+
+            $html .=
+                '<div style="margin-bottom: 15px; padding: 10px; background: #fff; border: 1px solid #ddd; border-top: none;">The following deliverables have been transmitted from Isomer Project Group</div>';
+
+            // Table-like structure for file details
+            $html .=
+                '<table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd; margin-bottom: 15px;">';
+
+            // Table headers
+            $html .=
+                '<tr style="background: #f8f9fa; font-weight: bold; font-size: 12px;">';
+            $html .=
+                '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">File Title</th>';
+            $html .=
+                '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Revision No.</th>';
+            $html .=
+                '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Issue Status</th>';
+            $html .=
+                '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Document Title</th>';
+            $html .=
+                '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Discipline</th>';
+            $html .=
+                '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Deliverable Type</th>';
+            $html .= "</tr>";
+
+            // Table data row
+            $html .= '<tr style="font-size: 12px;">';
+            $html .=
+                '<td style="border: 1px solid #ddd; padding: 8px;">' .
+                htmlspecialchars(
+                    $file_data["filename"] ?? $file_data["title"]
+                ) .
+                "</td>";
+            $html .=
+                '<td style="border: 1px solid #ddd; padding: 8px;">' .
+                htmlspecialchars($file_data["revision_number"] ?? "") .
+                "</td>";
+            $html .=
+                '<td style="border: 1px solid #ddd; padding: 8px;">' .
+                htmlspecialchars($file_data["issue_status"] ?? "") .
+                "</td>";
+            $html .=
+                '<td style="border: 1px solid #ddd; padding: 8px;">' .
+                htmlspecialchars($file_data["document_title"] ?? "") .
+                "</td>";
+            $html .=
+                '<td style="border: 1px solid #ddd; padding: 8px;">' .
+                htmlspecialchars($file_data["discipline"] ?? "") .
+                "</td>";
+            $html .=
+                '<td style="border: 1px solid #ddd; padding: 8px;">' .
+                htmlspecialchars($file_data["deliverable_type"] ?? "") .
+                "</td>";
+            $html .= "</tr>";
+
+            $html .= "</table>";
+
+            // Comments section (if any)
             if (!empty($file_data["comments"])) {
-                $comments_output =
-                    strpos($file_data["comments"], "<p>") !== false
-                        ? $file_data["comments"]
-                        : htmlspecialchars($file_data["comments"]);
+                $html .= '<div style="margin-bottom: 15px;">';
                 $html .=
-                    "<li><strong>Comments:</strong> " .
-                    $comments_output .
-                    "</li>";
+                    '<div style="font-weight: bold; margin-bottom: 5px;">Comments:</div>';
+                $html .=
+                    '<div style="border: 1px solid #ddd; padding: 10px; min-height: 60px; background: #fafafa;">';
+
+                if (strpos($file_data["comments"], "<p>") !== false) {
+                    $html .= $file_data["comments"];
+                } else {
+                    $html .= htmlspecialchars($file_data["comments"]);
+                }
+
+                $html .= "</div>";
+                $html .= "</div>";
             }
 
-            $html .= "</ul>";
-            $html .= "</li>";
+            // Access link section
+            $html .=
+                '<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">';
+            $html .=
+                "<div>To access the files pertinent to this transmittal,</div>";
+            $html .=
+                '<div><a href="#" style="color: #0066cc; text-decoration: underline;">please login here</a></div>';
+            $html .= "</div>";
+
+            $html .= "</div>"; // End inner container
+            $html .= "</div>"; // End file container
         }
+
+        $html .= "</div>"; // End main container
 
         return $html;
     }
