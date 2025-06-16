@@ -311,6 +311,25 @@ class TransmittalHelper
         $statement->execute([":transmittal_number" => $transmittal_number]);
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
+    /**
+     * Get user information by user ID
+     * @param int $user_id - The user ID to look up
+     * @return array|false - User data or false if not found
+     */
+    public function getUserById($user_id)
+    {
+        if (empty($user_id) || !is_numeric($user_id)) {
+            return false;
+        }
+
+        $query = "SELECT id, name, email, user as username 
+              FROM tbl_users 
+              WHERE id = :user_id AND active = '1'";
+
+        $statement = $this->dbh->prepare($query);
+        $statement->execute([":user_id" => $user_id]);
+        return $statement->fetch(PDO::FETCH_ASSOC);
+    }
 
     /**
      * Update file with transmittal information

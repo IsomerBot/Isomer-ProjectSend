@@ -105,6 +105,18 @@ class EmailNotifications
             // Add the file data to the global array
             if (!array_key_exists($row["file_id"], $this->files_data)) {
                 $file = new \ProjectSend\Classes\Files($row["file_id"]);
+
+                $uploader_name = "Isomer Project Group"; // fallback
+                if (!empty($file->user_id)) {
+                    $transmittal_helper = new \ProjectSend\Classes\TransmittalHelper();
+                    $uploader = $transmittal_helper->getUserById(
+                        $file->user_id
+                    );
+                    if ($uploader && !empty($uploader["name"])) {
+                        $uploader_name = $uploader["name"];
+                    }
+                }
+
                 $this->files_data[$file->id] = [
                     "id" => $file->id,
                     "filename" => $file->filename_original,
@@ -122,6 +134,7 @@ class EmailNotifications
                     "revision_number" => $file->revision_number ?? "",
                     "comments" => $file->comments ?? "",
                     "transmittal_name" => $file->transmittal_name ?? "",
+                    "uploader_name" => $uploader_name,
                 ];
             }
 
@@ -367,8 +380,27 @@ class EmailNotifications
                 $formatted_date .
                 "</div>";
 
+            // Get all recipients for this transmittal
+            $recipients_text = "All Recipients";
+            if (!empty($file_data["transmittal_number"])) {
+                $transmittal_helper = new \ProjectSend\Classes\TransmittalHelper();
+                $recipients = $transmittal_helper->getTransmittalRecipients(
+                    $file_data["transmittal_number"]
+                );
+
+                if (!empty($recipients)) {
+                    $recipient_names = [];
+                    foreach ($recipients as $recipient) {
+                        $recipient_names[] = $recipient["name"];
+                    }
+                    $recipients_text = implode(", ", $recipient_names);
+                }
+            }
+
             $html .=
-                '<div style="margin-bottom: 8px;"><strong>To:</strong> All Recipients List Here -- NO BC or CC</div>';
+                '<div style="margin-bottom: 8px;"><strong>To:</strong> ' .
+                htmlspecialchars($recipients_text) .
+                "</div>";
 
             $html .= "</div>";
 
@@ -381,10 +413,11 @@ class EmailNotifications
                     "</div>";
             }
 
-            // Always show "From" field with fallback
-            $from_text = !empty($uploader_username)
-                ? htmlspecialchars($uploader_username)
+            // Get uploader name from file data
+            $from_text = !empty($file_data["uploader_name"])
+                ? htmlspecialchars($file_data["uploader_name"])
                 : "Isomer Project Group";
+
             $html .=
                 '<div style="margin-bottom: 8px;"><strong>From:</strong> ' .
                 $from_text .
@@ -477,6 +510,12 @@ class EmailNotifications
             $html .= "</tr>";
 
             $html .= "</table>";
+
+            // Access link section
+            $html .=
+                '<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">';
+            $html .=
+                "<div>To access the files pertinent to this transmittal,</div>";
 
             // Access link section
             $html .=
