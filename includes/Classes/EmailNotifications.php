@@ -244,33 +244,34 @@ class EmailNotifications
                     $processed_notifications = [];
 
                     foreach ($admin_files as $client_uploader => $files) {
-                        $files_list_html = $this->makeFilesListHtml(
-                            $files,
-                            $client_uploader
-                        );
-
+                        // ORIGINAL BEHAVIOR: Process each file individually for admin notifications
                         foreach ($files as $file) {
+                            $files_list_html = $this->makeFilesListHtml(
+                                [$file], // Pass single file array to maintain original behavior
+                                $client_uploader
+                            );
+
                             $processed_notifications[] =
                                 $file["notification_id"];
-                        }
 
-                        $email = new \ProjectSend\Classes\Emails();
-                        if (
-                            $email->send([
-                                "type" => "new_files_by_client",
-                                "address" => $email_to,
-                                "files_list" => $files_list_html,
-                            ])
-                        ) {
-                            $this->notifications_sent = array_merge(
-                                $this->notifications_sent,
-                                $processed_notifications
-                            );
-                        } else {
-                            $this->notifications_failed = array_merge(
-                                $this->notifications_failed,
-                                $processed_notifications
-                            );
+                            $email = new \ProjectSend\Classes\Emails();
+                            if (
+                                $email->send([
+                                    "type" => "new_files_by_client",
+                                    "address" => $email_to,
+                                    "files_list" => $files_list_html,
+                                ])
+                            ) {
+                                $this->notifications_sent = array_merge(
+                                    $this->notifications_sent,
+                                    [$file["notification_id"]]
+                                );
+                            } else {
+                                $this->notifications_failed = array_merge(
+                                    $this->notifications_failed,
+                                    [$file["notification_id"]]
+                                );
+                            }
                         }
                     }
                 } else {
@@ -296,7 +297,7 @@ class EmailNotifications
                     $processed_notifications[] = $file["notification_id"];
                 }
 
-                $fist_file_data = $this->files_data[$files[0]["file_id"]];
+                $first_file_data = $this->files_data[$files[0]["file_id"]];
 
                 $email = new \ProjectSend\Classes\Emails();
                 if (
@@ -304,7 +305,7 @@ class EmailNotifications
                         "type" => "new_files_by_user",
                         "address" => $this->mail_by_user[$mail_username],
                         "files_list" => $files_list_html,
-                        "file_data" => $fist_file_data,
+                        "file_data" => $first_file_data,
                     ])
                 ) {
                     $this->notifications_sent = array_merge(
@@ -323,157 +324,166 @@ class EmailNotifications
 
     private function makeFilesListHtml($files, $uploader_username = null)
     {
+        if (empty($files)) {
+            return "";
+        }
+
         $html = "";
 
         // Header section similar to Isomer design
         $html .=
             '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #fff; ">';
 
+        // Get the first file to extract transmittal information (same for all files)
+        $first_file_data = $this->files_data[$files[0]["file_id"]];
+
+        // Company header with logo placeholder and transmittal info
+        $html .=
+            '<div style="background: #f8f9fa; padding: 15px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">';
+
+        // Left side - Logo with colored background
+        $html .=
+            '<div style="width: 120px; height: 40px; background: #ff6600; border-radius: 4px; display: flex; align-items: center; justify-content: center; padding: 5px;">';
+        $html .=
+            '<img src="' .
+            BASE_URI .
+            'assets/img/Isomer-email-logo.png" alt="Isomer Logo" style="max-height: 30px; max-width: 110px;" />';
+        $html .= "</div>";
+
+        $html .= '<div style="text-align: right; margin-left: auto;">';
+        $html .=
+            '<div style="font-weight: bold; font-size: 16px; margin-bottom: 2px;">TRANSMITTAL</div>';
+        $html .=
+            '<div style="font-weight: bold; font-size: 16px;">' .
+            htmlspecialchars($first_file_data["transmittal_name"] ?? "") .
+            "</div>";
+        $html .= "</div>";
+        $html .= "</div>"; // End header section
+
+        // Project information section
+        $html .= '<div style="padding: 15px; border-bottom: 1px solid #eee;">';
+
+        // Two-column layout for project info
+        $html .= '<div style="display: flex; justify-content: space-between;">';
+
+        // Left column
+        $html .= '<div style="flex: 1; margin-right: 30px;">';
+
+        if (!empty($first_file_data["project_number"])) {
+            $html .=
+                '<div style="margin-bottom: 8px;"><strong>Project No:</strong> ' .
+                htmlspecialchars($first_file_data["project_number"]) .
+                "</div>";
+        }
+
+        // Add transmittal date with formatted date
+        $formatted_date = date("F jS, Y"); // Format: May 9th, 2025
+        $html .=
+            '<div style="margin-bottom: 8px;"><strong>Transmittal Date:</strong> ' .
+            $formatted_date .
+            "</div>";
+
+        // Get all recipients for this transmittal
+        $recipients_text = "All Recipients";
+        if (!empty($first_file_data["transmittal_number"])) {
+            $transmittal_helper = new \ProjectSend\Classes\TransmittalHelper();
+            $recipients = $transmittal_helper->getTransmittalRecipients(
+                $first_file_data["transmittal_number"]
+            );
+
+            if (!empty($recipients)) {
+                $recipient_names = [];
+                foreach ($recipients as $recipient) {
+                    $recipient_names[] = $recipient["name"];
+                }
+                $recipients_text = implode(", ", $recipient_names);
+            }
+        }
+
+        $html .=
+            '<div style="margin-bottom: 8px;"><strong>To:</strong> ' .
+            htmlspecialchars($recipients_text) .
+            "</div>";
+
+        $html .= "</div>";
+
+        // Right column
+        $html .= '<div style="flex: 1;">';
+        if (!empty($first_file_data["project_name"])) {
+            $html .=
+                '<div style="margin-bottom: 8px;"><strong>Project Name:</strong> ' .
+                htmlspecialchars($first_file_data["project_name"]) .
+                "</div>";
+        }
+
+        // Get uploader name from file data
+        $from_text = !empty($first_file_data["uploader_name"])
+            ? htmlspecialchars($first_file_data["uploader_name"])
+            : "Isomer Project Group";
+
+        $html .=
+            '<div style="margin-bottom: 8px;"><strong>From:</strong> ' .
+            $from_text .
+            "</div>";
+
+        $html .= "</div>";
+
+        $html .= "</div>"; // End two-column layout
+        $html .= "</div>"; // End project info section
+
+        // Comments section (always show, even if empty) - now get from transmittal level
+        $html .= '<div style="margin-bottom: 15px;">';
+        $html .=
+            '<div style="font-weight: bold; margin-bottom: 5px;">Comments:</div>';
+        $html .=
+            '<div style="border: 1px solid #ddd; padding: 10px; min-height: 60px; background: #fafafa;">';
+
+        // Get comments from transmittal level (should be same for all files in this transmittal)
+        $transmittal_comments = $this->getTransmittalComments(
+            $first_file_data["transmittal_number"]
+        );
+        if (!empty($transmittal_comments)) {
+            if (strpos($transmittal_comments, "<p>") !== false) {
+                $html .= $transmittal_comments;
+            } else {
+                $html .= htmlspecialchars($transmittal_comments);
+            }
+        }
+        $html .= "</div>";
+        $html .= "</div>";
+        // Section above the files table
+        $html .= '<div style="padding: 15px;">';
+
+        // Simple headers above the table (no boxes)
+        $html .=
+            '<div style="text-align: center; font-weight: bold; margin-bottom: 10px;">Isomer Transmittal Available for Download</div>';
+        $html .=
+            '<div style="margin-bottom: 15px;">The following deliverables have been transmitted from Isomer Project Group</div>';
+
+        // Table-like structure for file details - NOW WITH ALL FILES
+        $html .=
+            '<table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd; margin-bottom: 15px;">';
+
+        // Table headers
+        $html .=
+            '<tr style="background: #f8f9fa; font-weight: bold; font-size: 12px;">';
+        $html .=
+            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">File Title</th>';
+        $html .=
+            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Revision No.</th>';
+        $html .=
+            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Issue Status</th>';
+        $html .=
+            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Document Title</th>';
+        $html .=
+            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Discipline</th>';
+        $html .=
+            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Deliverable Type</th>';
+        $html .= "</tr>";
+
+        // Loop through ALL files and add a row for each
         foreach ($files as $file) {
             $file_data = $this->files_data[$file["file_id"]];
-
-            // Company header with logo placeholder and transmittal info
-            $html .=
-                '<div style="background: #f8f9fa; padding: 15px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">';
-
-            // Left side - Logo with colored background
-            $html .=
-                '<div style="width: 120px; height: 40px; background: #ff6600; border-radius: 4px; display: flex; align-items: center; justify-content: center; padding: 5px;">';
-            $html .=
-                '<img src="' .
-                BASE_URI .
-                'assets/img/Isomer-email-logo.png" alt="Isomer Logo" style="max-height: 30px; max-width: 110px;" />';
-            $html .= "</div>";
-
-            $html .= '<div style="text-align: right; margin-left: auto;">';
-            $html .=
-                '<div style="font-weight: bold; font-size: 16px; margin-bottom: 2px;">TRANSMITTAL</div>';
-            $html .=
-                '<div style="font-weight: bold; font-size: 16px;">' .
-                htmlspecialchars($file_data["transmittal_name"] ?? "") .
-                "</div>";
-            $html .= "</div>";
-            $html .= "</div>"; // End header section
-
-            // Project information section
-            $html .=
-                '<div style="padding: 15px; border-bottom: 1px solid #eee;">';
-
-            // Two-column layout for project info
-            $html .=
-                '<div style="display: flex; justify-content: space-between;">';
-
-            // Left column
-            $html .= '<div style="flex: 1; margin-right: 30px;">';
-
-            if (!empty($file_data["project_number"])) {
-                $html .=
-                    '<div style="margin-bottom: 8px;"><strong>Project No:</strong> ' .
-                    htmlspecialchars($file_data["project_number"]) .
-                    "</div>";
-            }
-
-            // Add transmittal date with formatted date
-            $formatted_date = date("F jS, Y"); // Format: May 9th, 2025
-            $html .=
-                '<div style="margin-bottom: 8px;"><strong>Transmittal Date:</strong> ' .
-                $formatted_date .
-                "</div>";
-
-            // Get all recipients for this transmittal
-            $recipients_text = "All Recipients";
-            if (!empty($file_data["transmittal_number"])) {
-                $transmittal_helper = new \ProjectSend\Classes\TransmittalHelper();
-                $recipients = $transmittal_helper->getTransmittalRecipients(
-                    $file_data["transmittal_number"]
-                );
-
-                if (!empty($recipients)) {
-                    $recipient_names = [];
-                    foreach ($recipients as $recipient) {
-                        $recipient_names[] = $recipient["name"];
-                    }
-                    $recipients_text = implode(", ", $recipient_names);
-                }
-            }
-
-            $html .=
-                '<div style="margin-bottom: 8px;"><strong>To:</strong> ' .
-                htmlspecialchars($recipients_text) .
-                "</div>";
-
-            $html .= "</div>";
-
-            // Right column
-            $html .= '<div style="flex: 1;">';
-            if (!empty($file_data["project_name"])) {
-                $html .=
-                    '<div style="margin-bottom: 8px;"><strong>Project Name:</strong> ' .
-                    htmlspecialchars($file_data["project_name"]) .
-                    "</div>";
-            }
-
-            // Get uploader name from file data
-            $from_text = !empty($file_data["uploader_name"])
-                ? htmlspecialchars($file_data["uploader_name"])
-                : "Isomer Project Group";
-
-            $html .=
-                '<div style="margin-bottom: 8px;"><strong>From:</strong> ' .
-                $from_text .
-                "</div>";
-
-            $html .= "</div>";
-
-            $html .= "</div>"; // End two-column layout
-            $html .= "</div>"; // End project info section
-
-            // Comments section (always show, even if empty)
-            $html .= '<div style="margin-bottom: 15px;">';
-            $html .=
-                '<div style="font-weight: bold; margin-bottom: 5px;">Comments:</div>';
-            $html .=
-                '<div style="border: 1px solid #ddd; padding: 10px; min-height: 60px; background: #fafafa;">';
-
-            if (!empty($file_data["comments"])) {
-                if (strpos($file_data["comments"], "<p>") !== false) {
-                    $html .= $file_data["comments"];
-                } else {
-                    $html .= htmlspecialchars($file_data["comments"]);
-                }
-            }
-            $html .= "</div>";
-            $html .= "</div>";
-
-            // Section above the files table
-            $html .= '<div style="padding: 15px;">';
-
-            // Simple headers above the table (no boxes)
-            $html .=
-                '<div style="text-align: center; font-weight: bold; margin-bottom: 10px;">Isomer Transmittal Available for Download</div>';
-            $html .=
-                '<div style="margin-bottom: 15px;">The following deliverables have been transmitted from Isomer Project Group</div>';
-
-            // Table-like structure for file details
-            $html .=
-                '<table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd; margin-bottom: 15px;">';
-
-            // Table headers
-            $html .=
-                '<tr style="background: #f8f9fa; font-weight: bold; font-size: 12px;">';
-            $html .=
-                '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">File Title</th>';
-            $html .=
-                '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Revision No.</th>';
-            $html .=
-                '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Issue Status</th>';
-            $html .=
-                '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Document Title</th>';
-            $html .=
-                '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Discipline</th>';
-            $html .=
-                '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Deliverable Type</th>';
-            $html .= "</tr>";
 
             // Table data row
             $html .= '<tr style="font-size: 12px;">';
@@ -508,31 +518,49 @@ class EmailNotifications
                 ) .
                 "</td>";
             $html .= "</tr>";
-
-            $html .= "</table>";
-
-            // Access link section
-            $html .=
-                '<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">';
-            $html .=
-                "<div>To access the files pertinent to this transmittal,</div>";
-
-            // Access link section
-            $html .=
-                '<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">';
-            $html .=
-                "<div>To access the files pertinent to this transmittal,</div>";
-            $html .=
-                '<div><a href="#" style="color: #0066cc; text-decoration: underline;">please login here</a></div>';
-            $html .= "</div>";
-
-            $html .= "</div>"; // End inner container
-            $html .= "</div>"; // End file container
         }
 
+        $html .= "</table>";
+
+        // Access link section
+        $html .=
+            '<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">';
+        $html .=
+            "<div>To access the files pertinent to this transmittal,</div>";
+        $html .=
+            '<div><a href="#" style="color: #0066cc; text-decoration: underline;">please login here</a></div>';
+        $html .= "</div>";
+
+        $html .= "</div>"; // End inner container
         $html .= "</div>"; // End main container
 
         return $html;
+    }
+    private function getTransmittalComments($transmittal_number)
+    {
+        if (empty($transmittal_number)) {
+            return "";
+        }
+
+        // Get comments from the most recent file with this transmittal number that has comments
+        $statement = $this->dbh->prepare(
+            "SELECT comments FROM " .
+                TABLE_FILES .
+                " WHERE transmittal_number = :transmittal_number 
+                  AND comments IS NOT NULL 
+                  AND comments != ''
+                  ORDER BY id DESC 
+                  LIMIT 1"
+        );
+        $statement->bindParam(":transmittal_number", $transmittal_number);
+        $statement->execute();
+
+        if ($statement->rowCount() > 0) {
+            $row = $statement->fetch(PDO::FETCH_ASSOC);
+            return $row["comments"] ?? "";
+        }
+
+        return "";
     }
     private function updateDatabaseNotificationsSent($notifications = [])
     {

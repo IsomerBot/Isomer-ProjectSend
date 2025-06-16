@@ -90,8 +90,7 @@ if (isset($_POST["save"])) {
             $global_project_number = $_POST["project_number"] ?? "";
             $global_package_description = $_POST["package_description"] ?? "";
             $global_issue_status = $_POST["issue_status"] ?? "";
-            $global_discipline = $_POST["discipline"] ?? "";
-            $global_deliverable_type = $_POST["deliverable_type"] ?? "";
+            $global_comments = $_POST["comments"] ?? ""; // Now transmittal-level
 
             // Update each file with transmittal information
             foreach ($_POST["file"] as $file_data_from_post) {
@@ -122,13 +121,15 @@ if (isset($_POST["save"])) {
                         ":project_number" => $global_project_number,
                         ":package_description" => $global_package_description,
                         ":issue_status" => $global_issue_status,
-                        ":discipline" => $global_discipline,
-                        ":deliverable_type" => $global_deliverable_type,
+                        ":discipline" =>
+                            $file_data_from_post["discipline"] ?? "", // file-specific
+                        ":deliverable_type" =>
+                            $file_data_from_post["deliverable_type"] ?? "", // file-specific
                         ":document_title" =>
                             $file_data_from_post["document_title"] ?? "",
                         ":revision_number" =>
                             $file_data_from_post["revision_number"] ?? "",
-                        ":comments" => $file_data_from_post["comments"] ?? "",
+                        ":comments" => $global_comments,
                     ]);
                 }
             }
