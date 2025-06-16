@@ -5,9 +5,9 @@ if (!empty($editable) && !isset($_GET["saved"])) {
     // Get transmittal data from the first file
     $first_file_id = $editable[0];
     global $dbh;
-    $query = "SELECT transmittal_number, project_name, project_number, package_description, 
+    $query = "SELECT transmittal_number, transmittal_name, project_name, project_number, package_description, 
                      issue_status, discipline, deliverable_type, document_title,
-                     document_description, revision_number, comments
+                     revision_number, comments
               FROM tbl_files 
               WHERE id = :file_id";
     $statement = $dbh->prepare($query);
@@ -16,6 +16,7 @@ if (!empty($editable) && !isset($_GET["saved"])) {
     if (!$existing_transmittal_data) {
         $existing_transmittal_data = [
             "transmittal_number" => "",
+            "transmittal_name" => "",
             "project_name" => "",
             "project_number" => "",
             "package_description" => "",
@@ -23,7 +24,6 @@ if (!empty($editable) && !isset($_GET["saved"])) {
             "discipline" => "",
             "deliverable_type" => "",
             "document_title" => "",
-            "document_description" => "",
             "revision_number" => "",
             "comments" => "",
         ];
@@ -44,6 +44,24 @@ if (isset($_GET["confirm"])) {
             <div class="col-md-6">
                 <h3><?php _e("Transmittal Information", "cftp_admin"); ?></h3>
 
+
+                <!-- Transmittal Name Manual Field -->
+             
+<div class="form-group">
+    <label for="transmittal_name"><?php _e(
+        "Transmittal Name",
+        "cftp_admin"
+    ); ?>*</label>
+    <input type="text" name="transmittal_name" id="transmittal_name" class="form-control" 
+           value="<?php echo htmlspecialchars(
+               $existing_transmittal_data["transmittal_name"] ?? ""
+           ); ?>"
+           placeholder="<?php _e(
+               "Enter Transmittal Name",
+               "cftp_admin"
+           ); ?>" required />
+</div>
+
                 <!-- Transmittal Number Manual Field -->
                 <div class="form-group">
                     <label for="transmittal_number"><?php _e(
@@ -54,7 +72,7 @@ if (isset($_GET["confirm"])) {
        value="<?php echo htmlspecialchars(
            $existing_transmittal_data["transmittal_number"] ?? ""
        ); ?>"
-       placeholder="<?php _e("TBD", "cftp_admin"); ?>" required />
+       placeholder="<?php _e("####", "cftp_admin"); ?>" required />
                 </div>
 
                 <!-- Project Name Manual Field -->
@@ -82,10 +100,7 @@ if (isset($_GET["confirm"])) {
            value="<?php echo htmlspecialchars(
                $existing_transmittal_data["project_number"] ?? ""
            ); ?>"
-           placeholder="<?php _e(
-               "Enter Project Number",
-               "cftp_admin"
-           ); ?>" required />
+           placeholder="<?php _e("AAA####", "cftp_admin"); ?>" required />
 </div>
 
                 <!--Package Description Manual Field -->
@@ -184,9 +199,7 @@ if (isset($_GET["confirm"])) {
         "Select Discipline First",
         "cftp_admin"
     ); ?></option>
-    <?php // If we have existing data, populate deliverable types
-
-if (
+    <?php if (
         !empty($existing_transmittal_data["discipline"]) &&
         !empty($existing_transmittal_data["deliverable_type"])
     ) {
@@ -220,6 +233,23 @@ if (
         }
     } ?>
 </select>
+                                                <!-- Comments Field -->
+                                                <div class="form-group">
+                                                    <label for="comments_<?php echo $i; ?>"><?php _e(
+    "Comments",
+    "cftp_admin"
+); ?></label>
+                                                    <textarea id="comments_<?php echo $i; ?>"
+                                          name="file[<?php echo $i; ?>][comments]"
+                                          class="form-control"
+                                          rows="3"
+                                          placeholder="<?php _e(
+                                              "Enter any additional comments",
+                                              "cftp_admin"
+                                          ); ?>"><?php echo htmlspecialchars(
+    $file->comments ?? ""
+); ?></textarea>
+                                                </div>
                 </div>
 
                 <div class="divider"></div>
@@ -319,40 +349,8 @@ if (
 
                                                 </div>
 
-                                                <!-- Document Description -->
-                                                <div class="form-group">
-                                                    <label for="document_description_<?php echo $i; ?>"><?php _e(
-    "Optionally, enter here a description for the Document.",
-    "cftp_admin"
-); ?></label>
-                                                    <textarea id="document_description_<?php echo $i; ?>"
-                                          name="file[<?php echo $i; ?>][document_description]"
-                                          class="form-control"
-                                          rows="3"
-                                          placeholder="<?php _e(
-                                              "Enter Document Description",
-                                              "cftp_admin"
-                                          ); ?>"><?php echo htmlspecialchars(
-    $file->document_description ?? ""
-); ?></textarea>  
-                                                </div> 
-                                                <!-- Comments Field -->
-                                                <div class="form-group">
-                                                    <label for="comments_<?php echo $i; ?>"><?php _e(
-    "Comments",
-    "cftp_admin"
-); ?></label>
-                                                    <textarea id="comments_<?php echo $i; ?>"
-                                          name="file[<?php echo $i; ?>][comments]"
-                                          class="form-control"
-                                          rows="3"
-                                          placeholder="<?php _e(
-                                              "Enter any additional comments",
-                                              "cftp_admin"
-                                          ); ?>"><?php echo htmlspecialchars(
-    $file->comments ?? ""
-); ?></textarea>
-                                                </div>
+                                               
+
                                             </div>
                                         </div>
 

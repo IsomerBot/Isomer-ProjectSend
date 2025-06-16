@@ -119,9 +119,9 @@ class EmailNotifications
                     "discipline" => $file->discipline ?? "",
                     "deliverable_type" => $file->deliverable_type ?? "",
                     "document_title" => $file->document_title ?? "",
-                    "document_description" => $file->document_description ?? "",
                     "revision_number" => $file->revision_number ?? "",
                     "comments" => $file->comments ?? "",
+                    "transmittal_name" => $file->transmittal_name ?? "",
                 ];
             }
 
@@ -283,12 +283,15 @@ class EmailNotifications
                     $processed_notifications[] = $file["notification_id"];
                 }
 
+                $fist_file_data = $this->files_data[$files[0]["file_id"]];
+
                 $email = new \ProjectSend\Classes\Emails();
                 if (
                     $email->send([
                         "type" => "new_files_by_user",
                         "address" => $this->mail_by_user[$mail_username],
                         "files_list" => $files_list_html,
+                        "file_data" => $fist_file_data,
                     ])
                 ) {
                     $this->notifications_sent = array_merge(
@@ -311,7 +314,7 @@ class EmailNotifications
 
         // Header section similar to Isomer design
         $html .=
-            '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #fff; border: 1px solid #ddd;">';
+            '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #fff; ">';
 
         foreach ($files as $file) {
             $file_data = $this->files_data[$file["file_id"]];
@@ -320,22 +323,24 @@ class EmailNotifications
             $html .=
                 '<div style="background: #f8f9fa; padding: 15px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">';
 
-            // Left side - Logo placeholder
+            // Left side - Logo with colored background
             $html .=
-                '<div style="width: 40px; height: 40px; background: #ff6600; border-radius: 4px; display: flex; align-items: center; justify-content: center;">';
+                '<div style="width: 120px; height: 40px; background: #ff6600; border-radius: 4px; display: flex; align-items: center; justify-content: center; padding: 5px;">';
             $html .=
-                '<div style="width: 20px; height: 20px; background: #fff; border-radius: 2px;"></div>';
+                '<img src="' .
+                BASE_URI .
+                'assets/img/Isomer-email-logo.png" alt="Isomer Logo" style="max-height: 30px; max-width: 110px;" />';
             $html .= "</div>";
 
-            // Right side - Transmittal header
+            $html .= '<div style="text-align: right; margin-left: auto;">';
             $html .=
-                '<div style="font-weight: bold; font-size: 16px;">TRANSMITTAL ' .
-                htmlspecialchars(
-                    $file_data["transmittal_number"] ?? "AAANNNN-T-XXX"
-                ) .
+                '<div style="font-weight: bold; font-size: 16px; margin-bottom: 2px;">TRANSMITTAL</div>';
+            $html .=
+                '<div style="font-weight: bold; font-size: 16px;">' .
+                htmlspecialchars($file_data["transmittal_name"] ?? "") .
                 "</div>";
-
             $html .= "</div>";
+            $html .= "</div>"; // End header section
 
             // Project information section
             $html .=
@@ -348,17 +353,18 @@ class EmailNotifications
             // Left column
             $html .= '<div style="flex: 1; margin-right: 30px;">';
 
-            if (!empty($file_data["project_name"])) {
+            if (!empty($file_data["project_number"])) {
                 $html .=
-                    '<div style="margin-bottom: 8px;"><strong>Project Name:</strong> ' .
-                    htmlspecialchars($file_data["project_name"]) .
+                    '<div style="margin-bottom: 8px;"><strong>Project No:</strong> ' .
+                    htmlspecialchars($file_data["project_number"]) .
                     "</div>";
             }
 
-            // Add transmittal date (you may need to get this from notification timestamp)
+            // Add transmittal date with formatted date
+            $formatted_date = date("F jS, Y"); // Format: May 9th, 2025
             $html .=
                 '<div style="margin-bottom: 8px;"><strong>Transmittal Date:</strong> ' .
-                date("Y-m-d") .
+                $formatted_date .
                 "</div>";
 
             $html .=
@@ -368,55 +374,52 @@ class EmailNotifications
 
             // Right column
             $html .= '<div style="flex: 1;">';
-
-            if (!empty($file_data["project_number"])) {
+            if (!empty($file_data["project_name"])) {
                 $html .=
-                    '<div style="margin-bottom: 8px;"><strong>Project No:</strong> ' .
-                    htmlspecialchars($file_data["project_number"]) .
+                    '<div style="margin-bottom: 8px;"><strong>Project Name:</strong> ' .
+                    htmlspecialchars($file_data["project_name"]) .
                     "</div>";
             }
 
-            // Add uploader info as "From" - FIXED: using $uploader_username instead of $file_data["uploader"]
-            if (!empty($uploader_username)) {
-                $html .=
-                    '<div style="margin-bottom: 8px;"><strong>From:</strong> ' .
-                    htmlspecialchars($uploader_username) .
-                    "</div>";
-            }
+            // Always show "From" field with fallback
+            $from_text = !empty($uploader_username)
+                ? htmlspecialchars($uploader_username)
+                : "Isomer Project Group";
+            $html .=
+                '<div style="margin-bottom: 8px;"><strong>From:</strong> ' .
+                $from_text .
+                "</div>";
 
             $html .= "</div>";
 
             $html .= "</div>"; // End two-column layout
             $html .= "</div>"; // End project info section
 
-            // Description section
-            if (!empty($file_data["description"])) {
-                $html .= '<div style="padding: 15px; margin-bottom: 15px;">';
-                $html .=
-                    '<div style="font-weight: bold; margin-bottom: 5px;">Description:</div>';
-                if (strpos($file_data["description"], "<p>") !== false) {
-                    $html .=
-                        '<div style="color: #666;">' .
-                        $file_data["description"] .
-                        "</div>";
-                } else {
-                    $html .=
-                        '<div style="color: #666;">' .
-                        htmlspecialchars($file_data["description"]) .
-                        "</div>";
-                }
-                $html .= "</div>";
-            }
+            // Comments section (always show, even if empty)
+            $html .= '<div style="margin-bottom: 15px;">';
+            $html .=
+                '<div style="font-weight: bold; margin-bottom: 5px;">Comments:</div>';
+            $html .=
+                '<div style="border: 1px solid #ddd; padding: 10px; min-height: 60px; background: #fafafa;">';
 
-            // FIXED: Added proper container and styling for the download section
+            if (!empty($file_data["comments"])) {
+                if (strpos($file_data["comments"], "<p>") !== false) {
+                    $html .= $file_data["comments"];
+                } else {
+                    $html .= htmlspecialchars($file_data["comments"]);
+                }
+            }
+            $html .= "</div>";
+            $html .= "</div>";
+
+            // Section above the files table
             $html .= '<div style="padding: 15px;">';
 
-            // Table header for deliverables (matching Isomer design)
+            // Simple headers above the table (no boxes)
             $html .=
-                '<div style="background: #f8f9fa; padding: 10px; border: 1px solid #ddd; margin-bottom: 0; text-align: center; font-weight: bold;">Isomer Transmittal Available for Download</div>';
-
+                '<div style="text-align: center; font-weight: bold; margin-bottom: 10px;">Isomer Transmittal Available for Download</div>';
             $html .=
-                '<div style="margin-bottom: 15px; padding: 10px; background: #fff; border: 1px solid #ddd; border-top: none;">The following deliverables have been transmitted from Isomer Project Group</div>';
+                '<div style="margin-bottom: 15px;">The following deliverables have been transmitted from Isomer Project Group</div>';
 
             // Table-like structure for file details
             $html .=
@@ -465,29 +468,15 @@ class EmailNotifications
                 "</td>";
             $html .=
                 '<td style="border: 1px solid #ddd; padding: 8px;">' .
-                htmlspecialchars($file_data["deliverable_type"] ?? "") .
+                html_entity_decode(
+                    htmlspecialchars($file_data["deliverable_type"] ?? ""),
+                    ENT_QUOTES,
+                    "UTF-8"
+                ) .
                 "</td>";
             $html .= "</tr>";
 
             $html .= "</table>";
-
-            // Comments section (if any)
-            if (!empty($file_data["comments"])) {
-                $html .= '<div style="margin-bottom: 15px;">';
-                $html .=
-                    '<div style="font-weight: bold; margin-bottom: 5px;">Comments:</div>';
-                $html .=
-                    '<div style="border: 1px solid #ddd; padding: 10px; min-height: 60px; background: #fafafa;">';
-
-                if (strpos($file_data["comments"], "<p>") !== false) {
-                    $html .= $file_data["comments"];
-                } else {
-                    $html .= htmlspecialchars($file_data["comments"]);
-                }
-
-                $html .= "</div>";
-                $html .= "</div>";
-            }
 
             // Access link section
             $html .=
@@ -506,7 +495,6 @@ class EmailNotifications
 
         return $html;
     }
-
     private function updateDatabaseNotificationsSent($notifications = [])
     {
         if (!empty($notifications) && count($notifications) > 0) {

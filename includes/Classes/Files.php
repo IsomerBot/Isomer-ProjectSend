@@ -50,10 +50,10 @@ class Files
     public $discipline;
     public $deliverable_type;
     public $document_title;
-    public $document_description;
     public $revision_number;
     public $comments;
     public $project_number;
+    public $transmittal_name;
 
     private $use_date_folder;
     private $is_filetype_allowed;
@@ -113,7 +113,7 @@ class Files
     }
 
     /**
-     * Set the properties when saving to the database (data comnes from the form)
+     * Set the properties when saving to the database (data comes from the form)
      */
     public function set($arguments = [])
     {
@@ -185,20 +185,18 @@ class Files
         $this->document_title = !empty($arguments["document_title"])
             ? encode_html($arguments["document_title"])
             : null;
-        $this->document_description = !empty($arguments["document_description"])
-            ? encode_html($arguments["document_description"])
-            : null;
         $this->revision_number = !empty($arguments["revision_number"])
             ? encode_html($arguments["revision_number"])
             : null;
-        $this->revision_number = !empty($arguments["revision_number"])
-            ? encode_html($arguments["revision_number"])
-            : null;
+
         $this->comments = !empty($arguments["comments"])
             ? encode_html($arguments["comments"])
             : null;
         $this->project_number = !empty($arguments["project_number"])
             ? encode_html($arguments["project_number"])
+            : null;
+        $this->transmittal_name = !empty($arguments["transmittal_name"])
+            ? encode_html($arguments["transmittal_name"])
             : null;
 
         // Assignations
@@ -287,12 +285,12 @@ class Files
                 $row["deliverable_type"] ?? ""
             );
             $this->document_title = html_output($row["document_title"] ?? "");
-            $this->document_description = htmlentities_allowed(
-                $row["document_description"] ?? ""
-            );
             $this->revision_number = html_output($row["revision_number"] ?? "");
             $this->comments = htmlentities_allowed($row["comments"] ?? "");
             $this->project_number = html_output($row["project_number"] ?? "");
+            $this->transmittal_name = html_output(
+                $row["transmittal_name"] ?? ""
+            );
         }
 
         $this->full_path = $this->getFilePath();
@@ -1000,10 +998,10 @@ class Files
         $this->discipline = "";
         $this->deliverable_type = "";
         $this->document_title = "";
-        $this->document_description = "";
         $this->revision_number = "";
         $this->comments = "";
         $this->project_number = "";
+        $this->transmittal_name = "";
     }
 
     /**
@@ -1031,16 +1029,16 @@ class Files
         $this->discipline = $this->discipline ?? "";
         $this->deliverable_type = $this->deliverable_type ?? "";
         $this->document_title = $this->document_title ?? "";
-        $this->document_description = $this->document_description ?? "";
         $this->revision_number = $this->revision_number ?? "";
         $this->comments = $this->comments ?? "";
         $this->project_number = $this->project_number ?? "";
+        $this->transmittal_name = $this->transmittal_name ?? "";
 
         $statement = $this->dbh->prepare(
             "INSERT INTO " .
                 TABLE_FILES .
-                " (user_id, url, original_url, filename, description, uploader, expires, expiry_date, public_allow, public_token, disk_folder_year, disk_folder_month, transmittal_number, project_name, package_description, issue_status, discipline, deliverable_type, document_title, document_description, revision_number, comments, project_number)" .
-                " VALUES (:user_id, :url, :original_url, :title, :description, :uploader, :expires, :expiry_date, :public, :public_token, :disk_folder_year, :disk_folder_month, :transmittal_number, :project_name, :package_description, :issue_status, :discipline, :deliverable_type, :document_title, :document_description, :revision_number, :comments, :project_number)"
+                " (user_id, url, original_url, filename, description, uploader, expires, expiry_date, public_allow, public_token, disk_folder_year, disk_folder_month, transmittal_number, project_name, package_description, issue_status, discipline, deliverable_type, document_title, revision_number, comments, project_number, transmittal_name)" .
+                " VALUES (:user_id, :url, :original_url, :title, :description, :uploader, :expires, :expiry_date, :public, :public_token, :disk_folder_year, :disk_folder_month, :transmittal_number, :project_name, :package_description, :issue_status, :discipline, :deliverable_type, :document_title, :revision_number, :comments, :project_number, :transmittal_name)"
         );
 
         $statement->bindParam(":user_id", $this->uploader_id, PDO::PARAM_INT);
@@ -1073,13 +1071,10 @@ class Files
         $statement->bindParam(":discipline", $this->discipline);
         $statement->bindParam(":deliverable_type", $this->deliverable_type);
         $statement->bindParam(":document_title", $this->document_title);
-        $statement->bindParam(
-            ":document_description",
-            $this->document_description
-        );
         $statement->bindParam(":revision_number", $this->revision_number);
         $statement->bindParam(":comments", $this->comments);
         $statement->bindParam(":project_number", $this->project_number);
+        $statement->bindParam(":transmittal_name", $this->transmittal_name);
 
         $statement->execute();
 
@@ -1203,10 +1198,10 @@ class Files
             discipline = :discipline,
             deliverable_type = :deliverable_type,
             document_title = :document_title,
-            document_description = :document_description,
             revision_number = :revision_number,
             comments = :comments,
-            project_number = :project_number
+            project_number = :project_number,
+            transmittal_name = :transmittal_name
 
             WHERE id = :id
         "
@@ -1219,6 +1214,7 @@ class Files
         $statement->bindParam(":public", $is_public, PDO::PARAM_INT);
         $statement->bindParam(":folder_id", $this->folder_id);
         $statement->bindParam(":transmittal_number", $this->transmittal_number);
+        $statement->bindParam(":transmittal_name", $this->transmittal_name);
         $statement->bindParam(":project_name", $this->project_name);
         $statement->bindParam(
             ":package_description",
@@ -1228,10 +1224,7 @@ class Files
         $statement->bindParam(":discipline", $this->discipline);
         $statement->bindParam(":deliverable_type", $this->deliverable_type);
         $statement->bindParam(":document_title", $this->document_title);
-        $statement->bindParam(
-            ":document_description",
-            $this->document_description
-        );
+
         $statement->bindParam(":revision_number", $this->revision_number);
         $statement->bindParam(":comments", $this->comments);
         $statement->bindParam(":project_number", $this->project_number);

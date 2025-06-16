@@ -73,7 +73,6 @@ class Emails
                 // Strings for the "New file uploaded" BY A SYSTEM USER e-mail
                 $strings = [
                     "subject" =>
-                        //Hard Code "Isomer Transmittal" then pull data from $file_data [transmittal_number, project_name, package_description, issue_status] --ONLY FOR UPLOAD BY USERS
                         get_option(
                             "email_new_file_by_user_subject_customize"
                         ) == 1 &&
@@ -1089,11 +1088,33 @@ class Emails
      * tags with the strings values set at the top of this file and the
      * link to the log in page.
      */
-    private function email_new_files_by_user($files_list)
+    private function email_new_files_by_user($files_list, $file_data = null)
     {
         $email_data = $this->getEmailTypeData("new_files_by_user");
         $strings = $email_data["strings"];
-        $this->email_body = $this->prepareBody("new_files_by_user");
+
+        // Use only header, no footer for this email type
+        $customize_body = get_option("email_new_file_by_user_customize");
+        $body_text_option = "email_new_file_by_user_text";
+
+        // Content
+        $content =
+            $customize_body == "1" && !empty(get_option($body_text_option))
+                ? get_option($body_text_option)
+                : file_get_contents(
+                    EMAIL_TEMPLATES_DIR . DS . EMAIL_TEMPLATE_NEW_FILE_BY_USER
+                );
+
+        // Build email body with header but NO footer
+        $this->email_body = $this->header . $content; // Removed: . $this->footer
+
+        // Remove borders from header and footer elements
+        $this->email_body = str_replace(
+            ["border-top:", "border-bottom:"],
+            ["/*border-top:*/", "/*border-bottom:*/"],
+            $this->email_body
+        );
+
         $this->email_body = str_replace(
             [
                 "%SUBJECT%",
@@ -1105,22 +1126,51 @@ class Emails
                 "%URI%",
             ],
             [
-                $strings["subject"],
-                $strings["body"],
+                "", // Remove the subject header - set to empty string
+                "", // Remove the body text - set to empty string
                 $files_list,
-                $strings["body2"],
-                $strings["body3"],
-                $strings["body4"],
-                BASE_URI,
+                "",
+                "", // Remove the body text - set to empty string
+                "", // Remove the body text - set to empty string
+                "",
             ],
             $this->email_body
         );
+
+        // Build custom subject from file data - clean format
+        $custom_subject = "Isomer Transmittal";
+
+        if (!empty($file_data)) {
+            $subject_parts = [];
+
+            // Only add the values, not the labels
+            if (!empty($file_data["transmittal_number"])) {
+                $subject_parts[] = trim($file_data["transmittal_number"]);
+            }
+            if (!empty($file_data["project_name"])) {
+                $subject_parts[] = trim($file_data["project_name"]);
+                if (!empty($file_data["package_description"])) {
+                    $subject_parts[] = html_entity_decode(
+                        trim($file_data["package_description"]),
+                        ENT_QUOTES,
+                        "UTF-8"
+                    );
+                }
+            }
+            if (!empty($file_data["issue_status"])) {
+                $subject_parts[] = trim($file_data["issue_status"]);
+            }
+            if (!empty($subject_parts)) {
+                $custom_subject =
+                    "Isomer Transmittal - " . implode(" - ", $subject_parts);
+            }
+        }
+
         return [
-            "subject" => $strings["subject"],
+            "subject" => $custom_subject,
             "body" => $this->email_body,
         ];
     }
-
     /**
      * Prepare the body for the "New files by client" e-mail and replace the
      * tags with the strings values set at the top of this file and the
@@ -1417,7 +1467,10 @@ class Emails
                 $this->addresses = $arguments["to"];
                 break;
             case "new_files_by_user":
-                $body_variables = [$this->files_list];
+                $body_variables = [
+                    $this->files_list,
+                    $arguments["file_data"] ?? null,
+                ];
                 if (get_option("mail_copy_user_upload") == "1") {
                     $this->try_bcc = true;
                 }

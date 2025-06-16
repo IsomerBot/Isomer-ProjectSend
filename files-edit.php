@@ -76,7 +76,6 @@ function create_custom_download($link, $file_id, $client_id)
 
 if (isset($_POST["save"])) {
     // Process transmittal data
-
     if (
         isset($_POST["transmittal_number"]) &&
         !empty($_POST["transmittal_number"])
@@ -84,9 +83,9 @@ if (isset($_POST["save"])) {
         try {
             global $dbh;
 
-            // Update each file with transmittal information
             // Get the global transmittal data that applies to all files being edited
             $global_transmittal_number = $_POST["transmittal_number"] ?? "";
+            $global_transmittal_name = $_POST["transmittal_name"] ?? "";
             $global_project_name = $_POST["project_name"] ?? "";
             $global_project_number = $_POST["project_number"] ?? "";
             $global_package_description = $_POST["package_description"] ?? "";
@@ -96,13 +95,13 @@ if (isset($_POST["save"])) {
 
             // Update each file with transmittal information
             foreach ($_POST["file"] as $file_data_from_post) {
-                // Renamed $file to $file_data_from_post for clarity
                 if (
                     isset($file_data_from_post["id"]) &&
                     is_numeric($file_data_from_post["id"])
                 ) {
                     $query = "UPDATE tbl_files SET
                            transmittal_number = :transmittal_number,
+                           transmittal_name = :transmittal_name,
                            project_name = :project_name,
                            project_number = :project_number,
                            package_description = :package_description,
@@ -110,28 +109,26 @@ if (isset($_POST["save"])) {
                            discipline = :discipline,
                            deliverable_type = :deliverable_type,
                            document_title = :document_title,
-                           document_description = :document_description,
                            revision_number = :revision_number,
                            comments = :comments
                          WHERE id = :file_id";
 
                     $statement = $dbh->prepare($query);
                     $statement->execute([
-                        ":file_id" => $file_data_from_post["id"], // Correctly access file ID from the iterated array
-                        ":transmittal_number" => $global_transmittal_number, // Use the global value
-                        ":project_name" => $global_project_name, // Use the global value
-                        ":package_description" => $global_package_description, // Use the global value
-                        ":issue_status" => $global_issue_status, // Use the global value
-                        ":discipline" => $global_discipline, // Use the global value
-                        ":deliverable_type" => $global_deliverable_type, // Use the global value
+                        ":file_id" => $file_data_from_post["id"],
+                        ":transmittal_number" => $global_transmittal_number,
+                        ":transmittal_name" => $global_transmittal_name,
+                        ":project_name" => $global_project_name,
+                        ":project_number" => $global_project_number,
+                        ":package_description" => $global_package_description,
+                        ":issue_status" => $global_issue_status,
+                        ":discipline" => $global_discipline,
+                        ":deliverable_type" => $global_deliverable_type,
                         ":document_title" =>
-                            $file_data_from_post["document_title"] ?? "", // Correctly access file-specific value
-                        ":document_description" =>
-                            $file_data_from_post["document_description"] ?? "", // Correctly access file-specific value
+                            $file_data_from_post["document_title"] ?? "",
                         ":revision_number" =>
-                            $file_data_from_post["revision_number"] ?? "", // Correctly access file-specific value
-                        ":comments" => $file_data_from_post["comments"] ?? "", // Correctly access file-specific value
-                        ":project_number" => $global_project_number, // ADD THIS LINE
+                            $file_data_from_post["revision_number"] ?? "",
+                        ":comments" => $file_data_from_post["comments"] ?? "",
                     ]);
                 }
             }
@@ -454,3 +451,4 @@ include_once ADMIN_VIEWS_DIR . DS . "header.php";
     </div>
 </div>
 <?php include_once ADMIN_VIEWS_DIR . DS . "footer.php";
+?>

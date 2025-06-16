@@ -280,7 +280,7 @@ class TransmittalHelper
     public function getFilesByTransmittal($transmittal_number)
     {
         $query = "SELECT f.id, f.filename, f.original_url, f.description,
-                         f.transmittal_number, f.issue_status, f.discipline, 
+                         f.transmittal_number, f.transmittal_name, f.issue_status, f.discipline, 
                         f.deliverable_type, f.abbreviation,
                          f.document_title, f.project_name, f.project_number
                   FROM tbl_files f 
@@ -330,10 +330,10 @@ class TransmittalHelper
                     deliverable_type = :deliverable_type,
                     abbreviation = :abbreviation,
                     document_title = :document_title,
-                    document_description = :document_description,
                     revision_number = :revision_number,
                     comments = :comments,
-                    project_number = :project_number
+                    project_number = :project_number,
+                    transmittal_name = :transmittal_name
                   WHERE id = :file_id";
 
         $statement = $this->dbh->prepare($query);
@@ -349,11 +349,10 @@ class TransmittalHelper
             ":deliverable_type" => $transmittal_data["deliverable_type"] ?? "",
             ":abbreviation" => $transmittal_data["abbreviation"] ?? "",
             ":document_title" => $transmittal_data["document_title"] ?? "",
-            ":document_description" =>
-                $transmittal_data["document_description"] ?? "",
             ":revision_number" => $transmittal_data["revision_number"] ?? 1,
             ":comments" => $transmittal_data["comments"] ?? "",
             ":project_number" => $transmittal_data["project_number"] ?? "",
+            ":transmittal_name" => $transmittal_data["transmittal_name"] ?? "",
         ]);
     }
 }
