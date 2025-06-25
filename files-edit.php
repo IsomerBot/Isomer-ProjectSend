@@ -75,36 +75,41 @@ function create_custom_download($link, $file_id, $client_id)
 }
 
 if (isset($_POST["save"])) {
-    // Process transmittal data
-    if (
-        isset($_POST["transmittal_number"]) &&
-        !empty($_POST["transmittal_number"])
-    ) {
+    // Process transmittal data - only if project data is provided
+    if (isset($_POST["project_number"]) && !empty($_POST["project_number"])) {
         try {
             global $dbh;
 
             // Get the global transmittal data that applies to all files being edited
-            $global_transmittal_number = $_POST["transmittal_number"] ?? "";
             $global_project_name = $_POST["project_name"] ?? "";
             $global_project_number = $_POST["project_number"] ?? "";
             $global_package_description = $_POST["package_description"] ?? "";
             $global_issue_status = $_POST["issue_status"] ?? "";
-            $global_comments = $_POST["comments"] ?? ""; // Now transmittal-level
+            $global_comments = $_POST["comments"] ?? "";
 
+            // Get the next transmittal number for this project
+            // This will be the SAME for all files in this upload batch
+            $next_transmittal_query = "SELECT LPAD(COALESCE(MAX(CAST(transmittal_number AS UNSIGNED)), 0) + 1, 4, '0') AS next_transmittal
+                                      FROM tbl_files 
+                                      WHERE project_number = :project_number";
+            $stmt = $dbh->prepare($next_transmittal_query);
+            $stmt->execute([":project_number" => $global_project_number]);
+            $next_transmittal_number = $stmt->fetchColumn();
+
+            // Generate transmittal name using the new number
             $generated_transmittal_name = "";
             if (
                 !empty($global_project_number) &&
-                !empty($global_transmittal_number)
+                !empty($next_transmittal_number)
             ) {
                 $generated_transmittal_name = sprintf(
                     "%s-T-%s",
                     $global_project_number,
-                    $global_transmittal_number
+                    $next_transmittal_number
                 );
             }
-            $global_transmittal_name = $generated_transmittal_name;
 
-            // Update each file with transmittal information
+            // Update ALL files in this batch with the SAME transmittal number
             foreach ($_POST["file"] as $file_data_from_post) {
                 if (
                     isset($file_data_from_post["id"]) &&
@@ -128,16 +133,16 @@ if (isset($_POST["save"])) {
                     $statement = $dbh->prepare($query);
                     $statement->execute([
                         ":file_id" => $file_data_from_post["id"],
-                        ":transmittal_number" => $global_transmittal_number,
-                        ":transmittal_name" => $global_transmittal_name,
+                        ":transmittal_number" => $next_transmittal_number,
+                        ":transmittal_name" => $generated_transmittal_name,
                         ":project_name" => $global_project_name,
                         ":project_number" => $global_project_number,
                         ":package_description" => $global_package_description,
                         ":issue_status" => $global_issue_status,
                         ":discipline" =>
-                            $file_data_from_post["discipline"] ?? "", // file-specific
+                            $file_data_from_post["discipline"] ?? "",
                         ":deliverable_type" =>
-                            $file_data_from_post["deliverable_type"] ?? "", // file-specific
+                            $file_data_from_post["deliverable_type"] ?? "",
                         ":document_title" =>
                             $file_data_from_post["document_title"] ?? "",
                         ":revision_number" =>
@@ -149,19 +154,28 @@ if (isset($_POST["save"])) {
                 }
             }
 
-            // Set success message
+            // Set success message with the transmittal number used
             global $flash;
             $flash->success(
-                __("Transmittal information saved successfully.", "cftp_admin")
+                sprintf(
+                    __(
+                        "Transmittal information saved successfully. Transmittal Number: %s",
+                        "cftp_admin"
+                    ),
+                    $next_transmittal_number
+                )
             );
         } catch (Exception $e) {
             // Log error and show user-friendly message
             error_log("Transmittal save error: " . $e->getMessage());
             global $flash;
             $flash->error(
-                __(
-                    "Error saving transmittal information: " . $e->getMessage(),
-                    "cftp_admin"
+                sprintf(
+                    __(
+                        "Error saving transmittal information: %s",
+                        "cftp_admin"
+                    ),
+                    $e->getMessage()
                 )
             );
         }
@@ -177,20 +191,55 @@ if (isset($_POST["save"])) {
             }
         }
 
-        foreach ($file["custom_downloads"] as $custom_download) {
-            global $dbh;
+        // Handle custom downloads if they exist
+        if (
+            isset($file["custom_downloads"]) &&
+            is_array($file["custom_downloads"])
+        ) {
+            foreach ($file["custom_downloads"] as $custom_download) {
+                global $dbh;
 
-            if (
-                custom_download_exists($custom_download["link"]) &&
-                (!isset($_GET["confirmed"]) || !$_GET["confirmed"])
-            ) {
-                $confirm = true;
-                continue;
-            }
+                if (
+                    custom_download_exists($custom_download["link"]) &&
+                    (!isset($_GET["confirmed"]) || !$_GET["confirmed"])
+                ) {
+                    $confirm = true;
+                    continue;
+                }
 
-            if ($custom_download["id"]) {
-                if ($custom_download["link"]) {
-                    if ($custom_download["link"] != $custom_download["id"]) {
+                if ($custom_download["id"]) {
+                    if ($custom_download["link"]) {
+                        if (
+                            $custom_download["link"] != $custom_download["id"]
+                        ) {
+                            $statement = $dbh->prepare(
+                                "UPDATE " .
+                                    TABLE_CUSTOM_DOWNLOADS .
+                                    " SET file_id=NULL WHERE link=:link"
+                            );
+                            $statement->bindParam(
+                                ":link",
+                                $custom_download["id"]
+                            );
+                            $statement->execute();
+                            if (
+                                create_custom_download(
+                                    $custom_download["link"],
+                                    $file["id"],
+                                    CURRENT_USER_ID
+                                )
+                            ) {
+                                global $flash;
+                                $flash->warning(
+                                    __(
+                                        "Updated existing custom link to point to this file.",
+                                        "cftp_admin"
+                                    )
+                                );
+                            }
+                        }
+                    } else {
+                        // remove file_id from custom download
                         $statement = $dbh->prepare(
                             "UPDATE " .
                                 TABLE_CUSTOM_DOWNLOADS .
@@ -198,6 +247,9 @@ if (isset($_POST["save"])) {
                         );
                         $statement->bindParam(":link", $custom_download["id"]);
                         $statement->execute();
+                    }
+                } else {
+                    if ($custom_download["link"]) {
                         if (
                             create_custom_download(
                                 $custom_download["link"],
@@ -205,7 +257,6 @@ if (isset($_POST["save"])) {
                                 CURRENT_USER_ID
                             )
                         ) {
-                            global $flash;
                             $flash->warning(
                                 __(
                                     "Updated existing custom link to point to this file.",
@@ -213,32 +264,6 @@ if (isset($_POST["save"])) {
                                 )
                             );
                         }
-                    }
-                } else {
-                    // remove file_id from custom download
-                    $statement = $dbh->prepare(
-                        "UPDATE " .
-                            TABLE_CUSTOM_DOWNLOADS .
-                            " SET file_id=NULL WHERE link=:link"
-                    );
-                    $statement->bindParam(":link", $custom_download["id"]);
-                    $statement->execute();
-                }
-            } else {
-                if ($custom_download["link"]) {
-                    if (
-                        create_custom_download(
-                            $custom_download["link"],
-                            $file["id"],
-                            CURRENT_USER_ID
-                        )
-                    ) {
-                        $flash->warning(
-                            __(
-                                "Updated existing custom link to point to this file.",
-                                "cftp_admin"
-                            )
-                        );
                     }
                 }
             }
