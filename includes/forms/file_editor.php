@@ -44,22 +44,6 @@ if (isset($_GET["confirm"])) {
             <div class="col-md-6">
                 <h3><?php _e("Transmittal Information", "cftp_admin"); ?></h3>
 
-                <!-- Transmittal Name Manual Field -->
-                <div class="form-group">
-                    <label for="transmittal_name"><?php _e(
-                        "Transmittal Name",
-                        "cftp_admin"
-                    ); ?>*</label>
-                    <input type="text" name="transmittal_name" id="transmittal_name" class="form-control" 
-                           value="<?php echo htmlspecialchars(
-                               $existing_transmittal_data["transmittal_name"] ??
-                                   ""
-                           ); ?>"
-                           placeholder="<?php _e(
-                               "Enter Transmittal Name",
-                               "cftp_admin"
-                           ); ?>" required />
-                </div>
 
                 <!-- Transmittal Number Manual Field -->
                 <div class="form-group">
@@ -174,7 +158,7 @@ if (isset($_GET["confirm"])) {
             </div>
 
             <div class="col-md-6">
-                <h3><?php _e("Transmittal Details", "cftp_admin"); ?></h3>
+               
                 
             
                 <div class="form-group">

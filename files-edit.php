@@ -85,12 +85,24 @@ if (isset($_POST["save"])) {
 
             // Get the global transmittal data that applies to all files being edited
             $global_transmittal_number = $_POST["transmittal_number"] ?? "";
-            $global_transmittal_name = $_POST["transmittal_name"] ?? "";
             $global_project_name = $_POST["project_name"] ?? "";
             $global_project_number = $_POST["project_number"] ?? "";
             $global_package_description = $_POST["package_description"] ?? "";
             $global_issue_status = $_POST["issue_status"] ?? "";
             $global_comments = $_POST["comments"] ?? ""; // Now transmittal-level
+
+            $generated_transmittal_name = "";
+            if (
+                !empty($global_project_number) &&
+                !empty($global_transmittal_number)
+            ) {
+                $generated_transmittal_name = sprintf(
+                    "%s-T-%s",
+                    $global_project_number,
+                    $global_transmittal_number
+                );
+            }
+            $global_transmittal_name = $generated_transmittal_name;
 
             // Update each file with transmittal information
             foreach ($_POST["file"] as $file_data_from_post) {
