@@ -198,6 +198,9 @@ class Files
         $this->transmittal_name = !empty($arguments["transmittal_name"])
             ? encode_html($arguments["transmittal_name"])
             : null;
+        $this->description = !empty($arguments["description"])
+            ? htmlentities_allowed($arguments["description"])
+            : null;
 
         // Assignations
         $this->assignations_groups = !empty($arguments["assignations_groups"])
@@ -1033,6 +1036,7 @@ class Files
         $this->comments = $this->comments ?? "";
         $this->project_number = $this->project_number ?? "";
         $this->transmittal_name = $this->transmittal_name ?? "";
+        $this->description = $this->description ?? "";
 
         $statement = $this->dbh->prepare(
             "INSERT INTO " .

@@ -239,7 +239,7 @@ if (isset($_GET["confirm"])) {
                                                 <!-- Revision Number Manual Field -->
                                                 <div class="form-group">
                                                     <label for="revision_number_<?php echo $i; ?>"><?php _e(
-    "Revision Number",
+    "Revision",
     "cftp_admin"
 ); ?> *</label>
                                                     <input type="text" name="file[<?php echo $i; ?>][revision_number]" id="revision_number_<?php echo $i; ?>" class="form-control"

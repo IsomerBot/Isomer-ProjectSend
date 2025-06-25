@@ -1158,7 +1158,8 @@ class Emails
                 }
             }
             if (!empty($file_data["issue_status"])) {
-                $subject_parts[] = trim($file_data["issue_status"]);
+                $subject_parts[] =
+                    "Issued For: " . trim($file_data["issue_status"]);
             }
             if (!empty($subject_parts)) {
                 $custom_subject =

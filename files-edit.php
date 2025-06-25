@@ -109,7 +109,8 @@ if (isset($_POST["save"])) {
                            deliverable_type = :deliverable_type,
                            document_title = :document_title,
                            revision_number = :revision_number,
-                           comments = :comments
+                           comments = :comments,
+                           description = :description
                          WHERE id = :file_id";
 
                     $statement = $dbh->prepare($query);
@@ -130,6 +131,8 @@ if (isset($_POST["save"])) {
                         ":revision_number" =>
                             $file_data_from_post["revision_number"] ?? "",
                         ":comments" => $global_comments,
+                        ":description" =>
+                            $file_data_from_post["description"] ?? "",
                     ]);
                 }
             }

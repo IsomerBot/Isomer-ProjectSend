@@ -404,7 +404,6 @@ class EmailNotifications
             '<div style="margin-bottom: 8px;"><strong>To:</strong> ' .
             htmlspecialchars($recipients_text) .
             "</div>";
-
         $html .= "</div>";
 
         // Right column
@@ -420,19 +419,17 @@ class EmailNotifications
         $from_text = !empty($first_file_data["uploader_name"])
             ? htmlspecialchars($first_file_data["uploader_name"])
             : "Isomer Project Group";
-
         $html .=
             '<div style="margin-bottom: 8px;"><strong>From:</strong> ' .
             $from_text .
             "</div>";
-
         $html .= "</div>";
 
         $html .= "</div>"; // End two-column layout
         $html .= "</div>"; // End project info section
 
         // Comments section (always show, even if empty) - now get from transmittal level
-        $html .= '<div style="margin-bottom: 15px;">';
+        $html .= '<div style="padding: 15px; margin-bottom: 15px;">';
         $html .=
             '<div style="font-weight: bold; margin-bottom: 5px;">Comments:</div>';
         $html .=
@@ -443,14 +440,17 @@ class EmailNotifications
             $first_file_data["transmittal_number"]
         );
         if (!empty($transmittal_comments)) {
-            if (strpos($transmittal_comments, "<p>") !== false) {
-                $html .= $transmittal_comments;
-            } else {
-                $html .= htmlspecialchars($transmittal_comments);
-            }
+            // Strip HTML tags and decode entities to get plain text
+            $clean_comments = html_entity_decode(
+                strip_tags($transmittal_comments),
+                ENT_QUOTES,
+                "UTF-8"
+            );
+            $html .= htmlspecialchars($clean_comments);
         }
         $html .= "</div>";
         $html .= "</div>";
+
         // Section above the files table
         $html .= '<div style="padding: 15px;">';
 
@@ -460,17 +460,17 @@ class EmailNotifications
         $html .=
             '<div style="margin-bottom: 15px;">The following deliverables have been transmitted from Isomer Project Group</div>';
 
-        // Table-like structure for file details - NOW WITH ALL FILES
-        $html .=
-            '<table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd; margin-bottom: 15px;">';
+        // NEW STRUCTURE: Table without Description column + Individual description boxes below each file
+        // NO EXTRA CONTAINER - table should align with the padding of parent div
 
-        // Table headers
+        // Table headers - REMOVED Description column
         $html .=
-            '<tr style="background: #f8f9fa; font-weight: bold; font-size: 12px;">';
+            '<table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd; font-size: 12px; margin-bottom: 0;">';
+        $html .= '<tr style="background: #f8f9fa; font-weight: bold;">';
         $html .=
             '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">File Title</th>';
         $html .=
-            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Revision No.</th>';
+            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; width: 12%;">Revision</th>';
         $html .=
             '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Issue Status</th>';
         $html .=
@@ -481,46 +481,99 @@ class EmailNotifications
             '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Deliverable Type</th>';
         $html .= "</tr>";
 
-        // Loop through ALL files and add a row for each
+        // Loop through ALL files and add a row for each + description box
         foreach ($files as $file) {
             $file_data = $this->files_data[$file["file_id"]];
 
-            // Table data row
-            $html .= '<tr style="font-size: 12px;">';
+            // File row in table
+            $html .= "<tr>";
+
+            // File Title
+            $filename = htmlspecialchars(
+                $file_data["filename"] ?? $file_data["title"]
+            );
             $html .=
-                '<td style="border: 1px solid #ddd; padding: 8px;">' .
-                htmlspecialchars(
-                    $file_data["filename"] ?? $file_data["title"]
-                ) .
+                '<td style="border: 1px solid #ddd; padding: 8px; word-wrap: break-word;">' .
+                $filename .
                 "</td>";
+
+            // Revision Number
             $html .=
-                '<td style="border: 1px solid #ddd; padding: 8px;">' .
+                '<td style="border: 1px solid #ddd; padding: 8px; text-align: center;">' .
                 htmlspecialchars($file_data["revision_number"] ?? "") .
                 "</td>";
+
+            // Issue Status
             $html .=
                 '<td style="border: 1px solid #ddd; padding: 8px;">' .
+                "Issued For: " .
                 htmlspecialchars($file_data["issue_status"] ?? "") .
                 "</td>";
+
+            // Document Title
+            $doc_title = htmlspecialchars($file_data["document_title"] ?? "");
             $html .=
-                '<td style="border: 1px solid #ddd; padding: 8px;">' .
-                htmlspecialchars($file_data["document_title"] ?? "") .
+                '<td style="border: 1px solid #ddd; padding: 8px; word-wrap: break-word;">' .
+                $doc_title .
                 "</td>";
+
+            // Discipline
             $html .=
                 '<td style="border: 1px solid #ddd; padding: 8px;">' .
                 htmlspecialchars($file_data["discipline"] ?? "") .
                 "</td>";
+
+            // Deliverable Type
+            $deliverable_type = html_entity_decode(
+                htmlspecialchars($file_data["deliverable_type"] ?? ""),
+                ENT_QUOTES,
+                "UTF-8"
+            );
             $html .=
                 '<td style="border: 1px solid #ddd; padding: 8px;">' .
-                html_entity_decode(
-                    htmlspecialchars($file_data["deliverable_type"] ?? ""),
+                $deliverable_type .
+                "</td>";
+
+            $html .= "</tr>";
+            // NEW: Individual Description Box below each file row
+            $html .= "<tr>";
+            $html .=
+                '<td colspan="6" style="border-left: 1px solid #ddd; border-right: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 0;">';
+
+            // Description container - ALL content in gray box
+            $html .=
+                '<div style="padding: 8px; background: #f9f9f9; border-top: 1px solid #eee;">';
+
+            // Description content - label and text together in gray container
+            $description = $file_data["description"] ?? "";
+            if (!empty($description)) {
+                // Strip HTML tags and decode entities to get plain text
+                $description = html_entity_decode(
+                    strip_tags($description),
                     ENT_QUOTES,
                     "UTF-8"
-                ) .
-                "</td>";
+                );
+                $description = htmlspecialchars($description);
+            } else {
+                $description = ""; // Empty if no description
+            }
+
+            $html .=
+                '<span style="font-weight: bold; font-size: 11px;">File Description:</span>';
+            if (!empty($description)) {
+                $html .=
+                    ' <span style="font-size: 11px;">' .
+                    $description .
+                    "</span>";
+            }
+
+            $html .= "</div>"; // End description container
+            $html .= "</td>";
             $html .= "</tr>";
         }
 
         $html .= "</table>";
+        // End of files table section
 
         // Access link section
         $html .=
@@ -536,6 +589,7 @@ class EmailNotifications
 
         return $html;
     }
+
     private function getTransmittalComments($transmittal_number)
     {
         if (empty($transmittal_number)) {
@@ -562,6 +616,7 @@ class EmailNotifications
 
         return "";
     }
+
     private function updateDatabaseNotificationsSent($notifications = [])
     {
         if (!empty($notifications) && count($notifications) > 0) {
@@ -604,3 +659,4 @@ class EmailNotifications
         }
     }
 }
+?>

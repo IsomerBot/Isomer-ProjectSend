@@ -345,7 +345,7 @@ class TransmittalHelper
                     package_description = :package_description,
                     issue_status = :issue_status,
                     discipline = :discipline,
-
+                    description = :description,
                     deliverable_type = :deliverable_type,
                     abbreviation = :abbreviation,
                     document_title = :document_title,
@@ -364,7 +364,7 @@ class TransmittalHelper
                 $transmittal_data["package_description"] ?? "",
             ":issue_status" => $transmittal_data["issue_status"] ?? "",
             ":discipline" => $transmittal_data["discipline"] ?? "",
-
+            ":description" => $transmittal_data["description"] ?? "",
             ":deliverable_type" => $transmittal_data["deliverable_type"] ?? "",
             ":abbreviation" => $transmittal_data["abbreviation"] ?? "",
             ":document_title" => $transmittal_data["document_title"] ?? "",
