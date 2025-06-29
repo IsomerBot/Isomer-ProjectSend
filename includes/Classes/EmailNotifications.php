@@ -581,7 +581,7 @@ class EmailNotifications
         $html .=
             "<div>To access the files pertinent to this transmittal,</div>";
         $html .=
-            '<div><a href="#" style="color: #0066cc; text-decoration: underline;">please login here</a></div>';
+            '<div><a href="%URI%" style="color: #0066cc; text-decoration: underline;">please login here</a></div>';
         $html .= "</div>";
 
         $html .= "</div>"; // End inner container

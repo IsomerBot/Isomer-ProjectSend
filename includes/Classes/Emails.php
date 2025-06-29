@@ -1115,6 +1115,14 @@ class Emails
             $this->email_body
         );
 
+        // Build login URL with transmittal parameter if available
+        $login_url = BASE_URI;
+        if (!empty($file_data) && !empty($file_data["transmittal_number"])) {
+            $login_url .=
+                "my_files/index.php?transmittal=" .
+                urlencode($file_data["transmittal_number"]);
+        }
+
         $this->email_body = str_replace(
             [
                 "%SUBJECT%",
@@ -1126,17 +1134,16 @@ class Emails
                 "%URI%",
             ],
             [
-                "", // Remove the subject header - set to empty string
-                "", // Remove the body text - set to empty string
+                "", // Remove the subject header
+                "", // Remove the body text
                 $files_list,
                 "",
-                "", // Remove the body text - set to empty string
-                "", // Remove the body text - set to empty string
-                "",
+                "", // Remove the body text
+                "", // Remove the body text
+                $login_url, // ← Now includes transmittal parameter
             ],
             $this->email_body
         );
-
         // Build custom subject from file data - clean format
         $custom_subject = "Isomer Transmittal";
 

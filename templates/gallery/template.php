@@ -11,29 +11,30 @@ Background modified from: https://www.artofadambetts.com/weblog/2008/05/black-le
 Delete icon: https://www.iconfinder.com/icondetails/37519/16/can_delete_trash_icon
 */
 
-$ld = 'cftp_template_gallery'; // specify the language domain for this template
+$ld = "cftp_template_gallery"; // specify the language domain for this template
 
-define('TEMPLATE_RESULTS_PER_PAGE', -1);
+// FIX: Define TEMPLATE_RESULTS_PER_PAGE BEFORE including common.php
+define("TEMPLATE_RESULTS_PER_PAGE", -1);
 
-$filter_by_category = isset($_GET['category']) ? $_GET['category'] : null;
+$filter_by_category = isset($_GET["category"]) ? $_GET["category"] : null;
 
-include_once ROOT_DIR.'/templates/common.php'; // include the required functions for every template
+include_once ROOT_DIR . "/templates/common.php"; // include the required functions for every template
 
-$window_title = __('Gallery','cftp_template_gallery');
+$window_title = __("Gallery", "cftp_template_gallery");
 
 /**
  * Filter files by type, only save images.
-*/
+ */
 foreach ($available_files as $file_id) {
     $file = new \ProjectSend\Classes\Files($file_id);
     if ($file->isImage()) {
-		$img_files[] = $file;
-	}
+        $img_files[] = $file;
+    }
 }
-$count = (isset($img_files)) ? count($img_files) : 0;
+$count = isset($img_files) ? count($img_files) : 0;
 
-define('TEMPLATE_THUMBNAILS_WIDTH', '280');
-define('TEMPLATE_THUMBNAILS_HEIGHT', '215');
+define("TEMPLATE_THUMBNAILS_WIDTH", "280");
+define("TEMPLATE_THUMBNAILS_HEIGHT", "215");
 ?>
 <!doctype html>
 <html lang="<?php echo SITE_LANG; ?>">
@@ -41,7 +42,9 @@ define('TEMPLATE_THUMBNAILS_HEIGHT', '215');
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title><?php echo html_output( $client_info['name'].' | '.$window_title . ' &raquo; ' . SYSTEM_NAME ); ?></title>
+	<title><?php echo html_output(
+     $client_info["name"] . " | " . $window_title . " &raquo; " . SYSTEM_NAME
+ ); ?></title>
 	<?php meta_favicon(); ?>
 
 	<link rel="stylesheet" href="<?php echo $this_template_url; ?>/font-awesome-4.6.3/css/font-awesome.min.css">
@@ -56,11 +59,11 @@ define('TEMPLATE_THUMBNAILS_HEIGHT', '215');
         window.base_url = '<?php echo BASE_URI; ?>';
     </script>
 
-    <?php render_custom_assets('head'); ?>    
+    <?php render_custom_assets("head"); ?>    
 </head>
 
 <body>
-    <?php render_custom_assets('body_top'); ?>
+    <?php render_custom_assets("body_top"); ?>
 
 <div id="wrapper">
 
@@ -72,115 +75,143 @@ define('TEMPLATE_THUMBNAILS_HEIGHT', '215');
 			<div id="offsite_nav">
 				<nav class="account_actions">
 					<ul>
-                        <li><a href="<?php echo BASE_URI; ?>process.php?do=logout" target="_self" id="logout"><i class="fa fa-sign-out" aria-hidden="true"></i> <?php _e('Logout', 'cftp_admin'); ?></a></li>
-                        <li><a href="<?php echo BASE_URI; ?>manage-files.php" target="_self" id="manage"><i class="fa fa-file" aria-hidden="true"></i> <?php _e('Manage files', 'cftp_admin'); ?></a></li>
-						<li><a href="<?php echo BASE_URI; ?>upload.php" target="_self" id="upload"><i class="fa fa-cloud-upload" aria-hidden="true"></i> <?php _e('Upload', 'cftp_admin'); ?></a></li>
+                        <li><a href="<?php echo BASE_URI; ?>process.php?do=logout" target="_self" id="logout"><i class="fa fa-sign-out" aria-hidden="true"></i> <?php _e(
+    "Logout",
+    "cftp_admin"
+); ?></a></li>
+                        <li><a href="<?php echo BASE_URI; ?>manage-files.php" target="_self" id="manage"><i class="fa fa-file" aria-hidden="true"></i> <?php _e(
+    "Manage files",
+    "cftp_admin"
+); ?></a></li>
+						<li><a href="<?php echo BASE_URI; ?>upload.php" target="_self" id="upload"><i class="fa fa-cloud-upload" aria-hidden="true"></i> <?php _e(
+    "Upload",
+    "cftp_admin"
+); ?></a></li>
 					</ul>
 				</nav>
 				
-				<?php
-					if ( !empty( $get_categories['categories'] ) ) {
-						$url_client_id	= ( !empty($_GET['client'] ) && CURRENT_USER_LEVEL != '0') ? $_GET['client'] : null;
-						$link_template	= CLIENT_VIEW_FILE_LIST_URL;
-				?>
-						<h4><?php _e('Filter by category', 'cftp_admin'); ?></h4>
+				<?php if (!empty($get_categories["categories"])) {
+
+        $url_client_id =
+            !empty($_GET["client"]) && CURRENT_USER_LEVEL != "0"
+                ? $_GET["client"]
+                : null;
+        $link_template = CLIENT_VIEW_FILE_LIST_URL;
+        ?>
+						<h4><?php _e("Filter by category", "cftp_admin"); ?></h4>
 						<nav class="categories">
 							<ul>
-								<li class="filter_all_files"><a href="<?php echo CLIENT_VIEW_FILE_LIST_URL; if ( !empty( $url_client_id ) ) { echo '?client=' . $url_client_id; }; ?>"><?php  _e('All files', 'pinboxes_template'); ?></a></li>
+								<li class="filter_all_files"><a href="<?php
+        echo CLIENT_VIEW_FILE_LIST_URL;
+        if (!empty($url_client_id)) {
+            echo "?client=" . $url_client_id;
+        }
+        ?>"><?php _e("All files", "pinboxes_template"); ?></a></li>
+								<?php foreach ($get_categories["categories"] as $category) {
+
+            $link_data = [
+                "client" => $url_client_id,
+                "category" => $category["id"],
+            ];
+            $link_query = http_build_query($link_data);
+            ?>
+										<li><a href="<?php echo $link_template .
+              "?" .
+              $link_query; ?>"><?php echo $category["name"]; ?></a></li>
 								<?php
-									foreach ( $get_categories['categories'] as $category ) {
-										$link_data	= array(
-																'client'	=> $url_client_id,
-																'category'	=> $category['id'],
-															);
-										$link_query	= http_build_query($link_data);
-								?>
-										<li><a href="<?php echo $link_template . '?' . $link_query; ?>"><?php echo $category['name']; ?></a></li>
-								<?php
-									}
-								?>							
+        } ?>							
 							</ul>
 						</nav>
 				<?php
-					}
-				?>
+    } ?>
 			</div>
 		</div>
 
 		<header>
-			<?php if ($logo_file_info['exists'] === true) { ?>
+			<?php if ($logo_file_info["exists"] === true) { ?>
 				<div id="logo">
-                    <?php echo get_branding_layout(true); // true: returns the thumbnail, not the full image ?>
+                    <?php echo get_branding_layout(true);
+       // true: returns the thumbnail, not the full image
+       ?>
 				</div>
 			<?php } ?>
 		</header>
 			
 		<div id="content">
             <?php
-                $current_url = get_form_action_with_existing_parameters('index.php');
-                //include_once LAYOUT_DIR . DS . 'breadcrumbs.php';
-                include_once LAYOUT_DIR . DS . 'folders-nav.php';
+            $current_url = get_form_action_with_existing_parameters(
+                "index.php"
+            );
+            //include_once LAYOUT_DIR . DS . 'breadcrumbs.php';
+            include_once LAYOUT_DIR . DS . "folders-nav.php";
 
-                if (!$count) {
-					_e('There are no files.','cftp_template_gallery');
-				}
-				else {
-			?>
+            if (!$count) {
+                _e("There are no files.", "cftp_template_gallery");
+            } else {
+                 ?>
 					<ul class="photo_list">
-						<?php
-							foreach ($img_files as $file) {
-                                $dimensions = $file->getDimensions();
-						?>
+						<?php foreach ($img_files as $file) {
+          $dimensions = $file->getDimensions(); ?>
 								<li>
 									<h5><?php echo $file->title; ?></h5>
-                                    <?php if (!empty($dimensions['width'])) { ?>
+                                    <?php if (!empty($dimensions["width"])) { ?>
                                         <div class="file_meta">
                                             <small>
-                                                <?php echo $dimensions['width']; ?> x <?php echo $dimensions['height']; ?> px
+                                                <?php echo $dimensions[
+                                                    "width"
+                                                ]; ?> x <?php echo $dimensions[
+     "height"
+ ]; ?> px
                                             </small>
                                         </div>
                                     <?php } ?>
 
-                                    <?php
-										if ($file->expired == true) {
-									?>
-											<?php _e('File expired','cftp_template_gallery'); ?>
-									<?php
-										}
-										else {
-                                            $thumbnail = make_thumbnail( $file->full_path, null, TEMPLATE_THUMBNAILS_WIDTH, TEMPLATE_THUMBNAILS_HEIGHT );
-									?>
+                                    <?php if ($file->expired == true) { ?>
+											<?php _e("File expired", "cftp_template_gallery"); ?>
+									<?php } else {$thumbnail = make_thumbnail(
+                                            $file->full_path,
+                                            null,
+                                            TEMPLATE_THUMBNAILS_WIDTH,
+                                            TEMPLATE_THUMBNAILS_HEIGHT
+                                        ); ?>
                                             <div class="img_prev">
                                                 <a href="<?php echo $file->download_link; ?>" target="_blank">
-                                                    <img src="<?php echo $thumbnail['thumbnail']['url']; ?>" class="thumbnail" alt="<?php echo $file->title; ?>" />
+                                                    <img src="<?php echo $thumbnail[
+                                                        "thumbnail"
+                                                    ][
+                                                        "url"
+                                                    ]; ?>" class="thumbnail" alt="<?php echo $file->title; ?>" />
                                                 </a>
                                             </div>
                                             <div class="actions">
                                                 <div class="action">
                                                     <div class="download_link">
                                                         <a href="<?php echo $file->download_link; ?>" target="_blank">
-                                                            <?php _e('Download','cftp_template_gallery'); ?>
+                                                            <?php _e(
+                                                                "Download",
+                                                                "cftp_template_gallery"
+                                                            ); ?>
                                                         </a>
                                                     </div>
                                                 </div>
                                                 <div class="action">
                                                     <div class="checkbox">
                                                         <input type="checkbox" class="checkbox_file" name="file_id" value="<?php echo $file->id; ?>" id="checkbox_file_<?php echo $file->id; ?>">
-                                                        <label for="checkbox_file_<?php echo $file->id; ?>"><?php _e('Select', 'cftp_template_gallery'); ?></label>
+                                                        <label for="checkbox_file_<?php echo $file->id; ?>"><?php _e(
+    "Select",
+    "cftp_template_gallery"
+); ?></label>
                                                     </div>
                                                 </div>
                                             </div>
-									<?php
-										}
-									?>
+									<?php } ?>
 								</li>
 						<?php
-							}
-						?>
+      } ?>
 					</ul>
 				<?php
-				}
-				?>
+            }
+            ?>
 			<?php render_footer_text(); ?>
 		</div>
 	</div>
@@ -193,7 +224,7 @@ define('TEMPLATE_THUMBNAILS_HEIGHT', '215');
     <img src="<?php echo $this_template_url; ?>/img/loading.svg" id="indicator">
 </div>
 
-<?php render_custom_assets('body_bottom'); ?>
+<?php render_custom_assets("body_bottom"); ?>
 
 </body>
 </html>
