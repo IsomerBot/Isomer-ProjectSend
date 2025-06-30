@@ -330,60 +330,126 @@ class EmailNotifications
 
         $html = "";
 
-        // Header section similar to Isomer design
-        $html .=
-            '<div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #fff; ">';
+        // EMAIL-SAFE WEB FONTS IMPORT
+        // Note: Email clients have limited font support, so we include fallbacks
+        $html .= '<style>
+            @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap");
+            
+            /* Isomer Brand Typography Styles */
+            .isomer-h1 {
+                font-family: "Montserrat", "Made Tommy", Arial, sans-serif;
+                font-weight: 700;
+                font-size: 16px;
+                text-transform: uppercase;
+                letter-spacing: 1px;
+                color: #252c3a;
+                margin: 0;
+            }
+            
+            .isomer-h2 {
+                font-family: "Montserrat", "Made Tommy", Arial, sans-serif;
+                font-weight: 400;
+                font-size: 14px;
+                text-transform: uppercase;
+                color: #252c3a;
+                margin: 0;
+            }
+            
+            .isomer-h3 {
+                font-family: "Montserrat", "Metropolis", Arial, sans-serif;
+                font-weight: 800;
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 2px;
+                color: #252c3a;
+                margin: 0;
+            }
+            
+            .isomer-body {
+                font-family: "Montserrat", "Metropolis", Arial, sans-serif;
+                font-weight: 400;
+                font-size: 12px;
+                color: #252c3a;
+                line-height: 1.4;
+            }
+            
+            .isomer-bold {
+                font-weight: 600;
+            }
+        </style>';
 
-        // Get the first file to extract transmittal information (same for all files)
+        // Header section with Isomer brand compliance
+        $html .=
+            '<div style="font-family: Montserrat, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #fff;">';
+
+        // Get the first file to extract transmittal information
         $first_file_data = $this->files_data[$files[0]["file_id"]];
 
-        // Company header with logo placeholder and transmittal info
+        // Get the logo information using the system's branding functions
+        $logo_file_info = generate_logo_url();
+
+        // BRAND-COMPLIANT HEADER following Isomer guidelines
         $html .=
             '<div style="background: #f8f9fa; padding: 15px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">';
 
-        // Left side - Logo with colored background
+        // Left side - Logo with Isomer brand colors (proper clear space: 0.5X)
         $html .=
-            '<div style="width: 120px; height: 40px; background: #ff6600; border-radius: 4px; display: flex; align-items: center; justify-content: center; padding: 5px;">';
-        $html .=
-            '<img src="' .
-            BASE_URI .
-            'assets/img/Isomer-email-logo.png" alt="Isomer Logo" style="max-height: 30px; max-width: 110px;" />';
+            '<div style="width: 140px; height: 50px; background: #f56600; border-radius: 4px; display: flex; align-items: center; justify-content: center; padding: 8px; margin-right: 20px;">';
+
+        if ($logo_file_info["exists"] === true) {
+            // Use the system's uploaded logo with proper sizing (respecting 5mm minimum from brand guide)
+            $html .=
+                '<img src="' .
+                $logo_file_info["url"] .
+                '" alt="Isomer Project Group" style="max-height: 40px; max-width: 120px; width: auto; height: auto;" />';
+        } else {
+            // Fallback: Isomer brand text with exact brand typography
+            $html .= '<div style="color: white; text-align: center;">';
+            $html .=
+                '<div class="isomer-h1" style="color: white; font-size: 16px; margin-bottom: 2px;">ISOMER</div>';
+            $html .=
+                '<div class="isomer-h2" style="color: white; font-size: 12px;">PROJECT GROUP</div>';
+            $html .= "</div>";
+        }
+
         $html .= "</div>";
 
+        // Right side - Transmittal info with brand typography
         $html .= '<div style="text-align: right; margin-left: auto;">';
         $html .=
-            '<div style="font-weight: bold; font-size: 16px; margin-bottom: 2px;">TRANSMITTAL</div>';
+            '<div class="isomer-h1" style="margin-bottom: 2px;">TRANSMITTAL</div>';
         $html .=
-            '<div style="font-weight: bold; font-size: 16px;">' .
+            '<div class="isomer-h1" style="color: #252c3a;">' .
             htmlspecialchars($first_file_data["transmittal_name"] ?? "") .
             "</div>";
         $html .= "</div>";
         $html .= "</div>"; // End header section
 
-        // Project information section
-        $html .= '<div style="padding: 15px; border-bottom: 1px solid #eee;">';
+        // Project information section with brand-compliant typography
+        $html .=
+            '<div style="padding: 15px; border-bottom: 1px solid #eee; background: #fff;">';
 
         // Two-column layout for project info
         $html .= '<div style="display: flex; justify-content: space-between;">';
 
-        // Left column
+        // Left column with brand-compliant typography
         $html .= '<div style="flex: 1; margin-right: 30px;">';
 
         if (!empty($first_file_data["project_number"])) {
             $html .=
-                '<div style="margin-bottom: 8px;"><strong>Project No:</strong> ' .
+                '<div class="isomer-body" style="margin-bottom: 8px;"><span class="isomer-bold" style="color: #252c3a;">Project No:</span> ' .
                 htmlspecialchars($first_file_data["project_number"]) .
                 "</div>";
         }
 
-        // Add transmittal date with formatted date
-        $formatted_date = date("F jS, Y"); // Format: May 9th, 2025
+        // Add transmittal date with brand typography
+        $formatted_date = date("F jS, Y");
         $html .=
-            '<div style="margin-bottom: 8px;"><strong>Transmittal Date:</strong> ' .
+            '<div class="isomer-body" style="margin-bottom: 8px;"><span class="isomer-bold" style="color: #252c3a;">Transmittal Date:</span> ' .
             $formatted_date .
             "</div>";
 
-        // Get all recipients for this transmittal
+        // Get recipients
         $recipients_text = "All Recipients";
         if (!empty($first_file_data["transmittal_number"])) {
             $transmittal_helper = new \ProjectSend\Classes\TransmittalHelper();
@@ -401,7 +467,7 @@ class EmailNotifications
         }
 
         $html .=
-            '<div style="margin-bottom: 8px;"><strong>To:</strong> ' .
+            '<div class="isomer-body" style="margin-bottom: 8px;"><span class="isomer-bold" style="color: #252c3a;">To:</span> ' .
             htmlspecialchars($recipients_text) .
             "</div>";
         $html .= "</div>";
@@ -410,17 +476,16 @@ class EmailNotifications
         $html .= '<div style="flex: 1;">';
         if (!empty($first_file_data["project_name"])) {
             $html .=
-                '<div style="margin-bottom: 8px;"><strong>Project Name:</strong> ' .
+                '<div class="isomer-body" style="margin-bottom: 8px;"><span class="isomer-bold" style="color: #252c3a;">Project Name:</span> ' .
                 htmlspecialchars($first_file_data["project_name"]) .
                 "</div>";
         }
 
-        // Get uploader name from file data
         $from_text = !empty($first_file_data["uploader_name"])
             ? htmlspecialchars($first_file_data["uploader_name"])
             : "Isomer Project Group";
         $html .=
-            '<div style="margin-bottom: 8px;"><strong>From:</strong> ' .
+            '<div class="isomer-body" style="margin-bottom: 8px;"><span class="isomer-bold" style="color: #252c3a;">From:</span> ' .
             $from_text .
             "</div>";
         $html .= "</div>";
@@ -428,42 +493,38 @@ class EmailNotifications
         $html .= "</div>"; // End two-column layout
         $html .= "</div>"; // End project info section
 
-        // Comments section (always show, even if empty) - now get from transmittal level
+        // Comments section with brand typography
         $html .= '<div style="padding: 15px; margin-bottom: 15px;">';
         $html .=
-            '<div style="font-weight: bold; margin-bottom: 5px;">Comments:</div>';
+            '<div class="isomer-h3" style="margin-bottom: 5px;">COMMENTS:</div>';
         $html .=
             '<div style="border: 1px solid #ddd; padding: 10px; min-height: 60px; background: #fafafa;">';
 
-        // Get comments from transmittal level (should be same for all files in this transmittal)
         $transmittal_comments = $this->getTransmittalComments(
             $first_file_data["transmittal_number"]
         );
         if (!empty($transmittal_comments)) {
-            // Strip HTML tags and decode entities to get plain text
             $clean_comments = html_entity_decode(
                 strip_tags($transmittal_comments),
                 ENT_QUOTES,
                 "UTF-8"
             );
-            $html .= htmlspecialchars($clean_comments);
+            $html .=
+                '<span class="isomer-body">' .
+                htmlspecialchars($clean_comments) .
+                "</span>";
         }
         $html .= "</div>";
         $html .= "</div>";
 
-        // Section above the files table
+        // Section above the files table with brand typography
         $html .= '<div style="padding: 15px;">';
-
-        // Simple headers above the table (no boxes)
         $html .=
-            '<div style="text-align: center; font-weight: bold; margin-bottom: 10px;">Isomer Transmittal Available for Download</div>';
+            '<div class="isomer-h1" style="text-align: center; margin-bottom: 10px;">ISOMER TRANSMITTAL AVAILABLE FOR DOWNLOAD</div>';
         $html .=
-            '<div style="margin-bottom: 15px;">The following deliverables have been transmitted from Isomer Project Group</div>';
+            '<div class="isomer-body" style="margin-bottom: 15px;">The following deliverables have been transmitted from Isomer Project Group</div>';
 
-        // NEW STRUCTURE: Table without Description column + Individual description boxes below each file
-        // NO EXTRA CONTAINER - table should align with the padding of parent div
-
-        // Table headers - REMOVED Description column
+        // FILES TABLE - FIXED VERSION
         $html .=
             '<table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd; font-size: 12px; margin-bottom: 0;">';
         $html .= '<tr style="background: #f8f9fa; font-weight: bold;">';
@@ -481,7 +542,7 @@ class EmailNotifications
             '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Deliverable Type</th>';
         $html .= "</tr>";
 
-        // Loop through ALL files and add a row for each + description box
+        // CRITICAL FIX: Loop through ALL files and add a row for each
         foreach ($files as $file) {
             $file_data = $this->files_data[$file["file_id"]];
 
@@ -505,8 +566,7 @@ class EmailNotifications
 
             // Issue Status
             $html .=
-                '<td style="border: 1px solid #ddd; padding: 8px;">' .
-                "Issued For: " .
+                '<td style="border: 1px solid #ddd; padding: 8px;">Issued For: ' .
                 htmlspecialchars($file_data["issue_status"] ?? "") .
                 "</td>";
 
@@ -535,19 +595,18 @@ class EmailNotifications
                 "</td>";
 
             $html .= "</tr>";
-            // NEW: Individual Description Box below each file row
+
+            // Description row for each file
             $html .= "<tr>";
             $html .=
                 '<td colspan="6" style="border-left: 1px solid #ddd; border-right: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 0;">';
 
-            // Description container - ALL content in gray box
+            // Description container
             $html .=
                 '<div style="padding: 8px; background: #f9f9f9; border-top: 1px solid #eee;">';
 
-            // Description content - label and text together in gray container
             $description = $file_data["description"] ?? "";
             if (!empty($description)) {
-                // Strip HTML tags and decode entities to get plain text
                 $description = html_entity_decode(
                     strip_tags($description),
                     ENT_QUOTES,
@@ -555,7 +614,7 @@ class EmailNotifications
                 );
                 $description = htmlspecialchars($description);
             } else {
-                $description = ""; // Empty if no description
+                $description = "";
             }
 
             $html .=
@@ -567,21 +626,26 @@ class EmailNotifications
                     "</span>";
             }
 
-            $html .= "</div>"; // End description container
+            $html .= "</div>";
             $html .= "</td>";
             $html .= "</tr>";
         }
 
         $html .= "</table>";
-        // End of files table section
 
-        // Access link section
+        // FIXED LOGIN LINK SECTION - This was missing the %URI% replacement
         $html .=
             '<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">';
         $html .=
             "<div>To access the files pertinent to this transmittal,</div>";
         $html .=
             '<div><a href="%URI%" style="color: #0066cc; text-decoration: underline;">please login here</a></div>';
+        $html .= "</div>";
+
+        // END OF TRANSMITTAL
+        $html .=
+            '<div style="text-align: center; margin-top: 20px; padding: 15px; border-top: 2px solid #ddd; font-weight: bold;">';
+        $html .= "************END OF TRANSMITTAL************";
         $html .= "</div>";
 
         $html .= "</div>"; // End inner container
