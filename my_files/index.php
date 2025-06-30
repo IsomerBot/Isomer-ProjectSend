@@ -22,6 +22,24 @@ $filter_transmittal = isset($_GET["transmittal"])
     ? trim($_GET["transmittal"])
     : null;
 
+// Handle both new format (DOM2504-0001) and legacy format (0001)
+$filter_project = null;
+$filter_transmittal_num = null;
+
+if ($filter_transmittal) {
+    if (strpos($filter_transmittal, "-") !== false) {
+        // New format: PROJECT-TRANSMITTAL (e.g., DOM2504-0001)
+        list($filter_project, $filter_transmittal_num) = explode(
+            "-",
+            $filter_transmittal,
+            2
+        );
+    } else {
+        // Legacy format: just transmittal number
+        $filter_transmittal_num = $filter_transmittal;
+    }
+}
+
 // If transmittal filter is requested, we need to modify the database query
 if (!empty($filter_transmittal)) {
     // Set a global variable that can be used to modify SQL queries

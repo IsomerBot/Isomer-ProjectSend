@@ -63,8 +63,9 @@ function get_user_transmittals_for_filter($client_id)
     global $dbh;
 
     // Get transmittals from files assigned to this client (including via groups)
+    // Group by project_number + transmittal_number for unique transmittals
     $query =
-        "SELECT DISTINCT f.transmittal_number, COUNT(*) as file_count,
+        "SELECT DISTINCT f.project_number, f.transmittal_number, COUNT(*) as file_count,
                      MAX(f.transmittal_name) as transmittal_name,
                      MAX(f.project_name) as project_name
               FROM " .
@@ -77,8 +78,8 @@ function get_user_transmittals_for_filter($client_id)
               AND f.transmittal_number IS NOT NULL 
               AND f.transmittal_number != ''
               AND fr.hidden = '0'
-              GROUP BY f.transmittal_number 
-              ORDER BY f.transmittal_number DESC";
+              GROUP BY f.project_number, f.transmittal_number 
+              ORDER BY f.project_number DESC, f.transmittal_number DESC";
 
     $statement = $dbh->prepare($query);
     $statement->execute([
@@ -101,15 +102,17 @@ $user_transmittals = get_user_transmittals_for_filter($client_info["id"]);
 if (!empty($user_transmittals)) {
     $transmittal_filter = [];
     foreach ($user_transmittals as $transmittal) {
-        $display_name = $transmittal["transmittal_number"];
-        if (!empty($transmittal["transmittal_name"])) {
-            $display_name .= " - " . $transmittal["transmittal_name"];
-        } elseif (!empty($transmittal["project_name"])) {
-            $display_name .= " - " . $transmittal["project_name"];
-        }
-        $display_name .= " (" . $transmittal["file_count"] . " files)";
+        // Create unique key: PROJECT-TRANSMITTAL (e.g., DOM2504-0001)
+        $unique_key =
+            $transmittal["project_number"] .
+            "-" .
+            $transmittal["transmittal_number"];
 
-        $transmittal_filter[$transmittal["transmittal_number"]] = $display_name;
+        // Clean and simple: just the key and file count
+        $display_name =
+            $unique_key . " (" . $transmittal["file_count"] . " files)";
+
+        $transmittal_filter[$unique_key] = $display_name;
     }
 
     $filters_form["items"]["transmittal"] = [
@@ -175,14 +178,13 @@ include_once LAYOUT_DIR . DS . "folders-nav.php";
     Showing files from transmittal <strong><?php echo htmlspecialchars(
         $filter_by_transmittal
     ); ?></strong>
-    <?php // Find and display transmittal name/project name
+    <?php // Just show file count - keep it simple
     foreach ($user_transmittals as $transmittal) {
-        if ($transmittal["transmittal_number"] == $filter_by_transmittal) {
-            if (!empty($transmittal["transmittal_name"])) {
-                echo " - " . htmlspecialchars($transmittal["transmittal_name"]);
-            } elseif (!empty($transmittal["project_name"])) {
-                echo " - " . htmlspecialchars($transmittal["project_name"]);
-            }
+        $unique_key =
+            $transmittal["project_number"] .
+            "-" .
+            $transmittal["transmittal_number"];
+        if ($unique_key == $filter_by_transmittal) {
             echo " (" . $transmittal["file_count"] . " files)";
             break;
         }

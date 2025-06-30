@@ -1118,9 +1118,18 @@ class Emails
         // Build login URL with transmittal parameter if available
         $login_url = BASE_URI;
         if (!empty($file_data) && !empty($file_data["transmittal_number"])) {
+            // Use new format: PROJECT-TRANSMITTAL (e.g., DOM2504-0001)
+            $transmittal_param = $file_data["transmittal_number"];
+            if (!empty($file_data["project_number"])) {
+                $transmittal_param =
+                    $file_data["project_number"] .
+                    "-" .
+                    $file_data["transmittal_number"];
+            }
+
             $login_url .=
                 "my_files/index.php?transmittal=" .
-                urlencode($file_data["transmittal_number"]);
+                urlencode($transmittal_param);
         }
 
         $this->email_body = str_replace(
@@ -1201,6 +1210,10 @@ class Emails
             ],
             $this->email_body
         );
+
+        $this->email_body .=
+            "<br><br><div style='text-align: center; font-weight: bold;'>***********END OF TRANSMITTAL*************</div>";
+
         return [
             "subject" => $strings["subject"],
             "body" => $this->email_body,
