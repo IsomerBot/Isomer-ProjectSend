@@ -1153,6 +1153,10 @@ class Emails
             ],
             $this->email_body
         );
+
+        $this->email_body .=
+            "<br><br><div style='text-align: center; font-weight: bold;'>***********END OF TRANSMITTAL*************</div>";
+
         // Build custom subject from file data - clean format
         $custom_subject = "Isomer Transmittal";
 
@@ -1210,9 +1214,6 @@ class Emails
             ],
             $this->email_body
         );
-
-        $this->email_body .=
-            "<br><br><div style='text-align: center; font-weight: bold;'>***********END OF TRANSMITTAL*************</div>";
 
         return [
             "subject" => $strings["subject"],
