@@ -1,7 +1,7 @@
 <?php
-// Load existing transmittal data for editing
+// Load existing transmittal data for editing - ADMIN ONLY
 $existing_transmittal_data = [];
-if (!empty($editable) && !isset($_GET["saved"])) {
+if (!empty($editable) && !isset($_GET["saved"]) && CURRENT_USER_LEVEL != 0) {
     // Get transmittal data from the first file
     $first_file_id = $editable[0];
     global $dbh;
@@ -43,144 +43,153 @@ if (isset($_GET["confirm"])) {
 
     <div class="container-fluid">
         <?php $i = 1; ?>
-        <div class="row">
-            <div class="col-md-6">
-                <h3><?php _e("Transmittal Information", "cftp_admin"); ?></h3>
-
-                <!-- Transmittal Number - Auto-generated (Read-only) -->
-                <div class="form-group">
-                    <label for="transmittal_number"><?php _e(
-                        "Transmittal Number",
+        
+        <?php if (CURRENT_USER_LEVEL != 0): ?>
+            <!-- ADMIN USERS: Show full transmittal information form -->
+            <div class="row">
+                <div class="col-md-6">
+                    <h3><?php _e(
+                        "Transmittal Information",
                         "cftp_admin"
-                    ); ?>*</label>
-                    <input type="text" 
-                           name="transmittal_number" 
-                           id="transmittal_number" 
-                           class="form-control readonly-field" 
-                           value="Auto-generated"
-                           readonly
-                           placeholder="Will be assigned automatically" />
-                    <small class="form-text text-muted">
-                        <i class="fa fa-info-circle"></i> 
-                        Will be assigned automatically based on project number
-                    </small>
-                </div>
+                    ); ?></h3>
 
-                <!-- Project Name Manual Field -->
-                <div class="form-group">
-                    <label for="project_name"><?php _e(
-                        "Project Name",
-                        "cftp_admin"
-                    ); ?>*</label>
-                    <input type="text" name="project_name" id="project_name" class="form-control" 
-                           value="<?php echo htmlspecialchars(
-                               $existing_transmittal_data["project_name"] ?? ""
-                           ); ?>"
-                           placeholder="<?php _e(
-                               "Enter Project Name",
-                               "cftp_admin"
-                           ); ?>" required />
-                </div>
-
-                <div class="form-group">
-                    <label for="project_number"><?php _e(
-                        "Project Number",
-                        "cftp_admin"
-                    ); ?>*</label>
-                    <input type="text" name="project_number" id="project_number" class="form-control" 
-                           value="<?php echo htmlspecialchars(
-                               $existing_transmittal_data["project_number"] ??
-                                   ""
-                           ); ?>"
-                           placeholder="<?php _e(
-                               "AAA####",
-                               "cftp_admin"
-                           ); ?>" required />
-                </div>
-
-                <!-- Package Description Manual Field -->
-                <div class="form-group">
-                    <label for="package_description"><?php _e(
-                        "Package Description",
-                        "cftp_admin"
-                    ); ?>*</label>
-                    <input type="text" name="package_description" id="package_description" class="form-control" 
-                           value="<?php echo htmlspecialchars(
-                               $existing_transmittal_data[
-                                   "package_description"
-                               ] ?? ""
-                           ); ?>"
-                           placeholder="<?php _e(
-                               "Enter Package Description",
-                               "cftp_admin"
-                           ); ?>" required />
-                </div>
-
-                <!-- Issue_Status Dropdown Field -->
-                <div class="form-group">
-                    <label for="issue_status"><?php _e(
-                        "Issue Status",
-                        "cftp_admin"
-                    ); ?>*</label>
-                    <select id="issue_status" name="issue_status" class="form-select" required>
-                        <option value=""><?php _e(
-                            "Select Issue Status",
+                    <!-- Transmittal Number - Auto-generated (Read-only) -->
+                    <div class="form-group">
+                        <label for="transmittal_number"><?php _e(
+                            "Transmittal Number",
                             "cftp_admin"
-                        ); ?></option>
-                        <?php try {
-                            $helper = new \ProjectSend\Classes\TransmittalHelper();
-                            $statuses = $helper->getDropdownOptions(
-                                "issue_status"
-                            );
-                            foreach ($statuses as $status) {
-                                $selected =
-                                    $status ==
-                                    ($existing_transmittal_data[
-                                        "issue_status"
-                                    ] ??
-                                        "")
-                                        ? " selected"
-                                        : "";
-                                echo '<option value="' .
-                                    htmlspecialchars($status) .
-                                    '"' .
-                                    $selected .
-                                    ">" .
-                                    htmlspecialchars($status) .
-                                    "</option>";
-                            }
-                        } catch (Exception $e) {
-                            error_log(
-                                "Error loading issue statuses: " .
-                                    $e->getMessage()
-                            );
-                            echo '<option value="">Error loading statuses</option>';
-                        } ?>
-                    </select>
-                </div>
-            </div>
+                        ); ?>*</label>
+                        <input type="text" 
+                               name="transmittal_number" 
+                               id="transmittal_number" 
+                               class="form-control readonly-field" 
+                               value="Auto-generated"
+                               readonly
+                               placeholder="Will be assigned automatically" />
+                        <small class="form-text text-muted">
+                            <i class="fa fa-info-circle"></i> 
+                            Will be assigned automatically based on project number
+                        </small>
+                    </div>
 
-            <div class="col-md-6">
-                <div class="form-group">
-                    <label for="comments"><?php _e(
-                        "Comments",
-                        "cftp_admin"
-                    ); ?></label>
-                    <textarea id="comments" 
-                              name="comments" 
-                              class="form-control"
-                              rows="6"
-                              placeholder="<?php _e(
-                                  "Enter any additional comments",
-                                  "cftp_admin"
-                              ); ?>"><?php echo htmlspecialchars(
+                    <!-- Project Name Manual Field -->
+                    <div class="form-group">
+                        <label for="project_name"><?php _e(
+                            "Project Name",
+                            "cftp_admin"
+                        ); ?>*</label>
+                        <input type="text" name="project_name" id="project_name" class="form-control" 
+                               value="<?php echo htmlspecialchars(
+                                   $existing_transmittal_data["project_name"] ??
+                                       ""
+                               ); ?>"
+                               placeholder="<?php _e(
+                                   "Enter Project Name",
+                                   "cftp_admin"
+                               ); ?>" required />
+                    </div>
+
+                    <div class="form-group">
+                        <label for="project_number"><?php _e(
+                            "Project Number",
+                            "cftp_admin"
+                        ); ?>*</label>
+                        <input type="text" name="project_number" id="project_number" class="form-control" 
+                               value="<?php echo htmlspecialchars(
+                                   $existing_transmittal_data[
+                                       "project_number"
+                                   ] ?? ""
+                               ); ?>"
+                               placeholder="<?php _e(
+                                   "AAA####",
+                                   "cftp_admin"
+                               ); ?>" required />
+                    </div>
+
+                    <!-- Package Description Manual Field -->
+                    <div class="form-group">
+                        <label for="package_description"><?php _e(
+                            "Package Description",
+                            "cftp_admin"
+                        ); ?>*</label>
+                        <input type="text" name="package_description" id="package_description" class="form-control" 
+                               value="<?php echo htmlspecialchars(
+                                   $existing_transmittal_data[
+                                       "package_description"
+                                   ] ?? ""
+                               ); ?>"
+                               placeholder="<?php _e(
+                                   "Enter Package Description",
+                                   "cftp_admin"
+                               ); ?>" required />
+                    </div>
+
+                    <!-- Issue_Status Dropdown Field -->
+                    <div class="form-group">
+                        <label for="issue_status"><?php _e(
+                            "Issue Status",
+                            "cftp_admin"
+                        ); ?>*</label>
+                        <select id="issue_status" name="issue_status" class="form-select" required>
+                            <option value=""><?php _e(
+                                "Select Issue Status",
+                                "cftp_admin"
+                            ); ?></option>
+                            <?php try {
+                                $helper = new \ProjectSend\Classes\TransmittalHelper();
+                                $statuses = $helper->getDropdownOptions(
+                                    "issue_status"
+                                );
+                                foreach ($statuses as $status) {
+                                    $selected =
+                                        $status ==
+                                        ($existing_transmittal_data[
+                                            "issue_status"
+                                        ] ??
+                                            "")
+                                            ? " selected"
+                                            : "";
+                                    echo '<option value="' .
+                                        htmlspecialchars($status) .
+                                        '"' .
+                                        $selected .
+                                        ">" .
+                                        htmlspecialchars($status) .
+                                        "</option>";
+                                }
+                            } catch (Exception $e) {
+                                error_log(
+                                    "Error loading issue statuses: " .
+                                        $e->getMessage()
+                                );
+                                echo '<option value="">Error loading statuses</option>';
+                            } ?>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="comments"><?php _e(
+                            "Comments",
+                            "cftp_admin"
+                        ); ?></label>
+                        <textarea id="comments" 
+                                  name="comments" 
+                                  class="form-control"
+                                  rows="6"
+                                  placeholder="<?php _e(
+                                      "Enter any additional comments",
+                                      "cftp_admin"
+                                  ); ?>"><?php echo htmlspecialchars(
     $existing_transmittal_data["comments"] ?? ""
 ); ?></textarea>
-                </div>
+                    </div>
 
-                <div class="divider"></div>
+                    <div class="divider"></div>
+                </div>
             </div>
-        </div>
+        <?php endif; ?>
 
         <?php
         $me = new \ProjectSend\Classes\Users(CURRENT_USER_ID);
@@ -221,24 +230,149 @@ if (isset($_GET["confirm"])) {
                                             <input type="hidden" name="file[<?php echo $i; ?>][original]" value="<?php echo $file->filename_original; ?>" />
                                             <input type="hidden" name="file[<?php echo $i; ?>][file]" value="<?php echo $file->filename_on_disk; ?>" />
 
-                                            <!-- Revision Number Manual Field -->
-                                            <div class="form-group">
-                                                <label for="revision_number_<?php echo $i; ?>"><?php _e(
+                                            <?php if (
+                                                CURRENT_USER_LEVEL != 0
+                                            ): ?>
+                                                <!-- ADMIN USERS: Show all transmittal fields per file -->
+                                                
+                                                <!-- Revision Number Manual Field -->
+                                                <div class="form-group">
+                                                    <label for="revision_number_<?php echo $i; ?>"><?php _e(
     "Revision",
     "cftp_admin"
 ); ?> *</label>
-                                                <input type="text" name="file[<?php echo $i; ?>][revision_number]" id="revision_number_<?php echo $i; ?>" class="form-control"
-                                                       value="<?php echo htmlspecialchars(
-                                                           $file->revision_number ??
-                                                               ""
-                                                       ); ?>" 
-                                                       placeholder="<?php _e(
-                                                           "Enter Revision Number",
-                                                           "cftp_admin"
-                                                       ); ?>" required /> 
-                                            </div>
+                                                    <input type="text" name="file[<?php echo $i; ?>][revision_number]" id="revision_number_<?php echo $i; ?>" class="form-control"
+                                                           value="<?php echo htmlspecialchars(
+                                                               $file->revision_number ??
+                                                                   ""
+                                                           ); ?>" 
+                                                           placeholder="<?php _e(
+                                                               "Enter Revision Number",
+                                                               "cftp_admin"
+                                                           ); ?>" required /> 
+                                                </div>
 
-                                            <!-- File Title -->
+                                                <!-- Document Title-->
+                                                <div class="form-group">
+                                                    <label for="document_title_<?php echo $i; ?>"><?php _e(
+    "Document Title",
+    "cftp_admin"
+); ?></label>
+                                                    <input type="text" id="document_title_<?php echo $i; ?>" name="file[<?php echo $i; ?>][document_title]" class="form-control"
+                                                           value="<?php echo htmlspecialchars(
+                                                               $file->document_title ??
+                                                                   ""
+                                                           ); ?>"   
+                                                           placeholder="<?php _e(
+                                                               "Enter Document Title",
+                                                               "cftp_admin"
+                                                           ); ?>" />
+                                                </div>
+
+                                                <!-- Discipline Field (file-specific) -->
+                                                <div class="form-group">
+                                                    <label for="discipline_<?php echo $i; ?>"><?php _e(
+    "Discipline",
+    "cftp_admin"
+); ?> *</label>
+                                                    <select id="discipline_<?php echo $i; ?>" name="file[<?php echo $i; ?>][discipline]" class="form-select discipline-select" required>
+                                                        <?php try {
+                                                            $helper = new \ProjectSend\Classes\TransmittalHelper();
+                                                            echo $helper->generateDropdownHtmlWithAbbr(
+                                                                "discipline",
+                                                                $file->discipline ??
+                                                                    "",
+                                                                true,
+                                                                true
+                                                            );
+                                                        } catch (Exception $e) {
+                                                            error_log(
+                                                                "Error loading disciplines: " .
+                                                                    $e->getMessage()
+                                                            );
+                                                            echo '<option value="">Error loading disciplines</option>';
+                                                        } ?>
+                                                    </select>
+                                                </div>
+
+                                                <!-- Deliverable Type Field (file-specific) -->
+                                                <div class="form-group">
+                                                    <label for="deliverable_type_<?php echo $i; ?>"><?php _e(
+    "Deliverable Type",
+    "cftp_admin"
+); ?> *</label>
+                                                    <select id="deliverable_type_<?php echo $i; ?>" name="file[<?php echo $i; ?>][deliverable_type]" class="form-select deliverable-type-select" required>
+                                                        <option value=""><?php _e(
+                                                            "Select Discipline First",
+                                                            "cftp_admin"
+                                                        ); ?></option>
+                                                        <?php if (
+                                                            !empty(
+                                                                $file->discipline
+                                                            ) &&
+                                                            !empty(
+                                                                $file->deliverable_type
+                                                            )
+                                                        ) {
+                                                            try {
+                                                                $helper = new \ProjectSend\Classes\TransmittalHelper();
+                                                                $deliverable_types = $helper->getDeliverableTypesByDiscipline(
+                                                                    $file->discipline
+                                                                );
+                                                                foreach (
+                                                                    $deliverable_types
+                                                                    as $type
+                                                                ) {
+                                                                    $selected =
+                                                                        $type[
+                                                                            "deliverable_type"
+                                                                        ] ==
+                                                                        $file->deliverable_type
+                                                                            ? " selected"
+                                                                            : "";
+                                                                    $display_text = !empty(
+                                                                        $type[
+                                                                            "abbreviation"
+                                                                        ]
+                                                                    )
+                                                                        ? $type[
+                                                                                "deliverable_type"
+                                                                            ] .
+                                                                            " (" .
+                                                                            $type[
+                                                                                "abbreviation"
+                                                                            ] .
+                                                                            ")"
+                                                                        : $type[
+                                                                            "deliverable_type"
+                                                                        ];
+                                                                    echo '<option value="' .
+                                                                        htmlspecialchars(
+                                                                            $type[
+                                                                                "deliverable_type"
+                                                                            ]
+                                                                        ) .
+                                                                        '"' .
+                                                                        $selected .
+                                                                        ">" .
+                                                                        htmlspecialchars(
+                                                                            $display_text
+                                                                        ) .
+                                                                        "</option>";
+                                                                }
+                                                            } catch (Exception $e) {
+                                                                error_log(
+                                                                    "Error loading deliverable types: " .
+                                                                        $e->getMessage()
+                                                                );
+                                                            }
+                                                        } ?>
+                                                    </select>
+                                                </div>
+                                                
+                                            <?php endif; ?>
+
+                                            <!-- File Title (shown to everyone) -->
                                             <div class="form-group">
                                                 <label><?php _e(
                                                     "Title",
@@ -251,7 +385,7 @@ if (isset($_GET["confirm"])) {
                                                        ); ?>" />
                                             </div>
                                             
-                                            <!-- File Description -->
+                                            <!-- File Description (shown to everyone) -->
                                             <div class="form-group">
                                                 <label><?php _e(
                                                     "Description",
@@ -273,124 +407,6 @@ if (isset($_GET["confirm"])) {
 ) {
     echo $file->description;
 } ?></textarea>
-                                            </div>
-                                            
-                                            <!-- Document Title-->
-                                            <div class="form-group">
-                                                <label for="document_title_<?php echo $i; ?>"><?php _e(
-    "Document Title",
-    "cftp_admin"
-); ?></label>
-                                                <input type="text" id="document_title_<?php echo $i; ?>" name="file[<?php echo $i; ?>][document_title]" class="form-control"
-                                                       value="<?php echo htmlspecialchars(
-                                                           $file->document_title ??
-                                                               ""
-                                                       ); ?>"   
-                                                       placeholder="<?php _e(
-                                                           "Enter Document Title",
-                                                           "cftp_admin"
-                                                       ); ?>" />
-                                            </div>
-
-                                            <!-- Discipline Field (file-specific) -->
-                                            <div class="form-group">
-                                                <label for="discipline_<?php echo $i; ?>"><?php _e(
-    "Discipline",
-    "cftp_admin"
-); ?> *</label>
-                                                <select id="discipline_<?php echo $i; ?>" name="file[<?php echo $i; ?>][discipline]" class="form-select discipline-select" required>
-                                                    <?php try {
-                                                        $helper = new \ProjectSend\Classes\TransmittalHelper();
-                                                        echo $helper->generateDropdownHtmlWithAbbr(
-                                                            "discipline",
-                                                            $file->discipline ??
-                                                                "",
-                                                            true,
-                                                            true
-                                                        );
-                                                    } catch (Exception $e) {
-                                                        error_log(
-                                                            "Error loading disciplines: " .
-                                                                $e->getMessage()
-                                                        );
-                                                        echo '<option value="">Error loading disciplines</option>';
-                                                    } ?>
-                                                </select>
-                                            </div>
-
-                                            <!-- Deliverable Type Field (file-specific) -->
-                                            <div class="form-group">
-                                                <label for="deliverable_type_<?php echo $i; ?>"><?php _e(
-    "Deliverable Type",
-    "cftp_admin"
-); ?> *</label>
-                                                <select id="deliverable_type_<?php echo $i; ?>" name="file[<?php echo $i; ?>][deliverable_type]" class="form-select deliverable-type-select" required>
-                                                    <option value=""><?php _e(
-                                                        "Select Discipline First",
-                                                        "cftp_admin"
-                                                    ); ?></option>
-                                                    <?php if (
-                                                        !empty(
-                                                            $file->discipline
-                                                        ) &&
-                                                        !empty(
-                                                            $file->deliverable_type
-                                                        )
-                                                    ) {
-                                                        try {
-                                                            $helper = new \ProjectSend\Classes\TransmittalHelper();
-                                                            $deliverable_types = $helper->getDeliverableTypesByDiscipline(
-                                                                $file->discipline
-                                                            );
-                                                            foreach (
-                                                                $deliverable_types
-                                                                as $type
-                                                            ) {
-                                                                $selected =
-                                                                    $type[
-                                                                        "deliverable_type"
-                                                                    ] ==
-                                                                    $file->deliverable_type
-                                                                        ? " selected"
-                                                                        : "";
-                                                                $display_text = !empty(
-                                                                    $type[
-                                                                        "abbreviation"
-                                                                    ]
-                                                                )
-                                                                    ? $type[
-                                                                            "deliverable_type"
-                                                                        ] .
-                                                                        " (" .
-                                                                        $type[
-                                                                            "abbreviation"
-                                                                        ] .
-                                                                        ")"
-                                                                    : $type[
-                                                                        "deliverable_type"
-                                                                    ];
-                                                                echo '<option value="' .
-                                                                    htmlspecialchars(
-                                                                        $type[
-                                                                            "deliverable_type"
-                                                                        ]
-                                                                    ) .
-                                                                    '"' .
-                                                                    $selected .
-                                                                    ">" .
-                                                                    htmlspecialchars(
-                                                                        $display_text
-                                                                    ) .
-                                                                    "</option>";
-                                                            }
-                                                        } catch (Exception $e) {
-                                                            error_log(
-                                                                "Error loading deliverable types: " .
-                                                                    $e->getMessage()
-                                                            );
-                                                        }
-                                                    } ?>
-                                                </select>
                                             </div>
                                         </div>
                                     </div>
@@ -785,163 +801,6 @@ EOL;
                                         </div>
                                     </div>
                                 </div>
-
-                                <?php
-                                // Copy settings buttons
-                                $copy_buttons = [];
-                                if (count($editable) > 1) {
-                                    // Expiration
-                                    if (
-                                        CURRENT_USER_LEVEL != 0 ||
-                                        get_option(
-                                            "clients_can_set_expiration_date"
-                                        ) == "1"
-                                    ) {
-                                        $copy_buttons["expiration"] = [
-                                            "label" => __(
-                                                "Expiration settings",
-                                                "cftp_admin"
-                                            ),
-                                            "class" =>
-                                                "copy-expiration-settings",
-                                            "data" => [
-                                                "copy-from" =>
-                                                    "exp_checkbox_" . $i,
-                                                "copy-date-from" =>
-                                                    "file_expiry_date_" . $i,
-                                            ],
-                                        ];
-                                    }
-                                    // Public checkbox
-                                    if (
-                                        CURRENT_USER_LEVEL != 0 ||
-                                        current_user_can_upload_public()
-                                    ) {
-                                        $copy_buttons["public"] = [
-                                            "label" => __(
-                                                "Public settings",
-                                                "cftp_admin"
-                                            ),
-                                            "class" => "copy-public-settings",
-                                            "data" => [
-                                                "copy-from" =>
-                                                    "pub_checkbox_" . $i,
-                                            ],
-                                        ];
-                                    }
-                                    if (CURRENT_USER_LEVEL != 0) {
-                                        // Selected clients
-                                        $copy_buttons["clients"] = [
-                                            "label" => __(
-                                                "Selected clients",
-                                                "cftp_admin"
-                                            ),
-                                            "class" => "copy-all",
-                                            "data" => [
-                                                "type" => "clients",
-                                                "target" =>
-                                                    "clients_" . $file->id,
-                                            ],
-                                        ];
-                                        // Selected groups
-                                        $copy_buttons["groups"] = [
-                                            "label" => __(
-                                                "Selected groups",
-                                                "cftp_admin"
-                                            ),
-                                            "class" => "copy-all",
-                                            "data" => [
-                                                "type" => "groups",
-                                                "target" =>
-                                                    "groups_" . $file->id,
-                                            ],
-                                        ];
-                                        // Hidden status
-                                        $copy_buttons["hidden"] = [
-                                            "label" => __(
-                                                "Hidden status",
-                                                "cftp_admin"
-                                            ),
-                                            "class" => "copy-hidden-settings",
-                                            "data" => [
-                                                "copy-from" =>
-                                                    "hid_checkbox_" . $i,
-                                            ],
-                                        ];
-                                    }
-                                    if (
-                                        CURRENT_USER_LEVEL != 0 ||
-                                        get_option(
-                                            "clients_can_set_categories"
-                                        ) == "1"
-                                    ) {
-                                        // Categories
-                                        $copy_buttons["categories"] = [
-                                            "label" => __(
-                                                "Selected categories",
-                                                "cftp_admin"
-                                            ),
-                                            "class" => "copy-all",
-                                            "data" => [
-                                                "type" => "categories",
-                                                "target" =>
-                                                    "categories_" . $file->id,
-                                            ],
-                                        ];
-                                    }
-                                    if (CURRENT_USER_LEVEL != 0) {
-                                        // Folders
-                                        $copy_buttons["folder"] = [
-                                            "label" => __(
-                                                "Selected folder",
-                                                "cftp_admin"
-                                            ),
-                                            "class" => "copy-all",
-                                            "data" => [
-                                                "type" => "folder",
-                                                "target" =>
-                                                    "folder_" . $file->id,
-                                            ],
-                                        ];
-                                    }
-                                    if (count($copy_buttons) > 0) { ?>
-                                        <footer>
-                                            <div class="row">
-                                                <div class="col">
-                                                    <h3><?php _e(
-                                                        "Apply to all files",
-                                                        "cftp_admin"
-                                                    ); ?></h3>
-                                                    <?php foreach (
-                                                        $copy_buttons
-                                                        as $id => $button
-                                                    ) { ?>
-                                                        <button type="button" class="btn btn-sm btn-pslight mb-2 <?php echo $button[
-                                                            "class"
-                                                        ]; ?>"
-                                                            <?php foreach (
-                                                                $button["data"]
-                                                                as $key =>
-                                                                    $value
-                                                            ) {
-                                                                echo " data-" .
-                                                                    $key .
-                                                                    '="' .
-                                                                    $value .
-                                                                    '"';
-                                                            } ?>
-                                                        >
-                                                            <?php echo $button[
-                                                                "label"
-                                                            ]; ?>
-                                                        </button>
-                                                    <?php } ?>
-                                                </div>
-                                            </div>
-                                        </footer>
-                                    <?php }
-                                }
-                                ?>
                             </div>
                         </div>
                     </div>
@@ -978,6 +837,8 @@ EOL;
     }
     </style>
 
+    <?php if (CURRENT_USER_LEVEL != 0): ?>
+    <!-- JavaScript only for admin users -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
         // JavaScript for discipline/deliverable type dynamic dropdowns
@@ -1040,4 +901,5 @@ EOL;
         });
     });
     </script>
+    <?php endif; ?>
 </form>
