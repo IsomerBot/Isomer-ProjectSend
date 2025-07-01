@@ -385,9 +385,6 @@ class EmailNotifications
         // Get the first file to extract transmittal information
         $first_file_data = $this->files_data[$files[0]["file_id"]];
 
-        // Get the logo information using the system's branding functions
-        $logo_file_info = generate_logo_url();
-
         // BRAND-COMPLIANT HEADER following Isomer guidelines
         $html .=
             '<div style="background: #f8f9fa; padding: 15px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">';
@@ -395,6 +392,9 @@ class EmailNotifications
         // Left side - Logo with Isomer brand colors (proper clear space: 0.5X)
         $html .=
             '<div style="width: 140px; height: 50px; background: #f56600; border-radius: 4px; display: flex; align-items: center; justify-content: center; padding: 8px; margin-right: 20px;">';
+
+        // Check if logo file exists and get proper URL
+        $logo_file_info = $this->getLogoFileInfo();
 
         if ($logo_file_info["exists"] === true) {
             // Use the system's uploaded logo with proper sizing (respecting 5mm minimum from brand guide)
@@ -529,17 +529,17 @@ class EmailNotifications
             '<table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd; font-size: 12px; margin-bottom: 0;">';
         $html .= '<tr style="background: #f8f9fa; font-weight: bold;">';
         $html .=
-            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">File Title</th>';
+            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">File</th>';
         $html .=
-            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; width: 12%;">Revision</th>';
+            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Rev.</th>';
         $html .=
             '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Issue Status</th>';
         $html .=
-            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Document Title</th>';
+            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Document</th>';
         $html .=
             '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Discipline</th>';
         $html .=
-            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Deliverable Type</th>';
+            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Deliverable</th>';
         $html .= "</tr>";
 
         // CRITICAL FIX: Loop through ALL files and add a row for each
@@ -721,6 +721,88 @@ class EmailNotifications
             $statement->bindParam(":inactive", $notifications);
             $statement->execute();
         }
+    }
+
+    private function getLogoFileInfo()
+    {
+        try {
+            // Check if ProjectSend's logo function exists and works
+            if (function_exists("check_logo_file")) {
+                $logo_file_info = check_logo_file();
+
+                if (
+                    !empty($logo_file_info) &&
+                    isset($logo_file_info["exists"]) &&
+                    $logo_file_info["exists"] === true
+                ) {
+                    $is_local =
+                        strpos($_SERVER["HTTP_HOST"], "localhost") !== false;
+
+                    if ($is_local && file_exists($logo_file_info["path"])) {
+                        // Check file size to avoid issues (limit to 200KB for safety)
+                        $file_size = filesize($logo_file_info["path"]);
+                        if ($file_size > 204800) {
+                            // 200KB limit
+                            // File too large, use text fallback
+                            return [
+                                "exists" => false,
+                                "url" => "",
+                                "path" => $logo_file_info["path"],
+                                "method" => "file_too_large",
+                            ];
+                        }
+
+                        // Convert to base64 for email embedding (safe version)
+                        $image_data = file_get_contents(
+                            $logo_file_info["path"]
+                        );
+                        if ($image_data !== false) {
+                            $base64 = base64_encode($image_data);
+
+                            // Get mime type safely
+                            $extension = strtolower(
+                                pathinfo(
+                                    $logo_file_info["path"],
+                                    PATHINFO_EXTENSION
+                                )
+                            );
+                            $mime_type =
+                                $extension === "png"
+                                    ? "image/png"
+                                    : "image/jpeg";
+
+                            $data_url = "data:$mime_type;base64,$base64";
+
+                            return [
+                                "exists" => true,
+                                "url" => $data_url,
+                                "path" => $logo_file_info["path"],
+                                "method" => "base64_embedded",
+                            ];
+                        }
+                    } elseif (!$is_local) {
+                        // Production environment - use ProjectSend URL
+                        return [
+                            "exists" => true,
+                            "url" => $logo_file_info["url"],
+                            "path" => $logo_file_info["path"],
+                            "method" => "projectsend_url",
+                        ];
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            // Log error but continue with fallback
+            error_log("Logo loading error: " . $e->getMessage());
+        }
+
+        // Fallback to text logo
+        return [
+            "exists" => false,
+            "url" => "",
+            "path" => "",
+            "method" => "safe_fallback",
+        ];
     }
 }
 ?>

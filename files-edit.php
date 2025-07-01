@@ -89,9 +89,11 @@ if (isset($_POST["save"])) {
 
             // Get the next transmittal number for this project
             // This will be the SAME for all files in this upload batch
-            $next_transmittal_query = "SELECT LPAD(COALESCE(MAX(CAST(transmittal_number AS UNSIGNED)), 0) + 1, 4, '0') AS next_transmittal
-                                      FROM tbl_files 
-                                      WHERE project_number = :project_number";
+            $next_transmittal_query = "SELECT LPAD(COALESCE(MAX(CAST(SUBSTRING(transmittal_name, -4) AS UNSIGNED)), 0) + 1, 4, '0') AS next_transmittal
+            FROM tbl_files 
+            WHERE project_number = :project_number 
+            AND transmittal_name IS NOT NULL 
+            AND transmittal_name != ''";
             $stmt = $dbh->prepare($next_transmittal_query);
             $stmt->execute([":project_number" => $global_project_number]);
             $next_transmittal_number = $stmt->fetchColumn();
