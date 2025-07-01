@@ -133,7 +133,7 @@ if (isset($_POST["save"])) {
                     $statement = $dbh->prepare($query);
                     $statement->execute([
                         ":file_id" => $file_data_from_post["id"],
-                        ":transmittal_number" => $next_transmittal_number,
+                        ":transmittal_number" => $generated_transmittal_name,
                         ":transmittal_name" => $generated_transmittal_name,
                         ":project_name" => $global_project_name,
                         ":project_number" => $global_project_number,
