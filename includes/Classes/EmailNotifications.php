@@ -702,7 +702,7 @@ class EmailNotifications
 
         // END OF TRANSMITTAL
         $html .=
-            '<div style="text-align: center; margin-top: 20px; padding: 15px; border-top: 2px solid #ddd; font-weight: bold;">';
+            '<div style="text-align: center; margin-top: 20px; padding: 15px;  font-weight: bold;">';
         $html .= "************END OF TRANSMITTAL************";
         $html .= "</div>";
 
