@@ -3,6 +3,10 @@ define("VIEW_TYPE", "template");
 require_once "../bootstrap.php";
 
 if (!defined("CURRENT_USER_USERNAME")) {
+    if (!empty($_SERVER["QUERY_STRING"])) {
+        $_SESSION["redirect_after_login"] = $_SERVER["REQUEST_URI"];
+    }
+
     ps_redirect("../index.php");
 }
 
@@ -25,25 +29,50 @@ $filter_transmittal = isset($_GET["transmittal"])
 // Handle both new format (DOM2504-0001) and legacy format (0001)
 $filter_project = null;
 $filter_transmittal_num = null;
+$display_transmittal = null; // Add this for proper display
 
 if ($filter_transmittal) {
     if (strpos($filter_transmittal, "-") !== false) {
-        // New format: PROJECT-TRANSMITTAL (e.g., DOM2504-0001)
-        list($filter_project, $filter_transmittal_num) = explode(
-            "-",
-            $filter_transmittal,
-            2
-        );
+        // Check if this looks like: PROJECT-PROJECT-T-XXXX format
+        if (
+            preg_match(
+                '/^([A-Z0-9]+)-\1-T-(\d+)$/',
+                $filter_transmittal,
+                $matches
+            )
+        ) {
+            // Handle duplicate project format: DOM2502-DOM2502-T-0009
+            $filter_project = $matches[1];
+            $filter_transmittal_num = $matches[2];
+            $display_transmittal =
+                $filter_project . "-T-" . $filter_transmittal_num; // DOM2502-T-0009
+        } elseif (
+            preg_match('/^([A-Z0-9]+)-(.+)$/', $filter_transmittal, $matches)
+        ) {
+            // Handle normal format: PROJECT-TRANSMITTAL (e.g., DOM2504-0001)
+            $filter_project = $matches[1];
+            $filter_transmittal_num = $matches[2];
+            $display_transmittal = $filter_transmittal; // Use as-is
+        } else {
+            // Fallback to original logic
+            list($filter_project, $filter_transmittal_num) = explode(
+                "-",
+                $filter_transmittal,
+                2
+            );
+            $display_transmittal = $filter_transmittal;
+        }
     } else {
         // Legacy format: just transmittal number
         $filter_transmittal_num = $filter_transmittal;
+        $display_transmittal = $filter_transmittal;
     }
 }
 
 // If transmittal filter is requested, we need to modify the database query
 if (!empty($filter_transmittal)) {
     // Set a global variable that can be used to modify SQL queries
-    $GLOBALS["TRANSMITTAL_FILTER"] = $filter_transmittal;
+    $GLOBALS["TRANSMITTAL_FILTER"] = $display_transmittal;
 }
 
 // Now load the actual default template with the bug fixed
@@ -55,13 +84,6 @@ function get_transmittal_file_count($transmittal_number, $user_id)
     global $dbh;
 
     // Using the correct table name from your schema
-    $count = $dbh->get_var(
-        $dbh->prepare(
-            "SELECT COUNT(*) FROM " .
-                TABLE_FILES .
-                " WHERE transmittal_number = ? AND user_id = ?"
-        )
-    );
     $stmt = $dbh->prepare(
         "SELECT COUNT(*) FROM " .
             TABLE_FILES .
@@ -88,7 +110,7 @@ if (!empty($filter_transmittal)) {
 
         // Store this for potential use in the template
         $GLOBALS["TRANSMITTAL_FILE_COUNT"] = $file_count;
-        $GLOBALS["TRANSMITTAL_NUMBER"] = $filter_transmittal;
+        $GLOBALS["TRANSMITTAL_NUMBER"] = $display_transmittal; // Use clean display version
     }
 }
 
@@ -123,11 +145,11 @@ if (!empty($filter_transmittal)) {
 
     echo '<script>
     document.addEventListener("DOMContentLoaded", function() {
-        // Add filter notice to the page
+
         var notice = document.createElement("div");
         notice.className = "transmittal-filter-notice";
         notice.innerHTML = "<div><strong>📁 Transmittal Filter Active:</strong> Showing files from transmittal <strong>' .
-        htmlspecialchars($filter_transmittal) .
+        htmlspecialchars($display_transmittal) . // Use clean display version
         '</strong> | <a href=\"" + window.location.pathname + "\" style=\"color: #1976d2; text-decoration: none;\">🔄 Show All Files</a></div>";
         
         // Insert notice at the top of content area
@@ -142,22 +164,11 @@ if (!empty($filter_transmittal)) {
         var currentTitle = document.title;
         if (currentTitle && !currentTitle.includes("Transmittal")) {
             document.title = "Transmittal ' .
-        htmlspecialchars($filter_transmittal) .
+        htmlspecialchars($display_transmittal) . // Use clean display version
         ' - " + currentTitle;
         }
     });
     </script>';
 }
 
-// Debug information (remove in production)
-if (defined("DEBUG") && DEBUG && !empty($filter_transmittal)) {
-    echo "<!-- DEBUG: Transmittal filter active for: " .
-        htmlspecialchars($filter_transmittal) .
-        " -->";
-    if (isset($GLOBALS["TRANSMITTAL_FILE_COUNT"])) {
-        echo "<!-- DEBUG: File count: " .
-            $GLOBALS["TRANSMITTAL_FILE_COUNT"] .
-            " -->";
-    }
-}
 ?>

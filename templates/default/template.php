@@ -96,17 +96,14 @@ $filters_form = [
     "action" => "",
     "items" => [],
 ];
-
 // Add transmittal filter dropdown
 $user_transmittals = get_user_transmittals_for_filter($client_info["id"]);
 if (!empty($user_transmittals)) {
     $transmittal_filter = [];
     foreach ($user_transmittals as $transmittal) {
-        // Create unique key: PROJECT-TRANSMITTAL (e.g., DOM2504-0001)
-        $unique_key =
-            $transmittal["project_number"] .
-            "-" .
-            $transmittal["transmittal_number"];
+        // Use transmittal_number directly since it already contains the full identifier
+
+        $unique_key = $transmittal["transmittal_number"];
 
         // Clean and simple: just the key and file count
         $display_name =
@@ -170,21 +167,34 @@ include_once LAYOUT_DIR . DS . "breadcrumbs.php";
 
 include_once LAYOUT_DIR . DS . "folders-nav.php";
 ?>
-
 <!-- Clean transmittal filter banner - only shows when filtering -->
 <?php if (!empty($filter_by_transmittal)): ?>
 <div class="alert alert-info" style="margin: 20px 0; border-radius: 5px;">
     <strong>📁 Transmittal Filter Active:</strong> 
-    Showing files from transmittal <strong><?php echo htmlspecialchars(
-        $filter_by_transmittal
-    ); ?></strong>
+    Showing files from transmittal <strong><?php
+    // Clean the transmittal display - check if it has the duplicate pattern
+    $display_transmittal = $filter_by_transmittal;
+    if (
+        preg_match(
+            '/^([A-Z0-9]+)-\1-T-(\d+)$/',
+            $filter_by_transmittal,
+            $matches
+        )
+    ) {
+        // Remove duplicate: DOM2504-DOM2504-T-0002 becomes DOM2504-T-0002
+        $display_transmittal = $matches[1] . "-T-" . $matches[2];
+    }
+    // Also check if GLOBALS has a clean version
+    if (isset($GLOBALS["TRANSMITTAL_NUMBER"])) {
+        $display_transmittal = $GLOBALS["TRANSMITTAL_NUMBER"];
+    }
+    echo htmlspecialchars($display_transmittal);
+    ?></strong>
     <?php // Just show file count - keep it simple
+
     foreach ($user_transmittals as $transmittal) {
-        $unique_key =
-            $transmittal["project_number"] .
-            "-" .
-            $transmittal["transmittal_number"];
-        if ($unique_key == $filter_by_transmittal) {
+        $unique_key = $transmittal["transmittal_number"];
+        if ($unique_key == $display_transmittal) {
             echo " (" . $transmittal["file_count"] . " files)";
             break;
         }
@@ -192,6 +202,7 @@ include_once LAYOUT_DIR . DS . "folders-nav.php";
     | <a href="index.php" class="alert-link" style="text-decoration: none;">🔄 Show All Files</a>
 </div>
 <?php endif; ?>
+
 
 <form action="" name="files_list" method="get" class="form-inline batch_actions">
     <div class="row">

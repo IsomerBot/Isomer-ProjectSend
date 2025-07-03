@@ -327,125 +327,181 @@ class EmailNotifications
         if (empty($files)) {
             return "";
         }
-
         $html = "";
 
-        // EMAIL-SAFE WEB FONTS IMPORT
-        // Note: Email clients have limited font support, so we include fallbacks
+        // BRAND-COMPLIANT EMAIL STYLES - Updated to match Isomer guidelines
         $html .= '<style>
-            @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap");
-            
-            /* Isomer Brand Typography Styles */
-            .isomer-h1 {
-                font-family: "Montserrat", "Made Tommy", Arial, sans-serif;
-                font-weight: 700;
-                font-size: 16px;
-                text-transform: uppercase;
-                letter-spacing: 1px;
-                color: #252c3a;
-                margin: 0;
-            }
-            
-            .isomer-h2 {
-                font-family: "Montserrat", "Made Tommy", Arial, sans-serif;
-                font-weight: 400;
-                font-size: 14px;
-                text-transform: uppercase;
-                color: #252c3a;
-                margin: 0;
-            }
-            
-            .isomer-h3 {
-                font-family: "Montserrat", "Metropolis", Arial, sans-serif;
-                font-weight: 800;
-                font-size: 11px;
-                text-transform: uppercase;
-                letter-spacing: 2px;
-                color: #252c3a;
-                margin: 0;
-            }
-            
-            .isomer-body {
-                font-family: "Montserrat", "Metropolis", Arial, sans-serif;
-                font-weight: 400;
-                font-size: 12px;
-                color: #252c3a;
-                line-height: 1.4;
-            }
-            
-            .isomer-bold {
-                font-weight: 600;
-            }
-        </style>';
+           /* Import Isomer Brand Fonts - Made Tommy and Metropolis */
+           @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&display=swap");
+           
+           /* Isomer Brand Typography Styles - Updated to match brand guide */
+           .isomer-h1 {
+               font-family: "Montserrat", "Made Tommy", Arial, sans-serif;
+               font-weight: 700;
+               font-size: 40px;
+               text-transform: uppercase;
+               letter-spacing: 10px;
+               color: #252c3a;
+               margin: 0;
+           }
+           
+           .isomer-h2 {
+               font-family: "Montserrat", "Made Tommy", Arial, sans-serif;
+               font-weight: 300;
+               font-size: 30px;
+               text-transform: uppercase;
+               color: #252c3a;
+               margin: 0;
+           }
+           
+           .isomer-h3 {
+               font-family: "Montserrat", "Metropolis", Arial, sans-serif;
+               font-weight: 800;
+               font-size: 14px;
+               text-transform: uppercase;
+               letter-spacing: 25px;
+               color: #252c3a;
+               margin: 0;
+           }
+           
+           .isomer-body {
+               font-family: "Montserrat", "Metropolis", Arial, sans-serif;
+               font-weight: 400;
+               font-size: 12px;
+               color: #252c3a;
+               line-height: 1.4;
+           }
+           
+           /* Field labels - using brand typography */
+           .field-label {
+               font-family: "Montserrat", "Metropolis", Arial, sans-serif;
+               font-weight: 800;
+               font-size: 14px;
+               text-transform: uppercase;
+               letter-spacing: 2px;
+               color: #252c3a;
+           }
+           
+           /* Email-specific scaling for readability */
+           .email-h1 {
+               font-family: "Montserrat", "Made Tommy", Arial, sans-serif;
+               font-weight: 700;
+               font-size: 20px;
+               text-transform: uppercase;
+               letter-spacing: 2px;
+               color: #252c3a;
+               margin: 0;
+           }
+           
+           .email-h2 {
+               font-family: "Montserrat", "Made Tommy", Arial, sans-serif;
+               font-weight: 300;
+               font-size: 16px;
+               text-transform: uppercase;
+               color: #252c3a;
+               margin: 0;
+           }
+           
+           .email-h3 {
+               font-family: "Montserrat", "Metropolis", Arial, sans-serif;
+               font-weight: 800;
+               font-size: 12px;
+               text-transform: uppercase;
+               letter-spacing: 2px;
+               color: #252c3a;
+               margin: 0;
+           }
+       </style>';
 
-        // Header section with Isomer brand compliance
+        // Header section with brand-compliant colors and spacing
         $html .=
             '<div style="font-family: Montserrat, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #fff;">';
 
         // Get the first file to extract transmittal information
         $first_file_data = $this->files_data[$files[0]["file_id"]];
 
-        // BRAND-COMPLIANT HEADER following Isomer guidelines
+        // BRAND-COMPLIANT HEADER - Using exact brand colors
         $html .=
-            '<div style="background: #f8f9fa; padding: 15px; border-bottom: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;">';
+            '<div style="background: #252c3a; padding: 15px; display: flex; justify-content: space-between; align-items: center;">';
 
-        // Left side - Logo with Isomer brand colors (proper clear space: 0.5X)
+        // Left side - Logo with proper clear space (0.5X minimum)
         $html .=
-            '<div style="width: 140px; height: 50px; background: #f56600; border-radius: 4px; display: flex; align-items: center; justify-content: center; padding: 8px; margin-right: 20px;">';
+            '<div style="margin-right: 20px; display: flex; align-items: center;">';
 
         // Check if logo file exists and get proper URL
         $logo_file_info = $this->getLogoFileInfo();
 
         if ($logo_file_info["exists"] === true) {
-            // Use the system's uploaded logo with proper sizing (respecting 5mm minimum from brand guide)
+            // Logo with proper clear space - minimum 0.5X as per brand guide
             $html .=
-                '<img src="' .
-                $logo_file_info["url"] .
-                '" alt="Isomer Project Group" style="max-height: 40px; max-width: 120px; width: auto; height: auto;" />';
+                '<div style="padding: 8px; background-color: white; display: flex; align-items: center; justify-content: center;">';
+
+            if ($logo_file_info["method"] === "svg_inline") {
+                $svg_content = $logo_file_info["svg_content"];
+                // Ensure minimum 5mm (approximately 50px) as per brand guide
+                $svg_content = str_replace(
+                    "<svg",
+                    '<svg style="height: 50px; width: auto;"',
+                    $svg_content
+                );
+                $html .= $svg_content;
+            } else {
+                // Minimum 5mm size requirement
+                $html .=
+                    '<img src="' .
+                    $logo_file_info["url"] .
+                    '" alt="Isomer Project Group" style="height: 50px; width: auto; max-width: 200px;" />';
+            }
+
+            $html .= "</div>";
         } else {
-            // Fallback: Isomer brand text with exact brand typography
-            $html .= '<div style="color: white; text-align: center;">';
+            // Fallback: Brand-compliant text using exact brand colors
             $html .=
-                '<div class="isomer-h1" style="color: white; font-size: 16px; margin-bottom: 2px;">ISOMER</div>';
+                '<div style="padding: 8px; display: flex; align-items: center; justify-content: center;">';
+            $html .= '<div style="color: white; text-align: left;">';
             $html .=
-                '<div class="isomer-h2" style="color: white; font-size: 12px;">PROJECT GROUP</div>';
+                '<div class="email-h1" style="color: white; margin-bottom: 2px;">ISOMER</div>';
+            $html .=
+                '<div class="email-h2" style="color: #f56600; font-size: 14px;">PROJECT GROUP</div>';
+            $html .= "</div>";
             $html .= "</div>";
         }
 
         $html .= "</div>";
 
-        // Right side - Transmittal info with brand typography
+        // Right side - BIGGER, BOLDER "TRANSMITTAL"
         $html .= '<div style="text-align: right; margin-left: auto;">';
         $html .=
-            '<div class="isomer-h1" style="margin-bottom: 2px;">TRANSMITTAL</div>';
+            '<div style="color: white; font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 24px; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 4px;">TRANSMITTAL</div>';
         $html .=
-            '<div class="isomer-h1" style="color: #252c3a;">' .
+            '<div class="email-h1" style="color: #f56600; font-weight: 800;">' .
             htmlspecialchars($first_file_data["transmittal_name"] ?? "") .
             "</div>";
         $html .= "</div>";
         $html .= "</div>"; // End header section
 
-        // Project information section with brand-compliant typography
+        // Project information section - UPDATED: Bold labels, more spacing between columns
         $html .=
-            '<div style="padding: 15px; border-bottom: 1px solid #eee; background: #fff;">';
+            '<div style="padding: 20px; border-bottom: 1px solid #c5e0ea; background: #fff;">';
 
-        // Two-column layout for project info
-        $html .= '<div style="display: flex; justify-content: space-between;">';
+        // Two-column layout with MORE SPACING
+        $html .=
+            '<div style="display: flex; justify-content: space-between; gap: 50px;">';
 
-        // Left column with brand-compliant typography
-        $html .= '<div style="flex: 1; margin-right: 30px;">';
+        // Left column with BOLDER labels
+        $html .= '<div style="flex: 1;">';
 
         if (!empty($first_file_data["project_number"])) {
             $html .=
-                '<div class="isomer-body" style="margin-bottom: 8px;"><span class="isomer-bold" style="color: #252c3a;">Project No:</span> ' .
+                '<div class="isomer-body" style="margin-bottom: 20px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a;">PROJECT NO:</span><br>' .
                 htmlspecialchars($first_file_data["project_number"]) .
                 "</div>";
         }
 
-        // Add transmittal date with brand typography
+        // Add transmittal date
         $formatted_date = date("F jS, Y");
         $html .=
-            '<div class="isomer-body" style="margin-bottom: 8px;"><span class="isomer-bold" style="color: #252c3a;">Transmittal Date:</span> ' .
+            '<div class="isomer-body" style="margin-bottom: 20px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a;">TRANSMITTAL DATE:</span><br>' .
             $formatted_date .
             "</div>";
 
@@ -467,16 +523,16 @@ class EmailNotifications
         }
 
         $html .=
-            '<div class="isomer-body" style="margin-bottom: 8px;"><span class="isomer-bold" style="color: #252c3a;">To:</span> ' .
+            '<div class="isomer-body" style="margin-bottom: 20px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a;">TO:</span><br>' .
             htmlspecialchars($recipients_text) .
             "</div>";
         $html .= "</div>";
 
-        // Right column
+        // Right column with BOLDER labels
         $html .= '<div style="flex: 1;">';
         if (!empty($first_file_data["project_name"])) {
             $html .=
-                '<div class="isomer-body" style="margin-bottom: 8px;"><span class="isomer-bold" style="color: #252c3a;">Project Name:</span> ' .
+                '<div class="isomer-body" style="margin-bottom: 20px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a;">PROJECT NAME:</span><br>' .
                 htmlspecialchars($first_file_data["project_name"]) .
                 "</div>";
         }
@@ -485,7 +541,7 @@ class EmailNotifications
             ? htmlspecialchars($first_file_data["uploader_name"])
             : "Isomer Project Group";
         $html .=
-            '<div class="isomer-body" style="margin-bottom: 8px;"><span class="isomer-bold" style="color: #252c3a;">From:</span> ' .
+            '<div class="isomer-body" style="margin-bottom: 20px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a;">FROM:</span><br>' .
             $from_text .
             "</div>";
         $html .= "</div>";
@@ -493,12 +549,13 @@ class EmailNotifications
         $html .= "</div>"; // End two-column layout
         $html .= "</div>"; // End project info section
 
-        // Comments section with brand typography
-        $html .= '<div style="padding: 15px; margin-bottom: 15px;">';
+        // COMMENTS SECTION - Same boldness as project labels
         $html .=
-            '<div class="isomer-h3" style="margin-bottom: 5px;">COMMENTS:</div>';
+            '<div style="padding: 20px; margin-bottom: 0; background: #fff;">';
         $html .=
-            '<div style="border: 1px solid #ddd; padding: 10px; min-height: 60px; background: #fafafa;">';
+            '<div style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a; margin-bottom: 8px;">COMMENTS:</div>';
+        $html .=
+            '<div style="border: 1px solid #c5e0ea; padding: 15px; min-height: 60px; background: #fafafa;">';
 
         $transmittal_comments = $this->getTransmittalComments(
             $first_file_data["transmittal_number"]
@@ -517,29 +574,30 @@ class EmailNotifications
         $html .= "</div>";
         $html .= "</div>";
 
-        // Section above the files table with brand typography
-        $html .= '<div style="padding: 15px;">';
+        // FILES SECTION - Same boldness for main header
+        $html .= '<div style="padding: 20px; background: #fff;">';
         $html .=
-            '<div class="isomer-h1" style="text-align: center; margin-bottom: 10px;">ISOMER TRANSMITTAL AVAILABLE FOR DOWNLOAD</div>';
+            '<div style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 16px; text-transform: uppercase; letter-spacing: 2px; color: #252c3a; text-align: center; margin-bottom: 15px;">ISOMER TRANSMITTAL AVAILABLE FOR DOWNLOAD</div>';
         $html .=
-            '<div class="isomer-body" style="margin-bottom: 15px;">The following deliverables have been transmitted from Isomer Project Group</div>';
+            '<div class="isomer-body" style="margin-bottom: 20px; text-align: center;">The following deliverables have been transmitted from Isomer Project Group</div>';
 
-        // FILES TABLE - FIXED VERSION
+        // FILES TABLE - Blue header background with white font
         $html .=
             '<table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd; font-size: 12px; margin-bottom: 0;">';
-        $html .= '<tr style="background: #f8f9fa; font-weight: bold;">';
         $html .=
-            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">File</th>';
+            '<tr style="background: #252c3a; font-weight: bold; color: white;">';
         $html .=
-            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Rev.</th>';
+            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">File</th>';
         $html .=
-            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Issue Status</th>';
+            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">Rev.</th>';
         $html .=
-            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Document</th>';
+            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">Issue Status</th>';
         $html .=
-            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Discipline</th>';
+            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">Document</th>';
         $html .=
-            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Deliverable</th>';
+            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">Discipline</th>';
+        $html .=
+            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">Deliverable</th>';
         $html .= "</tr>";
 
         // CRITICAL FIX: Loop through ALL files and add a row for each
@@ -723,70 +781,109 @@ class EmailNotifications
         }
     }
 
+    /**
+     * REPLACE YOUR getLogoFileInfo() METHOD WITH THIS VERSION (handles large files better)
+     */
     private function getLogoFileInfo()
     {
         try {
-            // Check if ProjectSend's logo function exists and works
-            if (function_exists("check_logo_file")) {
-                $logo_file_info = check_logo_file();
+            // Use ProjectSend's actual function name
+            if (function_exists("generate_logo_url")) {
+                $logo_file_info = generate_logo_url();
 
                 if (
                     !empty($logo_file_info) &&
                     isset($logo_file_info["exists"]) &&
                     $logo_file_info["exists"] === true
                 ) {
-                    $is_local =
-                        strpos($_SERVER["HTTP_HOST"], "localhost") !== false;
+                    // Check if it's a local file that we can embed
+                    if (
+                        isset($logo_file_info["dir"]) &&
+                        file_exists($logo_file_info["dir"])
+                    ) {
+                        // Check file size - if too large, use URL instead of embedding
+                        $file_size = filesize($logo_file_info["dir"]);
 
-                    if ($is_local && file_exists($logo_file_info["path"])) {
-                        // Check file size to avoid issues (limit to 200KB for safety)
-                        $file_size = filesize($logo_file_info["path"]);
-                        if ($file_size > 204800) {
-                            // 200KB limit
-                            // File too large, use text fallback
-                            return [
-                                "exists" => false,
-                                "url" => "",
-                                "path" => $logo_file_info["path"],
-                                "method" => "file_too_large",
-                            ];
-                        }
+                        // INCREASED LIMIT: Try to embed files up to 500KB
+                        // If larger than 500KB, use absolute URL instead
+                        if ($file_size <= 512000) {
+                            // 500KB limit
 
-                        // Convert to base64 for email embedding (safe version)
-                        $image_data = file_get_contents(
-                            $logo_file_info["path"]
-                        );
-                        if ($image_data !== false) {
-                            $base64 = base64_encode($image_data);
-
-                            // Get mime type safely
-                            $extension = strtolower(
+                            // Get file extension
+                            $file_extension = strtolower(
                                 pathinfo(
-                                    $logo_file_info["path"],
+                                    $logo_file_info["dir"],
                                     PATHINFO_EXTENSION
                                 )
                             );
-                            $mime_type =
-                                $extension === "png"
-                                    ? "image/png"
-                                    : "image/jpeg";
 
-                            $data_url = "data:$mime_type;base64,$base64";
+                            // Handle SVG files differently
+                            if ($file_extension === "svg") {
+                                // For SVG, we can inline it directly in HTML
+                                $svg_content = file_get_contents(
+                                    $logo_file_info["dir"]
+                                );
+                                return [
+                                    "exists" => true,
+                                    "url" => "",
+                                    "svg_content" => $svg_content,
+                                    "method" => "svg_inline",
+                                    "path" => $logo_file_info["dir"],
+                                ];
+                            } else {
+                                // For other image types, convert to base64
+                                $image_data = file_get_contents(
+                                    $logo_file_info["dir"]
+                                );
+                                if ($image_data !== false) {
+                                    $base64 = base64_encode($image_data);
 
-                            return [
-                                "exists" => true,
-                                "url" => $data_url,
-                                "path" => $logo_file_info["path"],
-                                "method" => "base64_embedded",
-                            ];
+                                    // Get mime type properly
+                                    $mime_types = [
+                                        "jpg" => "image/jpeg",
+                                        "jpeg" => "image/jpeg",
+                                        "png" => "image/png",
+                                        "gif" => "image/gif",
+                                    ];
+                                    $mime_type =
+                                        $mime_types[$file_extension] ??
+                                        "image/jpeg";
+
+                                    $data_url = "data:$mime_type;base64,$base64";
+
+                                    return [
+                                        "exists" => true,
+                                        "url" => $data_url,
+                                        "path" => $logo_file_info["dir"],
+                                        "method" => "base64_embedded",
+                                    ];
+                                }
+                            }
                         }
-                    } elseif (!$is_local) {
-                        // Production environment - use ProjectSend URL
+
+                        // If file is too large for embedding OR base64 failed, use absolute URL
+                        $absolute_url = $this->makeAbsoluteUrl(
+                            $logo_file_info["url"]
+                        );
+
                         return [
                             "exists" => true,
-                            "url" => $logo_file_info["url"],
-                            "path" => $logo_file_info["path"],
-                            "method" => "projectsend_url",
+                            "url" => $absolute_url,
+                            "path" => $logo_file_info["dir"],
+                            "method" => "absolute_url_large_file",
+                            "file_size" => $file_size,
+                        ];
+                    } else {
+                        // If file doesn't exist locally, try to use the URL directly
+                        $absolute_url = $this->makeAbsoluteUrl(
+                            $logo_file_info["url"]
+                        );
+
+                        return [
+                            "exists" => true,
+                            "url" => $absolute_url,
+                            "path" => $logo_file_info["dir"] ?? "",
+                            "method" => "absolute_url",
                         ];
                     }
                 }
@@ -803,6 +900,32 @@ class EmailNotifications
             "path" => "",
             "method" => "safe_fallback",
         ];
+    }
+    /**
+     * Convert relative URL to absolute URL for emails
+     */
+    private function makeAbsoluteUrl($relative_url)
+    {
+        // If already absolute, return as-is
+        if (filter_var($relative_url, FILTER_VALIDATE_URL)) {
+            return $relative_url;
+        }
+
+        // Get the base URL from ProjectSend configuration
+        $protocol =
+            !empty($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] !== "off"
+                ? "https://"
+                : "http://";
+        $host = $_SERVER["HTTP_HOST"] ?? "localhost";
+        $base_url = $protocol . $host;
+
+        // If BASE_URI is defined, use it
+        if (defined("BASE_URI")) {
+            $base_url .= rtrim(BASE_URI, "/");
+        }
+
+        // Combine with relative URL
+        return $base_url . "/" . ltrim($relative_url, "/");
     }
 }
 ?>

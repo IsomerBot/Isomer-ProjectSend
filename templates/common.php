@@ -209,25 +209,11 @@ if (!empty($found_all_files_array)) {
 
     $files_query .= ")";
 
-    // TRANSMITTAL FILTERING - Updated to handle project-specific transmittals
+    // TRANSMITTAL FILTERING - Fixed to use transmittal_number directly
     if (!empty($GLOBALS["TRANSMITTAL_FILTER"])) {
-        // Check if transmittal contains project number (format: DOM2504-0001)
-        if (strpos($GLOBALS["TRANSMITTAL_FILTER"], "-") !== false) {
-            // Split project number and transmittal number
-            list($project_num, $transmittal_num) = explode(
-                "-",
-                $GLOBALS["TRANSMITTAL_FILTER"],
-                2
-            );
-            $files_query .=
-                " AND project_number = :project_number AND transmittal_number = :transmittal_number";
-            $params[":project_number"] = $project_num;
-            $params[":transmittal_number"] = $transmittal_num;
-        } else {
-            // Legacy support: just transmittal number (but this will show multiple projects)
-            $files_query .= " AND transmittal_number = :transmittal_number";
-            $params[":transmittal_number"] = $GLOBALS["TRANSMITTAL_FILTER"];
-        }
+        // Simply filter by the full transmittal_number since it contains the complete identifier
+        $files_query .= " AND transmittal_number = :transmittal_number";
+        $params[":transmittal_number"] = $GLOBALS["TRANSMITTAL_FILTER"];
     }
 
     /** Add the search terms */
