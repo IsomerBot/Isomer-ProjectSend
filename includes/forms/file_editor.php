@@ -801,6 +801,171 @@ EOL;
                                         </div>
                                     </div>
                                 </div>
+
+                                <?php
+                                // Copy settings buttons
+                                $copy_buttons = [];
+                                if (count($editable) > 1) {
+                                    // Expiration
+                                    if (
+                                        CURRENT_USER_LEVEL != 0 ||
+                                        get_option(
+                                            "clients_can_set_expiration_date"
+                                        ) == "1"
+                                    ) {
+                                        $copy_buttons["expiration"] = [
+                                            "label" => __(
+                                                "Expiration settings",
+                                                "cftp_admin"
+                                            ),
+                                            "class" =>
+                                                "copy-expiration-settings",
+                                            "data" => [
+                                                "copy-from" =>
+                                                    "exp_checkbox_" . $i,
+                                                "copy-date-from" =>
+                                                    "file_expiry_date_" . $i,
+                                            ],
+                                        ];
+                                    }
+                                    // Public checkbox
+                                    if (
+                                        CURRENT_USER_LEVEL != 0 ||
+                                        current_user_can_upload_public()
+                                    ) {
+                                        $copy_buttons["public"] = [
+                                            "label" => __(
+                                                "Public settings",
+                                                "cftp_admin"
+                                            ),
+                                            "class" => "copy-public-settings",
+                                            "data" => [
+                                                "copy-from" =>
+                                                    "pub_checkbox_" . $i,
+                                            ],
+                                        ];
+                                    }
+
+                                    if (CURRENT_USER_LEVEL != 0) {
+                                        // Selected clients
+                                        $copy_buttons["clients"] = [
+                                            "label" => __(
+                                                "Selected clients",
+                                                "cftp_admin"
+                                            ),
+                                            "class" => "copy-all",
+                                            "data" => [
+                                                "type" => "clients",
+                                                "target" =>
+                                                    "clients_" . $file->id,
+                                            ],
+                                        ];
+
+                                        // Selected groups
+                                        $copy_buttons["groups"] = [
+                                            "label" => __(
+                                                "Selected groups",
+                                                "cftp_admin"
+                                            ),
+                                            "class" => "copy-all",
+                                            "data" => [
+                                                "type" => "groups",
+                                                "target" =>
+                                                    "groups_" . $file->id,
+                                            ],
+                                        ];
+
+                                        // Hidden status
+                                        $copy_buttons["hidden"] = [
+                                            "label" => __(
+                                                "Hidden status",
+                                                "cftp_admin"
+                                            ),
+                                            "class" => "copy-hidden-settings",
+                                            "data" => [
+                                                "copy-from" =>
+                                                    "hid_checkbox_" . $i,
+                                            ],
+                                        ];
+                                    }
+
+                                    if (
+                                        CURRENT_USER_LEVEL != 0 ||
+                                        get_option(
+                                            "clients_can_set_categories"
+                                        ) == "1"
+                                    ) {
+                                        // Categories
+                                        $copy_buttons["categories"] = [
+                                            "label" => __(
+                                                "Selected categories",
+                                                "cftp_admin"
+                                            ),
+                                            "class" => "copy-all",
+                                            "data" => [
+                                                "type" => "categories",
+                                                "target" =>
+                                                    "categories_" . $file->id,
+                                            ],
+                                        ];
+                                    }
+
+                                    if (CURRENT_USER_LEVEL != 0) {
+                                        // Folders
+                                        $copy_buttons["folder"] = [
+                                            "label" => __(
+                                                "Selected folder",
+                                                "cftp_admin"
+                                            ),
+                                            "class" => "copy-all",
+                                            "data" => [
+                                                "type" => "folder",
+                                                "target" =>
+                                                    "folder_" . $file->id,
+                                            ],
+                                        ];
+                                    }
+
+                                    if (count($copy_buttons) > 0) { ?>
+                                            <footer>
+                                                <div class="row">
+                                                    <div class="col">
+                                                        <h3><?php _e(
+                                                            "Apply to all files",
+                                                            "cftp_admin"
+                                                        ); ?></h3>
+                                                        <?php foreach (
+                                                            $copy_buttons
+                                                            as $id => $button
+                                                        ) { ?>
+                                                            <button type="button" class="btn btn-sm btn-pslight mb-2 <?php echo $button[
+                                                                "class"
+                                                            ]; ?>"
+                                                                <?php foreach (
+                                                                    $button[
+                                                                        "data"
+                                                                    ]
+                                                                    as $key =>
+                                                                        $value
+                                                                ) {
+                                                                    echo " data-" .
+                                                                        $key .
+                                                                        '="' .
+                                                                        $value .
+                                                                        '"';
+                                                                } ?>
+                                                            >
+                                                                <?php echo $button[
+                                                                    "label"
+                                                                ]; ?>
+                                                            </button>
+                                                        <?php } ?>
+                                                    </div>
+                                                </div>
+                                            </footer>
+                                <?php }
+                                }
+                                ?>
                             </div>
                         </div>
                     </div>
