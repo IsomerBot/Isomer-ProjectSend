@@ -122,10 +122,12 @@ if (!empty($user_transmittals)) {
     ];
 }
 
-// Add category filter (existing functionality)
-if (!empty($cat_ids)) {
-    $selected_parent = isset($_GET["category"]) ? [$_GET["category"]] : [];
-    $category_filter = [];
+// Add category filter (always show, just like transmittal)
+$selected_parent = isset($_GET["category"]) ? [$_GET["category"]] : [];
+$category_filter = [];
+
+// Try to get categories if they exist
+if (!empty($cat_ids) && !empty($get_categories["arranged"])) {
     $generate_categories_options = generate_categories_options(
         $get_categories["arranged"],
         0,
@@ -139,15 +141,19 @@ if (!empty($cat_ids)) {
     foreach ($format_categories_options as $key => $category) {
         $category_filter[$category["id"]] = $category["label"];
     }
-    $filters_form["items"]["category"] = [
-        "current" => isset($_GET["category"]) ? $_GET["category"] : null,
-        "placeholder" => [
-            "value" => "0",
-            "label" => __("All categories", "cftp_admin"),
-        ],
-        "options" => $category_filter,
-    ];
 }
+
+// ALWAYS add the category filter to the form (just like transmittal filter)
+$filters_form["items"]["category"] = [
+    "current" => isset($_GET["category"]) ? $_GET["category"] : null,
+    "placeholder" => [
+        "value" => "0",
+        "label" => empty($category_filter)
+            ? __("No categories available", "cftp_admin")
+            : __("Filter by category", "cftp_admin"),
+    ],
+    "options" => $category_filter, // Will be empty array if no categories, but dropdown still shows
+];
 
 // Results count and form actions
 $elements_found_count = isset($count_for_pagination)

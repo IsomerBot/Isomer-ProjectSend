@@ -135,6 +135,7 @@ class EmailNotifications
                     "comments" => $file->comments ?? "",
                     "transmittal_name" => $file->transmittal_name ?? "",
                     "uploader_name" => $uploader_name,
+                    "file_bcc_addresses" => $file->file_bcc_addresses ?? "", // ADDED THIS LINE
                 ];
             }
 
@@ -246,7 +247,7 @@ class EmailNotifications
                     foreach ($admin_files as $client_uploader => $files) {
                         // ORIGINAL BEHAVIOR: Process each file individually for admin notifications
                         foreach ($files as $file) {
-                            $files_list_html = $this->makeFilesListHtml(
+                            $files_list_html = $this->makeSimpleFilesListHtml(
                                 [$file], // Pass single file array to maintain original behavior
                                 $client_uploader
                             );
@@ -286,6 +287,42 @@ class EmailNotifications
         }
     }
 
+    /**
+     * Make the list of files for client uploads - SIMPLE ORIGINAL STYLING
+     * This is the original simple styling for when clients upload files
+     */
+    private function makeSimpleFilesListHtml($files, $uploader_username = null)
+    {
+        $html = "";
+
+        if (!empty($uploader_username)) {
+            $html .=
+                '<li style="font-size:15px; font-weight:bold; margin-bottom:5px;">' .
+                $uploader_username .
+                "</li>";
+        }
+        foreach ($files as $file) {
+            $file_data = $this->files_data[$file["file_id"]];
+            $html .= '<li style="margin-bottom:11px;">';
+            $html .=
+                '<p style="font-weight:bold; margin:0 0 5px 0; font-size:14px;">' .
+                $file_data["title"] .
+                "<br>(" .
+                $file_data["filename"] .
+                ")</p>";
+            if (!empty($file_data["description"])) {
+                if (strpos($file_data["description"], "<p>") !== false) {
+                    $html .= $file_data["description"];
+                } else {
+                    $html .= "<p>" . $file_data["description"] . "</p>";
+                }
+            }
+            $html .= "</li>";
+        }
+
+        return $html;
+    }
+
     private function sendNotificationsToClients($notifications = [])
     {
         if (!empty($notifications)) {
@@ -297,7 +334,14 @@ class EmailNotifications
                     $processed_notifications[] = $file["notification_id"];
                 }
 
+                // Get the full file data for the first file in the batch.
+                // Assuming all files in this notification batch (i.e., this transmittal)
+                // share the same file_bcc_addresses.
                 $first_file_data = $this->files_data[$files[0]["file_id"]];
+
+                // Extract the dynamic BCC addresses from the file data
+                $dynamic_bcc_for_this_email =
+                    $first_file_data["file_bcc_addresses"] ?? "";
 
                 $email = new \ProjectSend\Classes\Emails();
                 if (
@@ -306,6 +350,7 @@ class EmailNotifications
                         "address" => $this->mail_by_user[$mail_username],
                         "files_list" => $files_list_html,
                         "file_data" => $first_file_data,
+                        "dynamic_bcc_addresses" => $dynamic_bcc_for_this_email, // ADDED THIS LINE
                     ])
                 ) {
                     $this->notifications_sent = array_merge(
@@ -527,6 +572,8 @@ class EmailNotifications
             htmlspecialchars($recipients_text) .
             "</div>";
         $html .= "</div>";
+
+        //BCC section -- not visible in the email
 
         // Right column with BOLDER labels
         $html .= '<div style="flex: 1;">';

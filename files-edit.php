@@ -74,7 +74,25 @@ function create_custom_download($link, $file_id, $client_id)
     return false;
 }
 
+// *** START OF MAIN POST HANDLING BLOCK ***
 if (isset($_POST["save"])) {
+    global $flash; // Make $flash available for use within this block
+
+    // --- NEW: Normalize the global BCC input here once for the whole batch ---
+    // This value comes from the top-level 'file_bcc_addresses' in $_POST
+    $global_file_bcc_addresses = $_POST["file_bcc_addresses"] ?? "";
+
+    if (!empty($global_file_bcc_addresses)) {
+        $raw_bcc = $global_file_bcc_addresses;
+        $cleaned_bcc = str_replace(["\r\n", "\r", "\n"], ",", $raw_bcc);
+        $cleaned_bcc = preg_replace("/[,]+/", ",", $cleaned_bcc);
+        $cleaned_bcc = trim($cleaned_bcc, ", ");
+        $individual_emails = array_map("trim", explode(",", $cleaned_bcc));
+        $individual_emails = array_unique(array_filter($individual_emails));
+        $global_file_bcc_addresses = implode(",", $individual_emails);
+    }
+    // --- END NEW BCC NORMALIZATION ---
+
     // Process transmittal data - only if project data is provided
     if (isset($_POST["project_number"]) && !empty($_POST["project_number"])) {
         try {
@@ -90,9 +108,9 @@ if (isset($_POST["save"])) {
             // Get the next transmittal number for this project
             // This will be the SAME for all files in this upload batch
             $next_transmittal_query = "SELECT LPAD(COALESCE(MAX(CAST(SUBSTRING(transmittal_name, -4) AS UNSIGNED)), 0) + 1, 4, '0') AS next_transmittal
-            FROM tbl_files 
-            WHERE project_number = :project_number 
-            AND transmittal_name IS NOT NULL 
+            FROM tbl_files
+            WHERE project_number = :project_number
+            AND transmittal_name IS NOT NULL
             AND transmittal_name != ''";
             $stmt = $dbh->prepare($next_transmittal_query);
             $stmt->execute([":project_number" => $global_project_number]);
@@ -129,7 +147,8 @@ if (isset($_POST["save"])) {
                            document_title = :document_title,
                            revision_number = :revision_number,
                            comments = :comments,
-                           description = :description
+                           description = :description,
+                           file_bcc_addresses = :file_bcc_addresses -- ADDED THIS LINE
                          WHERE id = :file_id";
 
                     $statement = $dbh->prepare($query);
@@ -152,13 +171,14 @@ if (isset($_POST["save"])) {
                         ":comments" => $global_comments,
                         ":description" =>
                             $file_data_from_post["description"] ?? "",
+                        ":file_bcc_addresses" => $global_file_bcc_addresses, // Pass the normalized global BCC here
                     ]);
                 }
             }
 
             // Set success message with the transmittal number used
-            global $flash;
             $flash->success(
+                // Using $flash from global scope
                 sprintf(
                     __(
                         "Transmittal information saved successfully. Transmittal Number: %s",
@@ -170,8 +190,8 @@ if (isset($_POST["save"])) {
         } catch (Exception $e) {
             // Log error and show user-friendly message
             error_log("Transmittal save error: " . $e->getMessage());
-            global $flash;
             $flash->error(
+                // Using $flash from global scope
                 sprintf(
                     __(
                         "Error saving transmittal information: %s",
@@ -183,9 +203,16 @@ if (isset($_POST["save"])) {
         }
     }
 
-    // Edit each file and its assignations
+    // Edit each file and its assignations (This loop processes $_POST['file'] for individual file settings)
     $confirm = false;
     foreach ($_POST["file"] as $file) {
+        // Assign the normalized global BCC to each file's data array
+        // This ensures the Files::save method gets the correct BCC for each file
+        $file["file_bcc_addresses"] = $global_file_bcc_addresses;
+
+        // The previous normalization block for $file['file_bcc_addresses'] that was here
+        // is now REMOVED because global normalization is done above.
+
         $object = new \ProjectSend\Classes\Files($file["id"]);
         if ($object->recordExists()) {
             if ($object->save($file) != false) {
@@ -194,6 +221,7 @@ if (isset($_POST["save"])) {
         }
 
         // Handle custom downloads if they exist
+        // ... (rest of the loop)
         if (
             isset($file["custom_downloads"]) &&
             is_array($file["custom_downloads"])
@@ -231,8 +259,8 @@ if (isset($_POST["save"])) {
                                     CURRENT_USER_ID
                                 )
                             ) {
-                                global $flash;
                                 $flash->warning(
+                                    // Using $flash from global scope
                                     __(
                                         "Updated existing custom link to point to this file.",
                                         "cftp_admin"
@@ -260,6 +288,7 @@ if (isset($_POST["save"])) {
                             )
                         ) {
                             $flash->warning(
+                                // Using $flash from global scope
                                 __(
                                     "Updated existing custom link to point to this file.",
                                     "cftp_admin"
@@ -317,9 +346,9 @@ if (isset($_POST["save"])) {
     $saved = implode(",", $saved_files);
 
     if ($confirm) {
-        global $flash;
-        $flash->success(__("Files saved successfully", "cftp_admin"));
+        $flash->success(__("Files saved successfully", "cftp_admin")); // Using $flash from global scope
         $flash->warning(
+            // Using $flash from global scope
             __(
                 "A custom link like this already exists, enter it again to override.",
                 "cftp_admin"
@@ -327,10 +356,11 @@ if (isset($_POST["save"])) {
         );
         ps_redirect("files-edit.php?&ids=" . $saved . "&confirm=true");
     } else {
-        $flash->success(__("Files saved successfully", "cftp_admin"));
+        $flash->success(__("Files saved successfully", "cftp_admin")); // Using $flash from global scope
         ps_redirect("files-edit.php?&ids=" . $saved . "&saved=true");
     }
 }
+// *** END REPLACEMENT HERE ***
 
 // Message
 if (!empty($editable) && !isset($_GET["saved"])) {
@@ -493,5 +523,5 @@ include_once ADMIN_VIEWS_DIR . DS . "header.php";
         ?>
     </div>
 </div>
-<?php include_once ADMIN_VIEWS_DIR . DS . "footer.php";
-?>
+<?php include_once ADMIN_VIEWS_DIR . DS . "footer.php"; ?>
+```

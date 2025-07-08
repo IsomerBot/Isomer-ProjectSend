@@ -7,7 +7,7 @@ if (!empty($editable) && !isset($_GET["saved"]) && CURRENT_USER_LEVEL != 0) {
     global $dbh;
     $query = "SELECT transmittal_number, transmittal_name, project_name, project_number, package_description, 
                      issue_status, discipline, deliverable_type, document_title,
-                     revision_number, comments
+                     revision_number, comments, file_bcc_addresses
               FROM tbl_files 
               WHERE id = :file_id";
     $statement = $dbh->prepare($query);
@@ -186,9 +186,29 @@ if (isset($_GET["confirm"])) {
 ); ?></textarea>
                     </div>
 
+                    
+
                     <div class="divider"></div>
                 </div>
             </div>
+
+            <div class="form-group">
+    <label for="file_bcc_addresses"><?php _e(
+        "BCC Recipients for this Transmittal",
+        "cftp_admin"
+    ); ?></label>
+    <textarea name="file_bcc_addresses" id="file_bcc_addresses" class="form-control" rows="5" placeholder="<?php _e(
+        "Paste comma-separated or one-per-line email addresses from Excel for this transmittal.",
+        "cftp_admin"
+    ); ?>"><?php echo htmlspecialchars(
+    $existing_transmittal_data["file_bcc_addresses"] ?? ""
+); ?></textarea>
+    <p class="field_note form-text"><?php _e(
+        "These email addresses will receive a hidden copy of the notification for this specific transmittal. Separate multiple addresses with commas or new lines.",
+        "cftp_admin"
+    ); ?></p>
+</div>
+            
         <?php endif; ?>
 
         <?php

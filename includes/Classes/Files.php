@@ -54,6 +54,7 @@ class Files
     public $comments;
     public $project_number;
     public $transmittal_name;
+    public $file_bcc_addresses;
 
     private $use_date_folder;
     private $is_filetype_allowed;
@@ -192,6 +193,9 @@ class Files
         $this->comments = !empty($arguments["comments"])
             ? encode_html($arguments["comments"])
             : null;
+        $this->file_bcc_addresses = !empty($arguments["file_bcc_addresses"])
+            ? $arguments["file_bcc_addresses"]
+            : null;
         $this->project_number = !empty($arguments["project_number"])
             ? encode_html($arguments["project_number"])
             : null;
@@ -293,6 +297,9 @@ class Files
             $this->project_number = html_output($row["project_number"] ?? "");
             $this->transmittal_name = html_output(
                 $row["transmittal_name"] ?? ""
+            );
+            $this->file_bcc_addresses = html_output(
+                $row["file_bcc_addresses"] ?? ""
             );
         }
 
@@ -1024,7 +1031,6 @@ class Files
             ? (int) $this->date_folder_month
             : null;
 
-        // Make sure all transmittal fields are initialized
         $this->transmittal_number = $this->transmittal_number ?? "";
         $this->project_name = $this->project_name ?? "";
         $this->package_description = $this->package_description ?? "";
@@ -1041,8 +1047,8 @@ class Files
         $statement = $this->dbh->prepare(
             "INSERT INTO " .
                 TABLE_FILES .
-                " (user_id, url, original_url, filename, description, uploader, expires, expiry_date, public_allow, public_token, disk_folder_year, disk_folder_month, transmittal_number, project_name, package_description, issue_status, discipline, deliverable_type, document_title, revision_number, comments, project_number, transmittal_name)" .
-                " VALUES (:user_id, :url, :original_url, :title, :description, :uploader, :expires, :expiry_date, :public, :public_token, :disk_folder_year, :disk_folder_month, :transmittal_number, :project_name, :package_description, :issue_status, :discipline, :deliverable_type, :document_title, :revision_number, :comments, :project_number, :transmittal_name)"
+                " (user_id, url, original_url, filename, description, uploader, expires, expiry_date, public_allow, public_token, disk_folder_year, disk_folder_month, transmittal_number, project_name, package_description, issue_status, discipline, deliverable_type, document_title, revision_number, comments, project_number, transmittal_name, file_bcc_addresses)" .
+                " VALUES (:user_id, :url, :original_url, :title, :description, :uploader, :expires, :expiry_date, :public, :public_token, :disk_folder_year, :disk_folder_month, :transmittal_number, :project_name, :package_description, :issue_status, :discipline, :deliverable_type, :document_title, :revision_number, :comments, :project_number, :transmittal_name, :file_bcc_addresses)"
         );
 
         $statement->bindParam(":user_id", $this->uploader_id, PDO::PARAM_INT);
@@ -1079,6 +1085,7 @@ class Files
         $statement->bindParam(":comments", $this->comments);
         $statement->bindParam(":project_number", $this->project_number);
         $statement->bindParam(":transmittal_name", $this->transmittal_name);
+        $statement->bindParam(":file_bcc_addresses", $this->file_bcc_addresses);
 
         $statement->execute();
 
@@ -1205,7 +1212,8 @@ class Files
             revision_number = :revision_number,
             comments = :comments,
             project_number = :project_number,
-            transmittal_name = :transmittal_name
+            transmittal_name = :transmittal_name,
+            file_bcc_addresses = :file_bcc_addresses 
 
             WHERE id = :id
         "
@@ -1232,6 +1240,7 @@ class Files
         $statement->bindParam(":revision_number", $this->revision_number);
         $statement->bindParam(":comments", $this->comments);
         $statement->bindParam(":project_number", $this->project_number);
+        $statement->bindParam(":file_bcc_addresses", $this->file_bcc_addresses);
         $statement->bindParam(":id", $this->id, PDO::PARAM_INT);
         $statement->execute();
         $hidden =

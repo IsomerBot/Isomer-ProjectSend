@@ -14,6 +14,7 @@ class Emails
     private $header;
     private $footer;
     private $email_successful;
+    private $dynamic_bcc_addresses;
 
     function __construct()
     {
@@ -1210,7 +1211,6 @@ class Emails
             ],
             $this->email_body
         );
-
         return [
             "subject" => $strings["subject"],
             "body" => $this->email_body,
@@ -1455,10 +1455,15 @@ class Emails
         $this->memberships = !empty($arguments["memberships"])
             ? $arguments["memberships"]
             : "";
-
+        $this->dynamic_bcc_addresses = !empty(
+            $arguments["dynamic_bcc_addresses"]
+        )
+            ? $arguments["dynamic_bcc_addresses"]
+            : "";
         $test_message = !empty($arguments["message"])
             ? filter_var($arguments["message"], FILTER_SANITIZE_STRING)
             : __("This is a test message", "cftp_admin");
+
         $generic_message = !empty($arguments["message"])
             ? $arguments["message"]
             : null;
@@ -1656,31 +1661,51 @@ class Emails
                 $email->AddAddress($this->addresses);
             }
 
-            /**
-             * Check if BCC is enabled and get the list of
-             * addresses to add, based on the email type.
-             */
             if ($this->try_bcc === true) {
                 $this->add_bcc_to = [];
+
+                // Add main admin email if enabled
                 if (get_option("mail_copy_main_user") == "1") {
                     $this->add_bcc_to[] = get_option("admin_email_address");
                 }
+
+                // Add global static BCC addresses if configured
                 $more_addresses = get_option("mail_copy_addresses");
                 if (!empty($more_addresses)) {
-                    $more_addresses = explode(",", $more_addresses);
-                    foreach ($more_addresses as $this->add_bcc) {
-                        $this->add_bcc_to[] = $this->add_bcc;
+                    $global_static_addresses = explode(",", $more_addresses);
+                    foreach ($global_static_addresses as $addr) {
+                        $this->add_bcc_to[] = $addr;
                     }
                 }
+
+                // NEW: Add the dynamic BCC addresses provided for this specific email
+                if (!empty($this->dynamic_bcc_addresses)) {
+                    $dynamic_addresses_array = explode(
+                        ",",
+                        $this->dynamic_bcc_addresses
+                    );
+                    foreach ($dynamic_addresses_array as $dynamic_bcc_email) {
+                        $this->add_bcc_to[] = $dynamic_bcc_email;
+                    }
+                }
+
                 /**
                  * Add the BCCs with the compiled array.
-                 * First, clean the array to make sure the admin
-                 * address is not written twice.
+                 * Clean the array to make sure addresses are unique and valid.
                  */
                 if (!empty($this->add_bcc_to)) {
-                    $this->add_bcc_to = array_unique($this->add_bcc_to);
+                    $this->add_bcc_to = array_unique(
+                        array_map("trim", $this->add_bcc_to)
+                    ); // Trim each address and make unique
+
                     foreach ($this->add_bcc_to as $this->set_bcc) {
-                        $email->AddBCC($this->set_bcc);
+                        if (filter_var($this->set_bcc, FILTER_VALIDATE_EMAIL)) {
+                            // Basic email validation
+                            $email->AddBCC($this->set_bcc);
+                        } else {
+                            // Optionally log invalid email addresses if needed for debugging
+                            // error_log("Invalid BCC email address skipped: " . $this->set_bcc);
+                        }
                     }
                 }
             }
