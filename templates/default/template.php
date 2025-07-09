@@ -47,8 +47,8 @@ if (!$count) {
     }
 }
 
-// Header buttons
-if (current_user_can_upload()) {
+// Header buttons - only show for logged-in users, not clients
+if (current_user_can_upload() && CURRENT_USER_LEVEL != 0) {
     $header_action_buttons = [
         [
             "url" => BASE_URI . "upload.php",
