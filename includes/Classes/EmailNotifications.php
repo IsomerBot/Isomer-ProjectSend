@@ -479,7 +479,7 @@ class EmailNotifications
         if ($logo_file_info["exists"] === true) {
             // Logo with proper clear space - minimum 0.5X as per brand guide
             $html .=
-                '<div style="padding: 8px; background-color: white; display: flex; align-items: center; justify-content: center;">';
+                '<div style="padding: 8px; display: flex; align-items: center; justify-content: center;">';
 
             if ($logo_file_info["method"] === "svg_inline") {
                 $svg_content = $logo_file_info["svg_content"];
