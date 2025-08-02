@@ -186,28 +186,26 @@ if (isset($_GET["confirm"])) {
 ); ?></textarea>
                     </div>
 
-                    
-
                     <div class="divider"></div>
                 </div>
             </div>
 
             <div class="form-group">
-    <label for="file_bcc_addresses"><?php _e(
-        "BCC Recipients for this Transmittal",
-        "cftp_admin"
-    ); ?></label>
-    <textarea name="file_bcc_addresses" id="file_bcc_addresses" class="form-control" rows="5" placeholder="<?php _e(
-        "Paste comma-separated or one-per-line email addresses from Excel for this transmittal.",
-        "cftp_admin"
-    ); ?>"><?php echo htmlspecialchars(
+                <label for="file_bcc_addresses"><?php _e(
+                    "BCC Recipients for this Transmittal",
+                    "cftp_admin"
+                ); ?></label>
+                <textarea name="file_bcc_addresses" id="file_bcc_addresses" class="form-control" rows="5" placeholder="<?php _e(
+                    "Paste comma-separated or one-per-line email addresses from Excel for this transmittal.",
+                    "cftp_admin"
+                ); ?>"><?php echo htmlspecialchars(
     $existing_transmittal_data["file_bcc_addresses"] ?? ""
 ); ?></textarea>
-    <p class="field_note form-text"><?php _e(
-        "These email addresses will receive a hidden copy of the notification for this specific transmittal. Separate multiple addresses with commas or new lines.",
-        "cftp_admin"
-    ); ?></p>
-</div>
+                <p class="field_note form-text"><?php _e(
+                    "These email addresses will receive a hidden copy of the notification for this specific transmittal. Separate multiple addresses with commas or new lines.",
+                    "cftp_admin"
+                ); ?></p>
+            </div>
             
         <?php endif; ?>
 
@@ -405,167 +403,15 @@ if (isset($_GET["confirm"])) {
                                                        ); ?>" />
                                             </div>
                                             
-                                            <!-- File Description (shown to everyone) -->
-                                            <div class="form-group">
-                                                <label><?php _e(
-                                                    "Description",
-                                                    "cftp_admin"
-                                                ); ?></label>
-                                                <textarea id="description_<?php echo $file->id; ?>" name="file[<?php echo $i; ?>][description]" 
-                                                          class="<?php if (
-                                                              get_option(
-                                                                  "files_descriptions_use_ckeditor"
-                                                              ) == 1
-                                                          ) {
-                                                              echo "ckeditor";
-                                                          } ?> form-control textarea_description" 
-                                                          placeholder="<?php _e(
-                                                              "Optionally, enter here a description for the file.",
-                                                              "cftp_admin"
-                                                          ); ?>"><?php if (
-    !empty($file->description)
-) {
-    echo $file->description;
-} ?></textarea>
-                                            </div>
+                                            <!-- REMOVED: Description field -->
+                                            <!-- REMOVED: Expiration date section -->
+                                            <!-- REMOVED: Public downloading section -->
                                         </div>
                                     </div>
 
-                                    <?php // The following options are available to users or client if clients_can_set_expiration_date set
+                                    <?php // Only show the CLIENTS select field if the current uploader is a system user, and not a client.
 
-
-                                    if (
-                                        CURRENT_USER_LEVEL != 0 ||
-                                        get_option(
-                                            "clients_can_set_expiration_date"
-                                        ) == "1"
-                                    ) { ?>
-                                        <div class="col">
-                                            <div class="file_data">
-                                                <h3><?php _e(
-                                                    "Expiration date",
-                                                    "cftp_admin"
-                                                ); ?></h3>
-
-                                                <div class="form-group">
-                                                    <label for="file[<?php echo $i; ?>][expires_date]"><?php _e(
-    "Select a date",
-    "cftp_admin"
-); ?></label>
-                                                    <div class="input-group date-container">
-                                                        <input type="text" class="date-field form-control datapick-field readonly-not-grayed" readonly 
-                                                               id="file_expiry_date_<?php echo $i; ?>" name="file[<?php echo $i; ?>][expiry_date]" 
-                                                               value="<?php echo !empty(
-                                                                   $file->expiry_date
-                                                               )
-                                                                   ? date(
-                                                                       "d-m-Y",
-                                                                       strtotime(
-                                                                           $file->expiry_date
-                                                                       )
-                                                                   )
-                                                                   : date(
-                                                                       "d-m-Y"
-                                                                   ); ?>" />
-                                                        <div class="input-group-text">
-                                                            <i class="fa fa-clock-o"></i>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <div class="checkbox">
-                                                    <label for="exp_checkbox_<?php echo $i; ?>">
-                                                        <input type="checkbox" class="checkbox_setting_expires" name="file[<?php echo $i; ?>][expires]" 
-                                                               id="exp_checkbox_<?php echo $i; ?>" value="1" <?php if (
-    $file->expires
-) { ?>checked="checked"<?php } ?> /> 
-                                                        <?php _e(
-                                                            "File expires",
-                                                            "cftp_admin"
-                                                        ); ?>
-                                                    </label>
-                                                </div>
-
-                                                <?php // The following options are available to users only
-
-                                        if (
-                                                    CURRENT_USER_LEVEL != 0 ||
-                                                    current_user_can_upload_public()
-                                                ) { ?>
-                                                    <div class="divider"></div>
-
-                                                    <h3><?php _e(
-                                                        "Public downloading",
-                                                        "cftp_admin"
-                                                    ); ?></h3>
-
-                                                    <div class="checkbox">
-                                                        <label for="pub_checkbox_<?php echo $i; ?>">
-                                                            <input type="checkbox" class="checkbox_setting_public" id="pub_checkbox_<?php echo $i; ?>" 
-                                                                   name="file[<?php echo $i; ?>][public]" value="1" <?php if (
-    $file->public
-) { ?>checked="checked"<?php } ?>/> 
-                                                            <?php _e(
-                                                                "Allow public downloading of this file.",
-                                                                "cftp_admin"
-                                                            ); ?>
-                                                        </label>
-                                                    </div>
-
-                                                    <div class="form-group">
-                                                        <div class="divider"></div>
-                                                        <h3><?php _e(
-                                                            "Custom download aliases",
-                                                            "cftp_admin"
-                                                        ); ?></h3>
-                                                        <?php foreach (
-                                                            $file->getCustomDownloads()
-                                                            as $j =>
-                                                                $custom_download
-                                                        ) {
-                                                            $trans = __(
-                                                                "Enter a custom download link.",
-                                                                "cftp_admin"
-                                                            );
-                                                            $custom_download_uri = get_option(
-                                                                "custom_download_uri"
-                                                            );
-                                                            if (
-                                                                !$custom_download_uri
-                                                            ) {
-                                                                $custom_download_uri =
-                                                                    BASE_URI .
-                                                                    "custom-download.php?link=";
-                                                            }
-                                                            echo <<<EOL
-                                                                <div class="input-group">
-                                                                    <input type="hidden" value="{$custom_download["link"]}" name="file[$i][custom_downloads][$j][id]" />
-                                                                    <input type="text" name="file[$i][custom_downloads][$j][link]"
-                                                                        id="custom_download_input_$j"
-                                                                        value="{$custom_download["link"]}"
-                                                                        class="form-control"
-                                                                        placeholder="$trans" />
-                                                                    <a href="#" class="input-group-text" onclick="copyTextToClipboard('$custom_download_uri' + document.getElementById('custom_download_input_$j').value);">
-                                                                        <i class="fa fa-copy" style="cursor: pointer"></i>
-                                                                    </a>
-                                                                </div>
-EOL;
-                                                        } ?>
-                                                        <p class="field_note form-text">
-                                                            <?php echo sprintf(
-                                                                __(
-                                                                    'Optional: enter an alias to use on the custom download link. Ej: "my-first-file" will let you download this file from %s'
-                                                                ),
-                                                                BASE_URI .
-                                                                    "custom-download.php?link=my-first-file"
-                                                            ); ?>
-                                                        </p>
-                                                    </div>
-                                                <?php } ?>
-                                            </div>
-                                        </div>
-                                    <?php } // Only show the CLIENTS select field if the current uploader is a system user, and not a client.
-                                    if (CURRENT_USER_LEVEL != 0) { ?>
+                    if (CURRENT_USER_LEVEL != 0) { ?>
                                         <div class="col assigns">
                                             <div class="file_data">
                                                 <h3><?php _e(
@@ -674,8 +520,7 @@ EOL;
                                                 </div>
                                             </div>
                                         </div>
-                                    <?php }
-                                    ?>
+                                    <?php } ?>
                                     
                                     <div class="col">
                                         <?php if (
@@ -735,137 +580,14 @@ EOL;
                                         <?php
                                         } ?>
 
-                                        <div class="folders">
-                                            <h3><?php _e(
-                                                "Location",
-                                                "cftp_admin"
-                                            ); ?></h3>
-                                            <label><?php _e(
-                                                "Store in this folder",
-                                                "cftp_admin"
-                                            ); ?>:</label>
-                                            <?php
-                                            $ignore = [];
-                                            if (CURRENT_USER_LEVEL == 0) {
-                                                $see_public_folders = get_option(
-                                                    "clients_files_list_include_public"
-                                                );
-                                                $statement = $dbh->prepare(
-                                                    "SELECT * FROM " .
-                                                        TABLE_FOLDERS
-                                                );
-                                                $statement->execute();
-                                                if (
-                                                    $statement->rowCount() > 0
-                                                ) {
-                                                    $statement->setFetchMode(
-                                                        PDO::FETCH_ASSOC
-                                                    );
-                                                    while (
-                                                        $folder_row = $statement->fetch()
-                                                    ) {
-                                                        if (
-                                                            $folder_row[
-                                                                "user_id"
-                                                            ] == CURRENT_USER_ID
-                                                        ) {
-                                                            continue;
-                                                        }
-                                                        if (
-                                                            $see_public_folders ==
-                                                                "1" &&
-                                                            $folder_row[
-                                                                "public"
-                                                            ] != 1
-                                                        ) {
-                                                            $ignore[] =
-                                                                $folder_row[
-                                                                    "id"
-                                                                ];
-                                                        }
-                                                    }
-                                                }
-                                            }
-                                            $folders = new \ProjectSend\Classes\Folders();
-                                            $folders_arranged = $folders->getAllArranged();
-                                            if (
-                                                CURRENT_USER_LEVEL == 0 &&
-                                                get_option(
-                                                    "clients_files_list_include_public"
-                                                )
-                                            ) {
-                                                $folders_arguments[
-                                                    "public_or_client"
-                                                ] = true;
-                                            }
-                                            ?>
-                                            <select class="form-select select2 none" id="folder_<?php echo $file->id; ?>" 
-                                                    name="file[<?php echo $i; ?>][folder_id]" data-type="folder" 
-                                                    data-placeholder="<?php _e(
-                                                        "Optional. Type to search.",
-                                                        "cftp_admin"
-                                                    ); ?>">
-                                                <option value=""><?php _e(
-                                                    "Root",
-                                                    "cftp_admin"
-                                                ); ?></option>
-                                                <?php echo $folders->renderSelectOptions(
-                                                    $folders_arranged,
-                                                    [
-                                                        "selected" =>
-                                                            $file->folder_id,
-                                                        "ignore" => $ignore,
-                                                    ]
-                                                ); ?>
-                                            </select>
-                                        </div>
+                                        <!-- REMOVED: Location (folders) section -->
                                     </div>
                                 </div>
 
                                 <?php
-                                // Copy settings buttons
+                                // Copy settings buttons - CLEANED UP
                                 $copy_buttons = [];
                                 if (count($editable) > 1) {
-                                    // Expiration
-                                    if (
-                                        CURRENT_USER_LEVEL != 0 ||
-                                        get_option(
-                                            "clients_can_set_expiration_date"
-                                        ) == "1"
-                                    ) {
-                                        $copy_buttons["expiration"] = [
-                                            "label" => __(
-                                                "Expiration settings",
-                                                "cftp_admin"
-                                            ),
-                                            "class" =>
-                                                "copy-expiration-settings",
-                                            "data" => [
-                                                "copy-from" =>
-                                                    "exp_checkbox_" . $i,
-                                                "copy-date-from" =>
-                                                    "file_expiry_date_" . $i,
-                                            ],
-                                        ];
-                                    }
-                                    // Public checkbox
-                                    if (
-                                        CURRENT_USER_LEVEL != 0 ||
-                                        current_user_can_upload_public()
-                                    ) {
-                                        $copy_buttons["public"] = [
-                                            "label" => __(
-                                                "Public settings",
-                                                "cftp_admin"
-                                            ),
-                                            "class" => "copy-public-settings",
-                                            "data" => [
-                                                "copy-from" =>
-                                                    "pub_checkbox_" . $i,
-                                            ],
-                                        ];
-                                    }
-
                                     if (CURRENT_USER_LEVEL != 0) {
                                         // Selected clients
                                         $copy_buttons["clients"] = [
@@ -930,60 +652,42 @@ EOL;
                                         ];
                                     }
 
-                                    if (CURRENT_USER_LEVEL != 0) {
-                                        // Folders
-                                        $copy_buttons["folder"] = [
-                                            "label" => __(
-                                                "Selected folder",
-                                                "cftp_admin"
-                                            ),
-                                            "class" => "copy-all",
-                                            "data" => [
-                                                "type" => "folder",
-                                                "target" =>
-                                                    "folder_" . $file->id,
-                                            ],
-                                        ];
-                                    }
-
                                     if (count($copy_buttons) > 0) { ?>
-                                            <footer>
-                                                <div class="row">
-                                                    <div class="col">
-                                                        <h3><?php _e(
-                                                            "Apply to all files",
-                                                            "cftp_admin"
-                                                        ); ?></h3>
-                                                        <?php foreach (
-                                                            $copy_buttons
-                                                            as $id => $button
-                                                        ) { ?>
-                                                            <button type="button" class="btn btn-sm btn-pslight mb-2 <?php echo $button[
-                                                                "class"
-                                                            ]; ?>"
-                                                                <?php foreach (
-                                                                    $button[
-                                                                        "data"
-                                                                    ]
-                                                                    as $key =>
-                                                                        $value
-                                                                ) {
-                                                                    echo " data-" .
-                                                                        $key .
-                                                                        '="' .
-                                                                        $value .
-                                                                        '"';
-                                                                } ?>
-                                                            >
-                                                                <?php echo $button[
-                                                                    "label"
-                                                                ]; ?>
-                                                            </button>
-                                                        <?php } ?>
-                                                    </div>
+                                        <footer>
+                                            <div class="row">
+                                                <div class="col">
+                                                    <h3><?php _e(
+                                                        "Apply to all files",
+                                                        "cftp_admin"
+                                                    ); ?></h3>
+                                                    <?php foreach (
+                                                        $copy_buttons
+                                                        as $id => $button
+                                                    ) { ?>
+                                                        <button type="button" class="btn btn-sm btn-pslight mb-2 <?php echo $button[
+                                                            "class"
+                                                        ]; ?>"
+                                                            <?php foreach (
+                                                                $button["data"]
+                                                                as $key =>
+                                                                    $value
+                                                            ) {
+                                                                echo " data-" .
+                                                                    $key .
+                                                                    '="' .
+                                                                    $value .
+                                                                    '"';
+                                                            } ?>
+                                                        >
+                                                            <?php echo $button[
+                                                                "label"
+                                                            ]; ?>
+                                                        </button>
+                                                    <?php } ?>
                                                 </div>
-                                            </footer>
-                                <?php }
+                                            </div>
+                                        </footer>
+                                    <?php }
                                 }
                                 ?>
                             </div>
