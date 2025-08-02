@@ -147,8 +147,7 @@ if (isset($_POST["save"])) {
                            document_title = :document_title,
                            revision_number = :revision_number,
                            comments = :comments,
-                           description = :description,
-                           file_bcc_addresses = :file_bcc_addresses -- ADDED THIS LINE
+                           file_bcc_addresses = :file_bcc_addresses
                          WHERE id = :file_id";
 
                     $statement = $dbh->prepare($query);
@@ -169,13 +168,10 @@ if (isset($_POST["save"])) {
                         ":revision_number" =>
                             $file_data_from_post["revision_number"] ?? "",
                         ":comments" => $global_comments,
-                        ":description" =>
-                            $file_data_from_post["description"] ?? "",
-                        ":file_bcc_addresses" => $global_file_bcc_addresses, // Pass the normalized global BCC here
+                        ":file_bcc_addresses" => $global_file_bcc_addresses,
                     ]);
                 }
             }
-
             // Set success message with the transmittal number used
             $flash->success(
                 // Using $flash from global scope
@@ -419,17 +415,7 @@ include_once ADMIN_VIEWS_DIR . DS . "header.php";
                     "content" => __("Title", "cftp_admin"),
                 ],
                 [
-                    "content" => __("Description", "cftp_admin"),
-                ],
-                [
                     "content" => __("File Name", "cftp_admin"),
-                ],
-                [
-                    "content" => __("Public", "cftp_admin"),
-                    "condition" =>
-                        CURRENT_USER_LEVEL != 0 ||
-                        current_user_can_upload_public(),
-                    "hide" => "phone",
                 ],
                 [
                     "content" => __("Actions", "cftp_admin"),
@@ -442,22 +428,6 @@ include_once ADMIN_VIEWS_DIR . DS . "header.php";
                 $file = new \ProjectSend\Classes\Files($file_id);
                 if ($file->recordExists()) {
                     $table->addRow();
-
-                    if ($file->public == "1") {
-                        $col_public =
-                            '<a href="javascript:void(0);" class="btn btn-primary btn-sm public_link" data-type="file" data-public-url="' .
-                            $file->public_url .
-                            '" data-title="' .
-                            $file->title .
-                            '">' .
-                            __("Public", "cftp_admin") .
-                            "</a>";
-                    } else {
-                        $col_public =
-                            '<a href="javascript:void(0);" class="btn btn-pslight btn-sm disabled" rel="" title="">' .
-                            __("Private", "cftp_admin") .
-                            "</a>";
-                    }
 
                     $col_actions =
                         '<a href="files-edit.php?ids=' .
@@ -484,21 +454,7 @@ include_once ADMIN_VIEWS_DIR . DS . "header.php";
                             "content" => $file->title,
                         ],
                         [
-                            "content" => htmlentities_allowed(
-                                $file->description
-                            ),
-                        ],
-                        [
                             "content" => $file->filename_original,
-                        ],
-                        [
-                            "content" => $col_public,
-                            "condition" =>
-                                CURRENT_USER_LEVEL != 0 ||
-                                current_user_can_upload_public(),
-                            "attributes" => [
-                                "class" => ["col_visibility"],
-                            ],
                         ],
                         [
                             "content" => $col_actions,
