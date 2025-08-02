@@ -129,7 +129,8 @@ if (isset($_POST["save"])) {
                 );
             }
 
-            // Update ALL files in this batch with the SAME transmittal number
+            // UPDATED: Only update fields that are still available in the UI
+            // Removed: description, expires, expiry_date, public_allow, public_token, folder_id
             foreach ($_POST["file"] as $file_data_from_post) {
                 if (
                     isset($file_data_from_post["id"]) &&
@@ -172,9 +173,9 @@ if (isset($_POST["save"])) {
                     ]);
                 }
             }
+
             // Set success message with the transmittal number used
             $flash->success(
-                // Using $flash from global scope
                 sprintf(
                     __(
                         "Transmittal information saved successfully. Transmittal Number: %s",
@@ -187,7 +188,6 @@ if (isset($_POST["save"])) {
             // Log error and show user-friendly message
             error_log("Transmittal save error: " . $e->getMessage());
             $flash->error(
-                // Using $flash from global scope
                 sprintf(
                     __(
                         "Error saving transmittal information: %s",
@@ -199,16 +199,14 @@ if (isset($_POST["save"])) {
         }
     }
 
-    // Edit each file and its assignations (This loop processes $_POST['file'] for individual file settings)
+    // Edit each file and its assignations
+    // UNCHANGED: This uses the Files class save() method which handles all the backend logic
     $confirm = false;
     foreach ($_POST["file"] as $file) {
         // Assign the normalized global BCC to each file's data array
-        // This ensures the Files::save method gets the correct BCC for each file
         $file["file_bcc_addresses"] = $global_file_bcc_addresses;
 
-        // The previous normalization block for $file['file_bcc_addresses'] that was here
-        // is now REMOVED because global normalization is done above.
-
+        // UNCHANGED: Use original Files class - no modifications needed
         $object = new \ProjectSend\Classes\Files($file["id"]);
         if ($object->recordExists()) {
             if ($object->save($file) != false) {
@@ -216,8 +214,7 @@ if (isset($_POST["save"])) {
             }
         }
 
-        // Handle custom downloads if they exist
-        // ... (rest of the loop)
+        // Handle custom downloads if they exist - UNCHANGED
         if (
             isset($file["custom_downloads"]) &&
             is_array($file["custom_downloads"])
@@ -256,7 +253,6 @@ if (isset($_POST["save"])) {
                                 )
                             ) {
                                 $flash->warning(
-                                    // Using $flash from global scope
                                     __(
                                         "Updated existing custom link to point to this file.",
                                         "cftp_admin"
@@ -284,7 +280,6 @@ if (isset($_POST["save"])) {
                             )
                         ) {
                             $flash->warning(
-                                // Using $flash from global scope
                                 __(
                                     "Updated existing custom link to point to this file.",
                                     "cftp_admin"
@@ -297,7 +292,7 @@ if (isset($_POST["save"])) {
         }
     }
 
-    // Send the notifications
+    // Send the notifications - UNCHANGED
     if (get_option("notifications_send_when_saving_files") == "1") {
         $notifications = new \ProjectSend\Classes\EmailNotifications();
         $notifications->sendNotifications();
@@ -342,9 +337,8 @@ if (isset($_POST["save"])) {
     $saved = implode(",", $saved_files);
 
     if ($confirm) {
-        $flash->success(__("Files saved successfully", "cftp_admin")); // Using $flash from global scope
+        $flash->success(__("Files saved successfully", "cftp_admin"));
         $flash->warning(
-            // Using $flash from global scope
             __(
                 "A custom link like this already exists, enter it again to override.",
                 "cftp_admin"
@@ -352,11 +346,10 @@ if (isset($_POST["save"])) {
         );
         ps_redirect("files-edit.php?&ids=" . $saved . "&confirm=true");
     } else {
-        $flash->success(__("Files saved successfully", "cftp_admin")); // Using $flash from global scope
+        $flash->success(__("Files saved successfully", "cftp_admin"));
         ps_redirect("files-edit.php?&ids=" . $saved . "&saved=true");
     }
 }
-// *** END REPLACEMENT HERE ***
 
 // Message
 if (!empty($editable) && !isset($_GET["saved"])) {
@@ -394,7 +387,7 @@ include_once ADMIN_VIEWS_DIR . DS . "header.php";
 <div class="row">
     <div class="col-12">
         <?php
-        // Saved files
+        // Saved files display
         $saved_files = [];
         if (!empty($_GET["saved"])) {
             foreach ($editable as $file_id) {
@@ -403,7 +396,7 @@ include_once ADMIN_VIEWS_DIR . DS . "header.php";
                 }
             }
 
-            // Generate the table using the class.
+            // UPDATED: Simplified table - removed Description and Public columns
             $table = new \ProjectSend\Classes\Layout\Table([
                 "id" => "uploaded_files_tbl",
                 "class" => "footable table",
@@ -448,7 +441,7 @@ include_once ADMIN_VIEWS_DIR . DS . "header.php";
                             "</a>";
                     }
 
-                    // Add the cells to the row
+                    // UPDATED: Simplified table cells - removed description and public columns
                     $tbody_cells = [
                         [
                             "content" => $file->title,
@@ -480,4 +473,3 @@ include_once ADMIN_VIEWS_DIR . DS . "header.php";
     </div>
 </div>
 <?php include_once ADMIN_VIEWS_DIR . DS . "footer.php"; ?>
-```

@@ -403,9 +403,9 @@ if (isset($_GET["confirm"])) {
                                                        ); ?>" />
                                             </div>
                                             
-                                            <!-- REMOVED: Description field -->
-                                            <!-- REMOVED: Expiration date section -->
-                                            <!-- REMOVED: Public downloading section -->
+                                            <!-- REMOVED: Description field - users can no longer set descriptions via UI -->
+                                            <!-- REMOVED: Expiration date section - users can no longer set expiration via UI -->
+                                            <!-- REMOVED: Public downloading section - users can no longer mark files public via UI -->
                                         </div>
                                     </div>
 
@@ -580,12 +580,12 @@ if (isset($_GET["confirm"])) {
                                         <?php
                                         } ?>
 
-                                        <!-- REMOVED: Location (folders) section -->
+                                        <!-- REMOVED: Location (folders) section - users can no longer select folders via UI -->
                                     </div>
                                 </div>
 
                                 <?php
-                                // Copy settings buttons - CLEANED UP
+                                // UPDATED: Copy settings buttons - removed references to deleted fields
                                 $copy_buttons = [];
                                 if (count($editable) > 1) {
                                     if (CURRENT_USER_LEVEL != 0) {
