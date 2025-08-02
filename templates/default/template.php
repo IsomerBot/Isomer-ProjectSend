@@ -216,14 +216,14 @@ include_once LAYOUT_DIR . DS . "folders-nav.php";
             <?php include_once LAYOUT_DIR . DS . "form-counts-actions.php"; ?>
 
             <?php if (isset($count) && $count > 0) {
-                // Generate the clean table - no transmittal column clutter
+                // UPDATED: Cleaned table - removed Description and Expiry columns
                 $table = new \ProjectSend\Classes\Layout\Table([
                     "id" => "files_list",
                     "class" => "footable table",
                     "origin" => CLIENT_VIEW_FILE_LIST_URL_PATH,
                 ]);
 
-                // Standard columns - clean and simple
+                // UPDATED: Removed Description and Expiry column headers
                 $thead_columns = [
                     [
                         "select_all" => true,
@@ -240,15 +240,7 @@ include_once LAYOUT_DIR . DS . "folders-nav.php";
                         "content" => __("Type", "cftp_admin"),
                         "hide" => "phone",
                     ],
-                    [
-                        "sortable" => true,
-                        "sort_url" => "description",
-                        "content" => __("Description", "cftp_admin"),
-                        "hide" => "phone",
-                        "attributes" => [
-                            "class" => ["description"],
-                        ],
-                    ],
+                    // REMOVED: Description column
                     [
                         "content" => __("Size", "cftp_admin"),
                         "hide" => "phone",
@@ -259,10 +251,7 @@ include_once LAYOUT_DIR . DS . "folders-nav.php";
                         "sort_default" => true,
                         "content" => __("Date", "cftp_admin"),
                     ],
-                    [
-                        "content" => __("Expiry", "cftp_admin"),
-                        "hide" => "phone",
-                    ],
+                    // REMOVED: Expiry column
                     [
                         "content" => __("Preview", "cftp_admin"),
                         "hide" => "phone,tablet",
@@ -322,27 +311,7 @@ include_once LAYOUT_DIR . DS . "folders-nav.php";
                     /** Date */
                     $date = format_date($file->uploaded_date);
 
-                    /** Expiration */
-                    if ($file->expires == "1") {
-                        if ($file->expired == false) {
-                            $badge_class = "bg-primary";
-                        } else {
-                            $badge_class = "bg-danger";
-                        }
-                        $badge_label = date(
-                            get_option("timeformat"),
-                            strtotime($file->expiry_date)
-                        );
-                    } else {
-                        $badge_class = "bg-success";
-                        $badge_label = __("Never", "cftp_template");
-                    }
-                    $expiration_cell =
-                        '<span class="badge ' .
-                        $badge_class .
-                        ' label_big">' .
-                        $badge_label .
-                        "</span>";
+                    // REMOVED: Expiration cell generation (but keep the logic for expired file handling)
 
                     /** Thumbnail */
                     $preview_cell = "";
@@ -400,7 +369,7 @@ include_once LAYOUT_DIR . DS . "folders-nav.php";
                         $download_text .
                         "</a>";
 
-                    // Clean table cells - no transmittal column clutter
+                    // UPDATED: Cleaned table cells - removed Description and Expiry data cells
                     $tbody_cells = [
                         [
                             "content" => $checkbox,
@@ -417,21 +386,14 @@ include_once LAYOUT_DIR . DS . "folders-nav.php";
                                 "class" => ["extra"],
                             ],
                         ],
-                        [
-                            "content" => $file->description,
-                            "attributes" => [
-                                "class" => ["description"],
-                            ],
-                        ],
+                        // REMOVED: Description cell
                         [
                             "content" => $file->size_formatted,
                         ],
                         [
                             "content" => $date,
                         ],
-                        [
-                            "content" => $expiration_cell,
-                        ],
+                        // REMOVED: Expiry cell
                         [
                             "content" => $preview_cell,
                             "attributes" => [

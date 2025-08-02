@@ -206,6 +206,115 @@ if (isset($_GET["confirm"])) {
                     "cftp_admin"
                 ); ?></p>
             </div>
+
+            <!-- NEW: Transmittal-level Client Assignment -->
+            <div class="form-group">
+                <h4><?php _e("Transmittal Recipients", "cftp_admin"); ?></h4>
+                <label for="transmittal_clients"><?php _e(
+                    "Clients",
+                    "cftp_admin"
+                ); ?></label>
+                <select class="form-select select2 none" multiple="multiple" 
+                        id="transmittal_clients" name="transmittal_clients[]" 
+                        data-placeholder="<?php _e(
+                            "Select clients for this transmittal. Type to search.",
+                            "cftp_admin"
+                        ); ?>">
+                    <?php
+                    // Get all clients for transmittal assignment
+                    $me = new \ProjectSend\Classes\Users(CURRENT_USER_ID);
+                    if (
+                        $me->shouldLimitUploadTo() &&
+                        !empty($me->limit_upload_to)
+                    ) {
+                        $transmittal_clients = file_editor_get_clients_by_ids(
+                            $me->limit_upload_to
+                        );
+                    } else {
+                        $transmittal_clients = file_editor_get_all_clients();
+                    }
+
+                    foreach ($transmittal_clients as $id => $name) { ?>
+                        <option value="<?php echo html_output($id); ?>">
+                            <?php echo html_output($name); ?>
+                        </option>
+                    <?php }
+                    ?>
+                </select>
+                <p class="field_note form-text"><?php _e(
+                    "All files in this transmittal will be assigned to the selected clients.",
+                    "cftp_admin"
+                ); ?></p>
+            </div>
+
+            <!-- NEW: Transmittal-level Groups Assignment -->
+            <div class="form-group">
+                <label for="transmittal_groups"><?php _e(
+                    "Groups",
+                    "cftp_admin"
+                ); ?></label>
+                <select class="form-select select2 none" multiple="multiple" 
+                        id="transmittal_groups" name="transmittal_groups[]" 
+                        data-placeholder="<?php _e(
+                            "Select groups for this transmittal. Type to search.",
+                            "cftp_admin"
+                        ); ?>">
+                    <?php
+                    // Get all groups for transmittal assignment
+                    if (
+                        $me->shouldLimitUploadTo() &&
+                        !empty($me->limit_upload_to)
+                    ) {
+                        $transmittal_groups = file_editor_get_groups_by_members(
+                            $me->limit_upload_to
+                        );
+                    } else {
+                        $transmittal_groups = file_editor_get_all_groups();
+                    }
+
+                    foreach ($transmittal_groups as $id => $name) { ?>
+                        <option value="<?php echo html_output($id); ?>">
+                            <?php echo html_output($name); ?>
+                        </option>
+                    <?php }
+                    ?>
+                </select>
+                <p class="field_note form-text"><?php _e(
+                    "All files in this transmittal will be assigned to the selected groups.",
+                    "cftp_admin"
+                ); ?></p>
+            </div>
+
+            <!-- NEW: Transmittal-level Categories Assignment -->
+            <div class="form-group">
+                <label for="transmittal_categories"><?php _e(
+                    "Categories",
+                    "cftp_admin"
+                ); ?></label>
+                <select class="form-select select2 none" multiple="multiple" 
+                        id="transmittal_categories" name="transmittal_categories[]" 
+                        data-placeholder="<?php _e(
+                            "Select categories for this transmittal. Type to search.",
+                            "cftp_admin"
+                        ); ?>">
+                    <?php // Get all categories for transmittal assignment
+                    if (!empty($get_categories["arranged"])) {
+                        $generate_categories_options = generate_categories_options(
+                            $get_categories["arranged"],
+                            0,
+                            []
+                        );
+                        echo render_categories_options(
+                            $generate_categories_options,
+                            ["selected" => [], "ignore" => []]
+                        );
+                    } ?>
+                </select>
+                <p class="field_note form-text"><?php _e(
+                    "All files in this transmittal will be assigned to the selected categories.",
+                    "cftp_admin"
+                ); ?></p>
+            </div>
             
         <?php endif; ?>
 
@@ -402,6 +511,61 @@ if (isset($_GET["confirm"])) {
                                                            "cftp_admin"
                                                        ); ?>" />
                                             </div>
+
+                                            <!-- Custom Download Alias (restored) -->
+                                            <?php if (
+                                                CURRENT_USER_LEVEL != 0 ||
+                                                current_user_can_upload_public()
+                                            ) { ?>
+                                                <div class="form-group">
+                                                    <label for="custom_download_<?php echo $i; ?>"><?php _e(
+    "Custom Download Alias",
+    "cftp_admin"
+); ?></label>
+                                                    <?php foreach (
+                                                        $file->getCustomDownloads()
+                                                        as $j =>
+                                                            $custom_download
+                                                    ) {
+                                                        $trans = __(
+                                                            "Enter a custom download link.",
+                                                            "cftp_admin"
+                                                        );
+                                                        $custom_download_uri = get_option(
+                                                            "custom_download_uri"
+                                                        );
+                                                        if (
+                                                            !$custom_download_uri
+                                                        ) {
+                                                            $custom_download_uri =
+                                                                BASE_URI .
+                                                                "custom-download.php?link=";
+                                                        }
+                                                        echo <<<EOL
+                                                            <div class="input-group">
+                                                                <input type="hidden" value="{$custom_download["link"]}" name="file[$i][custom_downloads][$j][id]" />
+                                                                <input type="text" name="file[$i][custom_downloads][$j][link]"
+                                                                    id="custom_download_input_{$i}_{$j}"
+                                                                    value="{$custom_download["link"]}"
+                                                                    class="form-control"
+                                                                    placeholder="$trans" />
+                                                                <a href="#" class="input-group-text" onclick="copyTextToClipboard('$custom_download_uri' + document.getElementById('custom_download_input_{$i}_{$j}').value);">
+                                                                    <i class="fa fa-copy" style="cursor: pointer"></i>
+                                                                </a>
+                                                            </div>
+EOL;
+                                                    } ?>
+                                                    <p class="field_note form-text">
+                                                        <?php echo sprintf(
+                                                            __(
+                                                                'Optional: enter an alias to use on the custom download link. Ej: "my-first-file" will let you download this file from %s'
+                                                            ),
+                                                            BASE_URI .
+                                                                "custom-download.php?link=my-first-file"
+                                                        ); ?>
+                                                    </p>
+                                                </div>
+                                            <?php } ?>
                                             
                                             <!-- REMOVED: Description field - users can no longer set descriptions via UI -->
                                             <!-- REMOVED: Expiration date section - users can no longer set expiration via UI -->
@@ -409,104 +573,18 @@ if (isset($_GET["confirm"])) {
                                         </div>
                                     </div>
 
-                                    <?php // Only show the CLIENTS select field if the current uploader is a system user, and not a client.
+                                    <?php // UPDATED: Removed client and group assignments - now handled at transmittal level
 
                     if (CURRENT_USER_LEVEL != 0) { ?>
                                         <div class="col assigns">
                                             <div class="file_data">
                                                 <h3><?php _e(
-                                                    "Assignations",
+                                                    "File Settings",
                                                     "cftp_admin"
                                                 ); ?></h3>
-                                                <label><?php _e(
-                                                    "Clients",
-                                                    "cftp_admin"
-                                                ); ?></label>
-                                                <select class="form-select select2 assignments_clients none" multiple="multiple" 
-                                                        id="clients_<?php echo $file->id; ?>" name="file[<?php echo $i; ?>][assignments][clients][]" 
-                                                        data-file-id="<?php echo $file->id; ?>" data-type="clients" 
-                                                        data-placeholder="<?php _e(
-                                                            "Select one or more options. Type to search.",
-                                                            "cftp_admin"
-                                                        ); ?>">
-                                                    <?php foreach (
-                                                        $clients
-                                                        as $id => $name
-                                                    ) { ?>
-                                                        <option value="<?php echo html_output(
-                                                            $id
-                                                        ); ?>" <?php if (
-    in_array($id, $file->assignments_clients)
-) {
-    echo ' selected="selected"';
-} ?>>
-                                                            <?php echo html_output(
-                                                                $name
-                                                            ); ?>
-                                                        </option>
-                                                    <?php } ?>
-                                                </select>
-                                                <div class="select_control_buttons">
-                                                    <button type="button" class="btn btn-sm btn-primary add-all" data-target="clients_<?php echo $file->id; ?>">
-                                                        <?php _e(
-                                                            "Add all",
-                                                            "cftp_admin"
-                                                        ); ?>
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm btn-primary remove-all" data-target="clients_<?php echo $file->id; ?>">
-                                                        <?php _e(
-                                                            "Remove all",
-                                                            "cftp_admin"
-                                                        ); ?>
-                                                    </button>
-                                                </div>
-
-                                                <div class="divider"></div>
-
-                                                <label><?php _e(
-                                                    "Groups",
-                                                    "cftp_admin"
-                                                ); ?></label>
-                                                <select class="form-select select2 assignments_groups none" multiple="multiple" 
-                                                        id="groups_<?php echo $file->id; ?>" name="file[<?php echo $i; ?>][assignments][groups][]" 
-                                                        data-file-id="<?php echo $file->id; ?>" data-type="groups" 
-                                                        data-placeholder="<?php _e(
-                                                            "Select one or more options. Type to search.",
-                                                            "cftp_admin"
-                                                        ); ?>">
-                                                    <?php foreach (
-                                                        $groups
-                                                        as $id => $name
-                                                    ) { ?>
-                                                        <option value="<?php echo html_output(
-                                                            $id
-                                                        ); ?>" <?php if (
-    in_array($id, $file->assignments_groups)
-) {
-    echo ' selected="selected"';
-} ?>>
-                                                            <?php echo html_output(
-                                                                $name
-                                                            ); ?>
-                                                        </option>
-                                                    <?php } ?>
-                                                </select>
-                                                <div class="select_control_buttons">
-                                                    <button type="button" class="btn btn-sm btn-primary add-all" data-target="groups_<?php echo $file->id; ?>">
-                                                        <?php _e(
-                                                            "Add all",
-                                                            "cftp_admin"
-                                                        ); ?>
-                                                    </button>
-                                                    <button type="button" class="btn btn-sm btn-primary remove-all" data-target="groups_<?php echo $file->id; ?>">
-                                                        <?php _e(
-                                                            "Remove all",
-                                                            "cftp_admin"
-                                                        ); ?>
-                                                    </button>
-                                                </div>
-
-                                                <div class="divider"></div>
+                                                
+                                                <!-- REMOVED: Clients section - moved to transmittal level -->
+                                                <!-- REMOVED: Groups section - moved to transmittal level -->
 
                                                 <div class="checkbox">
                                                     <label for="hid_checkbox_<?php echo $i; ?>">
@@ -523,100 +601,15 @@ if (isset($_GET["confirm"])) {
                                     <?php } ?>
                                     
                                     <div class="col">
-                                        <?php if (
-                                            CURRENT_USER_LEVEL != 0 ||
-                                            get_option(
-                                                "clients_can_set_categories"
-                                            ) == "1"
-                                        ) {
-                                            $generate_categories_options = generate_categories_options(
-                                                $get_categories["arranged"],
-                                                0,
-                                                $file->categories
-                                            ); ?>
-                                            <div class="categories">
-                                                <div class="file_data">
-                                                    <h3><?php _e(
-                                                        "Categories",
-                                                        "cftp_admin"
-                                                    ); ?></h3>
-                                                    <label><?php _e(
-                                                        "Add to",
-                                                        "cftp_admin"
-                                                    ); ?>:</label>
-                                                    <select class="form-select select2 none" multiple="multiple" id="categories_<?php echo $file->id; ?>" 
-                                                            name="file[<?php echo $i; ?>][categories][]" data-type="categories" 
-                                                            data-placeholder="<?php _e(
-                                                                "Select one or more options. Type to search.",
-                                                                "cftp_admin"
-                                                            ); ?>">
-                                                        <?php echo render_categories_options(
-                                                            $generate_categories_options,
-                                                            [
-                                                                "selected" =>
-                                                                    $file->categories,
-                                                                "ignore" =>
-                                                                    $ignore ??
-                                                                    [],
-                                                            ]
-                                                        ); ?>
-                                                    </select>
-                                                    <div class="select_control_buttons">
-                                                        <button type="button" class="btn btn-sm btn-primary add-all" data-target="categories_<?php echo $file->id; ?>">
-                                                            <?php _e(
-                                                                "Add all",
-                                                                "cftp_admin"
-                                                            ); ?>
-                                                        </button>
-                                                        <button type="button" class="btn btn-sm btn-primary remove-all" data-target="categories_<?php echo $file->id; ?>">
-                                                            <?php _e(
-                                                                "Remove all",
-                                                                "cftp_admin"
-                                                            ); ?>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        <?php
-                                        } ?>
-
-                                        <!-- REMOVED: Location (folders) section - users can no longer select folders via UI -->
+                                        <!-- REMOVED: Categories section - moved to transmittal level -->
                                     </div>
                                 </div>
 
                                 <?php
-                                // UPDATED: Copy settings buttons - removed references to deleted fields
+                                // UPDATED: Apply to All Files buttons - only the ones we need
                                 $copy_buttons = [];
                                 if (count($editable) > 1) {
                                     if (CURRENT_USER_LEVEL != 0) {
-                                        // Selected clients
-                                        $copy_buttons["clients"] = [
-                                            "label" => __(
-                                                "Selected clients",
-                                                "cftp_admin"
-                                            ),
-                                            "class" => "copy-all",
-                                            "data" => [
-                                                "type" => "clients",
-                                                "target" =>
-                                                    "clients_" . $file->id,
-                                            ],
-                                        ];
-
-                                        // Selected groups
-                                        $copy_buttons["groups"] = [
-                                            "label" => __(
-                                                "Selected groups",
-                                                "cftp_admin"
-                                            ),
-                                            "class" => "copy-all",
-                                            "data" => [
-                                                "type" => "groups",
-                                                "target" =>
-                                                    "groups_" . $file->id,
-                                            ],
-                                        ];
-
                                         // Hidden status
                                         $copy_buttons["hidden"] = [
                                             "label" => __(
@@ -629,25 +622,58 @@ if (isset($_GET["confirm"])) {
                                                     "hid_checkbox_" . $i,
                                             ],
                                         ];
-                                    }
 
-                                    if (
-                                        CURRENT_USER_LEVEL != 0 ||
-                                        get_option(
-                                            "clients_can_set_categories"
-                                        ) == "1"
-                                    ) {
-                                        // Categories
-                                        $copy_buttons["categories"] = [
+                                        // File Comments (PLACEHOLDER - to be implemented)
+                                        $copy_buttons["file_comments"] = [
                                             "label" => __(
-                                                "Selected categories",
+                                                "File Comments",
                                                 "cftp_admin"
                                             ),
-                                            "class" => "copy-all",
+                                            "class" => "copy-file-comments",
                                             "data" => [
-                                                "type" => "categories",
-                                                "target" =>
-                                                    "categories_" . $file->id,
+                                                "copy-from" =>
+                                                    "file_comments_" . $i,
+                                            ],
+                                            "disabled" => true, // Placeholder
+                                        ];
+
+                                        // Client Document Number (PLACEHOLDER - to be implemented)
+                                        $copy_buttons["client_doc_number"] = [
+                                            "label" => __(
+                                                "Client Document Number",
+                                                "cftp_admin"
+                                            ),
+                                            "class" => "copy-client-doc-number",
+                                            "data" => [
+                                                "copy-from" =>
+                                                    "client_doc_number_" . $i,
+                                            ],
+                                            "disabled" => true, // Placeholder
+                                        ];
+
+                                        // Revision
+                                        $copy_buttons["revision"] = [
+                                            "label" => __(
+                                                "Revision",
+                                                "cftp_admin"
+                                            ),
+                                            "class" => "copy-revision",
+                                            "data" => [
+                                                "copy-from" =>
+                                                    "revision_number_" . $i,
+                                            ],
+                                        ];
+
+                                        // Custom Download Alias
+                                        $copy_buttons["custom_download"] = [
+                                            "label" => __(
+                                                "Custom Download Alias",
+                                                "cftp_admin"
+                                            ),
+                                            "class" => "copy-custom-download",
+                                            "data" => [
+                                                "copy-from" =>
+                                                    "custom_download_" . $i,
                                             ],
                                         ];
                                     }
@@ -663,27 +689,84 @@ if (isset($_GET["confirm"])) {
                                                     <?php foreach (
                                                         $copy_buttons
                                                         as $id => $button
-                                                    ) { ?>
+                                                    ) {
+
+                                                        $disabled_class =
+                                                            isset(
+                                                                $button[
+                                                                    "disabled"
+                                                                ]
+                                                            ) &&
+                                                            $button["disabled"]
+                                                                ? " disabled"
+                                                                : "";
+                                                        $disabled_attr =
+                                                            isset(
+                                                                $button[
+                                                                    "disabled"
+                                                                ]
+                                                            ) &&
+                                                            $button["disabled"]
+                                                                ? " disabled"
+                                                                : "";
+                                                        $title_attr =
+                                                            isset(
+                                                                $button[
+                                                                    "disabled"
+                                                                ]
+                                                            ) &&
+                                                            $button["disabled"]
+                                                                ? ' title="Coming soon - database field needs to be created"'
+                                                                : "";
+                                                        ?>
                                                         <button type="button" class="btn btn-sm btn-pslight mb-2 <?php echo $button[
                                                             "class"
-                                                        ]; ?>"
-                                                            <?php foreach (
-                                                                $button["data"]
-                                                                as $key =>
-                                                                    $value
+                                                        ] .
+                                                            $disabled_class; ?>"<?php echo $disabled_attr .
+    $title_attr; ?>
+                                                            <?php if (
+                                                                !isset(
+                                                                    $button[
+                                                                        "disabled"
+                                                                    ]
+                                                                ) ||
+                                                                !$button[
+                                                                    "disabled"
+                                                                ]
                                                             ) {
-                                                                echo " data-" .
-                                                                    $key .
-                                                                    '="' .
-                                                                    $value .
-                                                                    '"';
+                                                                foreach (
+                                                                    $button[
+                                                                        "data"
+                                                                    ]
+                                                                    as $key =>
+                                                                        $value
+                                                                ) {
+                                                                    echo " data-" .
+                                                                        $key .
+                                                                        '="' .
+                                                                        $value .
+                                                                        '"';
+                                                                }
                                                             } ?>
                                                         >
                                                             <?php echo $button[
                                                                 "label"
                                                             ]; ?>
+                                                            <?php if (
+                                                                isset(
+                                                                    $button[
+                                                                        "disabled"
+                                                                    ]
+                                                                ) &&
+                                                                $button[
+                                                                    "disabled"
+                                                                ]
+                                                            ) {
+                                                                echo " <small>(Coming Soon)</small>";
+                                                            } ?>
                                                         </button>
-                                                    <?php } ?>
+                                                    <?php
+                                                    } ?>
                                                 </div>
                                             </div>
                                         </footer>
@@ -787,6 +870,79 @@ if (isset($_GET["confirm"])) {
             if (disciplineSelect.value) {
                 disciplineSelect.dispatchEvent(new Event('change'));
             }
+        });
+
+        // "Apply to All Files" button functionality
+        
+        // Hidden Status
+        document.querySelectorAll('.copy-hidden-settings').forEach(function(button) {
+            button.addEventListener('click', function() {
+                const sourceId = this.getAttribute('data-copy-from');
+                const sourceCheckbox = document.getElementById(sourceId);
+                if (!sourceCheckbox) return;
+                
+                // Apply to all hidden checkboxes
+                document.querySelectorAll('[id^="hid_checkbox_"]').forEach(function(checkbox) {
+                    checkbox.checked = sourceCheckbox.checked;
+                });
+                
+                alert('Hidden status applied to all files');
+            });
+        });
+
+        // Revision
+        document.querySelectorAll('.copy-revision').forEach(function(button) {
+            button.addEventListener('click', function() {
+                const sourceId = this.getAttribute('data-copy-from');
+                const sourceInput = document.getElementById(sourceId);
+                if (!sourceInput) return;
+                
+                const sourceValue = sourceInput.value;
+                
+                // Apply to all revision inputs
+                document.querySelectorAll('[id^="revision_number_"]').forEach(function(input) {
+                    input.value = sourceValue;
+                });
+                
+                alert('Revision number applied to all files');
+            });
+        });
+
+        // Custom Download Alias
+        document.querySelectorAll('.copy-custom-download').forEach(function(button) {
+            button.addEventListener('click', function() {
+                // Find the first custom download input as source
+                const firstCustomDownloadInput = document.querySelector('[id^="custom_download_input_1_"]');
+                if (!firstCustomDownloadInput) return;
+                
+                const sourceValue = firstCustomDownloadInput.value;
+                
+                // Apply to all custom download inputs (but with unique suffixes)
+                document.querySelectorAll('[id^="custom_download_input_"]').forEach(function(input, index) {
+                    if (sourceValue && index > 0) {
+                        // Add index suffix to make unique
+                        input.value = sourceValue + '-' + (index + 1);
+                    } else {
+                        input.value = sourceValue;
+                    }
+                });
+                
+                alert('Custom download alias applied to all files (with unique suffixes)');
+            });
+        });
+
+        // File Comments (placeholder - will be implemented when database field is added)
+        document.querySelectorAll('.copy-file-comments').forEach(function(button) {
+            button.addEventListener('click', function() {
+                alert('File Comments feature coming soon - database field needs to be created first');
+            });
+        });
+
+        // Client Document Number (placeholder - will be implemented when database field is added)
+        document.querySelectorAll('.copy-client-doc-number').forEach(function(button) {
+            button.addEventListener('click', function() {
+                alert('Client Document Number feature coming soon - database field needs to be created first');
+            });
         });
     });
     </script>

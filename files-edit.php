@@ -200,13 +200,37 @@ if (isset($_POST["save"])) {
     }
 
     // Edit each file and its assignations
-    // UNCHANGED: This uses the Files class save() method which handles all the backend logic
+    // UPDATED: Process transmittal-level client assignments
     $confirm = false;
     foreach ($_POST["file"] as $file) {
         // Assign the normalized global BCC to each file's data array
         $file["file_bcc_addresses"] = $global_file_bcc_addresses;
 
-        // UNCHANGED: Use original Files class - no modifications needed
+        // NEW: Apply transmittal-level client assignments to each file
+        if (
+            isset($_POST["transmittal_clients"]) &&
+            is_array($_POST["transmittal_clients"])
+        ) {
+            $file["assignments"]["clients"] = $_POST["transmittal_clients"];
+        }
+
+        // NEW: Apply transmittal-level group assignments to each file
+        if (
+            isset($_POST["transmittal_groups"]) &&
+            is_array($_POST["transmittal_groups"])
+        ) {
+            $file["assignments"]["groups"] = $_POST["transmittal_groups"];
+        }
+
+        // NEW: Apply transmittal-level categories to each file
+        if (
+            isset($_POST["transmittal_categories"]) &&
+            is_array($_POST["transmittal_categories"])
+        ) {
+            $file["categories"] = $_POST["transmittal_categories"];
+        }
+
+        // UNCHANGED: Use original Files class - backend processing intact
         $object = new \ProjectSend\Classes\Files($file["id"]);
         if ($object->recordExists()) {
             if ($object->save($file) != false) {
