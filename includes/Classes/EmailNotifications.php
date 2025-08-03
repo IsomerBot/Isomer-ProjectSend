@@ -525,30 +525,9 @@ class EmailNotifications
         $html .= "</div>";
         $html .= "</div>"; // End header section
 
-        // Project information section - UPDATED: Bold labels, more spacing between columns
+        // Project information section - THREE-COLUMN LAYOUT WITH DISCIPLINE & DELIVERABLE TYPE
         $html .=
             '<div style="padding: 20px; border-bottom: 1px solid #c5e0ea; background: #fff;">';
-
-        // Two-column layout with MORE SPACING
-        $html .=
-            '<div style="display: flex; justify-content: space-between; gap: 50px;">';
-
-        // Left column with BOLDER labels
-        $html .= '<div style="flex: 1;">';
-
-        if (!empty($first_file_data["project_number"])) {
-            $html .=
-                '<div class="isomer-body" style="margin-bottom: 20px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a;">PROJECT NO:</span><br>' .
-                htmlspecialchars($first_file_data["project_number"]) .
-                "</div>";
-        }
-
-        // Add transmittal date
-        $formatted_date = date("F jS, Y");
-        $html .=
-            '<div class="isomer-body" style="margin-bottom: 20px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a;">TRANSMITTAL DATE:</span><br>' .
-            $formatted_date .
-            "</div>";
 
         // Get recipients
         $recipients_text = "All Recipients";
@@ -567,16 +546,39 @@ class EmailNotifications
             }
         }
 
+        // THREE-COLUMN LAYOUT for transmittal information
+        $html .=
+            '<div style="display: flex; justify-content: space-between; gap: 30px;">';
+
+        // LEFT COLUMN
+        $html .= '<div style="flex: 1;">';
+
+        if (!empty($first_file_data["project_number"])) {
+            $html .=
+                '<div class="isomer-body" style="margin-bottom: 20px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a;">PROJECT NO:</span><br>' .
+                htmlspecialchars($first_file_data["project_number"]) .
+                "</div>";
+        }
+
+        // Issue Status (if available)
+        if (!empty($first_file_data["issue_status"])) {
+            $html .=
+                '<div class="isomer-body" style="margin-bottom: 20px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a;">ISSUE STATUS:</span><br>' .
+                htmlspecialchars($first_file_data["issue_status"]) .
+                "</div>";
+        }
+
+        // TO field
         $html .=
             '<div class="isomer-body" style="margin-bottom: 20px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a;">TO:</span><br>' .
             htmlspecialchars($recipients_text) .
             "</div>";
-        $html .= "</div>";
 
-        //BCC section -- not visible in the email
+        $html .= "</div>"; // End left column
 
-        // Right column with BOLDER labels
+        // MIDDLE COLUMN
         $html .= '<div style="flex: 1;">';
+
         if (!empty($first_file_data["project_name"])) {
             $html .=
                 '<div class="isomer-body" style="margin-bottom: 20px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a;">PROJECT NAME:</span><br>' .
@@ -584,6 +586,15 @@ class EmailNotifications
                 "</div>";
         }
 
+        // DISCIPLINE
+        if (!empty($first_file_data["discipline"])) {
+            $html .=
+                '<div class="isomer-body" style="margin-bottom: 20px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a;">DISCIPLINE:</span><br>' .
+                htmlspecialchars($first_file_data["discipline"]) .
+                "</div>";
+        }
+
+        // FROM field
         $from_text = !empty($first_file_data["uploader_name"])
             ? htmlspecialchars($first_file_data["uploader_name"])
             : "Isomer Project Group";
@@ -591,16 +602,42 @@ class EmailNotifications
             '<div class="isomer-body" style="margin-bottom: 20px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a;">FROM:</span><br>' .
             $from_text .
             "</div>";
-        $html .= "</div>";
 
-        $html .= "</div>"; // End two-column layout
+        $html .= "</div>"; // End middle column
+
+        // RIGHT COLUMN
+        $html .= '<div style="flex: 1;">';
+
+        // Transmittal Date
+        $formatted_date = date("F jS, Y");
+        $html .=
+            '<div class="isomer-body" style="margin-bottom: 20px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a;">TRANSMITTAL DATE:</span><br>' .
+            $formatted_date .
+            "</div>";
+
+        // DELIVERABLE TYPE
+        if (!empty($first_file_data["deliverable_type"])) {
+            $deliverable_type = html_entity_decode(
+                htmlspecialchars($first_file_data["deliverable_type"]),
+                ENT_QUOTES,
+                "UTF-8"
+            );
+            $html .=
+                '<div class="isomer-body" style="margin-bottom: 20px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a;">DELIVERABLE TYPE:</span><br>' .
+                $deliverable_type .
+                "</div>";
+        }
+
+        $html .= "</div>"; // End right column
+
+        $html .= "</div>"; // End three-column layout
         $html .= "</div>"; // End project info section
 
         // COMMENTS SECTION - Same boldness as project labels
         $html .=
             '<div style="padding: 20px; margin-bottom: 0; background: #fff;">';
         $html .=
-            '<div style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a; margin-bottom: 8px;">COMMENTS:</div>';
+            '<div style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a; margin-bottom: 8px;">TRANSMITTAL COMMENTS:</div>';
         $html .=
             '<div style="border: 1px solid #c5e0ea; padding: 15px; min-height: 60px; background: #fafafa;">';
 
@@ -628,23 +665,19 @@ class EmailNotifications
         $html .=
             '<div class="isomer-body" style="margin-bottom: 20px; text-align: center;">The following deliverables have been transmitted from Isomer Project Group</div>';
 
-        // FILES TABLE - Blue header background with white font
+        // FILES TABLE - UPDATED: Removed Discipline and Deliverable columns
         $html .=
             '<table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd; font-size: 12px; margin-bottom: 0;">';
         $html .=
             '<tr style="background: #252c3a; font-weight: bold; color: white;">';
         $html .=
-            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">File</th>';
+            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">File Name</th>';
         $html .=
-            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">Rev.</th>';
+            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">Revision</th>';
         $html .=
             '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">Issue Status</th>';
         $html .=
-            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">Document</th>';
-        $html .=
-            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">Discipline</th>';
-        $html .=
-            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">Deliverable</th>';
+            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">Document Title</th>';
         $html .= "</tr>";
 
         // CRITICAL FIX: Loop through ALL files and add a row for each
@@ -682,29 +715,12 @@ class EmailNotifications
                 $doc_title .
                 "</td>";
 
-            // Discipline
-            $html .=
-                '<td style="border: 1px solid #ddd; padding: 8px;">' .
-                htmlspecialchars($file_data["discipline"] ?? "") .
-                "</td>";
-
-            // Deliverable Type
-            $deliverable_type = html_entity_decode(
-                htmlspecialchars($file_data["deliverable_type"] ?? ""),
-                ENT_QUOTES,
-                "UTF-8"
-            );
-            $html .=
-                '<td style="border: 1px solid #ddd; padding: 8px;">' .
-                $deliverable_type .
-                "</td>";
-
             $html .= "</tr>";
 
-            // Description row for each file
+            // Description row for each file - UPDATED COLSPAN: Changed from 6 to 4
             $html .= "<tr>";
             $html .=
-                '<td colspan="6" style="border-left: 1px solid #ddd; border-right: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 0;">';
+                '<td colspan="4" style="border-left: 1px solid #ddd; border-right: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 0;">';
 
             // Description container
             $html .=

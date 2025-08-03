@@ -166,12 +166,109 @@ if (isset($_GET["confirm"])) {
                             } ?>
                         </select>
                     </div>
+
+                    <!-- NEW: Transmittal-level Discipline -->
+                    <div class="form-group">
+                        <label for="transmittal_discipline"><?php _e(
+                            "Discipline",
+                            "cftp_admin"
+                        ); ?> *</label>
+                        <select id="transmittal_discipline" name="transmittal_discipline" class="form-select transmittal-discipline-select" required>
+                            <?php try {
+                                $helper = new \ProjectSend\Classes\TransmittalHelper();
+                                echo $helper->generateDropdownHtmlWithAbbr(
+                                    "discipline",
+                                    $existing_transmittal_data["discipline"] ??
+                                        "",
+                                    true,
+                                    true
+                                );
+                            } catch (Exception $e) {
+                                error_log(
+                                    "Error loading disciplines: " .
+                                        $e->getMessage()
+                                );
+                                echo '<option value="">Error loading disciplines</option>';
+                            } ?>
+                        </select>
+                        <p class="field_note form-text"><?php _e(
+                            "All files in this transmittal will use this discipline.",
+                            "cftp_admin"
+                        ); ?></p>
+                    </div>
+
+                    <!-- NEW: Transmittal-level Deliverable Type -->
+                    <div class="form-group">
+                        <label for="transmittal_deliverable_type"><?php _e(
+                            "Deliverable Type",
+                            "cftp_admin"
+                        ); ?> *</label>
+                        <select id="transmittal_deliverable_type" name="transmittal_deliverable_type" class="form-select transmittal-deliverable-type-select" required>
+                            <option value=""><?php _e(
+                                "Select Discipline First",
+                                "cftp_admin"
+                            ); ?></option>
+                            <?php if (
+                                !empty(
+                                    $existing_transmittal_data["discipline"]
+                                ) &&
+                                !empty(
+                                    $existing_transmittal_data[
+                                        "deliverable_type"
+                                    ]
+                                )
+                            ) {
+                                try {
+                                    $helper = new \ProjectSend\Classes\TransmittalHelper();
+                                    $deliverable_types = $helper->getDeliverableTypesByDiscipline(
+                                        $existing_transmittal_data["discipline"]
+                                    );
+                                    foreach ($deliverable_types as $type) {
+                                        $selected =
+                                            $type["deliverable_type"] ==
+                                            ($existing_transmittal_data[
+                                                "deliverable_type"
+                                            ] ??
+                                                "")
+                                                ? " selected"
+                                                : "";
+                                        $display_text = !empty(
+                                            $type["abbreviation"]
+                                        )
+                                            ? $type["deliverable_type"] .
+                                                " (" .
+                                                $type["abbreviation"] .
+                                                ")"
+                                            : $type["deliverable_type"];
+                                        echo '<option value="' .
+                                            htmlspecialchars(
+                                                $type["deliverable_type"]
+                                            ) .
+                                            '"' .
+                                            $selected .
+                                            ">" .
+                                            htmlspecialchars($display_text) .
+                                            "</option>";
+                                    }
+                                } catch (Exception $e) {
+                                    error_log(
+                                        "Error loading deliverable types: " .
+                                            $e->getMessage()
+                                    );
+                                }
+                            } ?>
+                        </select>
+                        <p class="field_note form-text"><?php _e(
+                            "All files in this transmittal will use this deliverable type.",
+                            "cftp_admin"
+                        ); ?></p>
+                    </div>
                 </div>
 
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="comments"><?php _e(
-                            "Comments",
+                            "Transmittal Comments",
                             "cftp_admin"
                         ); ?></label>
                         <textarea id="comments" 
@@ -192,24 +289,24 @@ if (isset($_GET["confirm"])) {
 
             <div class="form-group">
                 <label for="file_bcc_addresses"><?php _e(
-                    "BCC Recipients for this Transmittal",
+                    "BCC Recipients",
                     "cftp_admin"
                 ); ?></label>
                 <textarea name="file_bcc_addresses" id="file_bcc_addresses" class="form-control" rows="5" placeholder="<?php _e(
-                    "Paste comma-separated or one-per-line email addresses from Excel for this transmittal.",
+                    "Enter email addresses separated by commas.",
                     "cftp_admin"
                 ); ?>"><?php echo htmlspecialchars(
     $existing_transmittal_data["file_bcc_addresses"] ?? ""
 ); ?></textarea>
                 <p class="field_note form-text"><?php _e(
-                    "These email addresses will receive a hidden copy of the notification for this specific transmittal. Separate multiple addresses with commas or new lines.",
+                    "These email addresses will receive a hidden copy of the notification for this specific transmittal.",
                     "cftp_admin"
                 ); ?></p>
             </div>
 
             <!-- NEW: Transmittal-level Client Assignment -->
             <div class="form-group">
-                <h4><?php _e("Transmittal Recipients", "cftp_admin"); ?></h4>
+                <h3><?php _e("Assignments", "cftp_admin"); ?></h3>
                 <label for="transmittal_clients"><?php _e(
                     "Clients",
                     "cftp_admin"
@@ -241,13 +338,8 @@ if (isset($_GET["confirm"])) {
                     <?php }
                     ?>
                 </select>
-                <p class="field_note form-text"><?php _e(
-                    "All files in this transmittal will be assigned to the selected clients.",
-                    "cftp_admin"
-                ); ?></p>
             </div>
 
-            <!-- NEW: Transmittal-level Groups Assignment -->
             <div class="form-group">
                 <label for="transmittal_groups"><?php _e(
                     "Groups",
@@ -279,13 +371,8 @@ if (isset($_GET["confirm"])) {
                     <?php }
                     ?>
                 </select>
-                <p class="field_note form-text"><?php _e(
-                    "All files in this transmittal will be assigned to the selected groups.",
-                    "cftp_admin"
-                ); ?></p>
             </div>
 
-            <!-- NEW: Transmittal-level Categories Assignment -->
             <div class="form-group">
                 <label for="transmittal_categories"><?php _e(
                     "Categories",
@@ -298,7 +385,8 @@ if (isset($_GET["confirm"])) {
                             "cftp_admin"
                         ); ?>">
                     <?php // Get all categories for transmittal assignment
-                    if (!empty($get_categories["arranged"])) {
+
+            if (!empty($get_categories["arranged"])) {
                         $generate_categories_options = generate_categories_options(
                             $get_categories["arranged"],
                             0,
@@ -310,13 +398,7 @@ if (isset($_GET["confirm"])) {
                         );
                     } ?>
                 </select>
-                <p class="field_note form-text"><?php _e(
-                    "All files in this transmittal will be assigned to the selected categories.",
-                    "cftp_admin"
-                ); ?></p>
             </div>
-            
-        <?php endif; ?>
 
         <?php
         $me = new \ProjectSend\Classes\Users(CURRENT_USER_ID);
@@ -360,7 +442,7 @@ if (isset($_GET["confirm"])) {
                                             <?php if (
                                                 CURRENT_USER_LEVEL != 0
                                             ): ?>
-                                                <!-- ADMIN USERS: Show all transmittal fields per file -->
+                                                <!-- ADMIN USERS: Show file-specific transmittal fields -->
                                                 
                                                 <!-- Revision Number Manual Field -->
                                                 <div class="form-group">
@@ -396,118 +478,20 @@ if (isset($_GET["confirm"])) {
                                                            ); ?>" />
                                                 </div>
 
-                                                <!-- Discipline Field (file-specific) -->
-                                                <div class="form-group">
-                                                    <label for="discipline_<?php echo $i; ?>"><?php _e(
-    "Discipline",
-    "cftp_admin"
-); ?> *</label>
-                                                    <select id="discipline_<?php echo $i; ?>" name="file[<?php echo $i; ?>][discipline]" class="form-select discipline-select" required>
-                                                        <?php try {
-                                                            $helper = new \ProjectSend\Classes\TransmittalHelper();
-                                                            echo $helper->generateDropdownHtmlWithAbbr(
-                                                                "discipline",
-                                                                $file->discipline ??
-                                                                    "",
-                                                                true,
-                                                                true
-                                                            );
-                                                        } catch (Exception $e) {
-                                                            error_log(
-                                                                "Error loading disciplines: " .
-                                                                    $e->getMessage()
-                                                            );
-                                                            echo '<option value="">Error loading disciplines</option>';
-                                                        } ?>
-                                                    </select>
-                                                </div>
-
-                                                <!-- Deliverable Type Field (file-specific) -->
-                                                <div class="form-group">
-                                                    <label for="deliverable_type_<?php echo $i; ?>"><?php _e(
-    "Deliverable Type",
-    "cftp_admin"
-); ?> *</label>
-                                                    <select id="deliverable_type_<?php echo $i; ?>" name="file[<?php echo $i; ?>][deliverable_type]" class="form-select deliverable-type-select" required>
-                                                        <option value=""><?php _e(
-                                                            "Select Discipline First",
-                                                            "cftp_admin"
-                                                        ); ?></option>
-                                                        <?php if (
-                                                            !empty(
-                                                                $file->discipline
-                                                            ) &&
-                                                            !empty(
-                                                                $file->deliverable_type
-                                                            )
-                                                        ) {
-                                                            try {
-                                                                $helper = new \ProjectSend\Classes\TransmittalHelper();
-                                                                $deliverable_types = $helper->getDeliverableTypesByDiscipline(
-                                                                    $file->discipline
-                                                                );
-                                                                foreach (
-                                                                    $deliverable_types
-                                                                    as $type
-                                                                ) {
-                                                                    $selected =
-                                                                        $type[
-                                                                            "deliverable_type"
-                                                                        ] ==
-                                                                        $file->deliverable_type
-                                                                            ? " selected"
-                                                                            : "";
-                                                                    $display_text = !empty(
-                                                                        $type[
-                                                                            "abbreviation"
-                                                                        ]
-                                                                    )
-                                                                        ? $type[
-                                                                                "deliverable_type"
-                                                                            ] .
-                                                                            " (" .
-                                                                            $type[
-                                                                                "abbreviation"
-                                                                            ] .
-                                                                            ")"
-                                                                        : $type[
-                                                                            "deliverable_type"
-                                                                        ];
-                                                                    echo '<option value="' .
-                                                                        htmlspecialchars(
-                                                                            $type[
-                                                                                "deliverable_type"
-                                                                            ]
-                                                                        ) .
-                                                                        '"' .
-                                                                        $selected .
-                                                                        ">" .
-                                                                        htmlspecialchars(
-                                                                            $display_text
-                                                                        ) .
-                                                                        "</option>";
-                                                                }
-                                                            } catch (Exception $e) {
-                                                                error_log(
-                                                                    "Error loading deliverable types: " .
-                                                                        $e->getMessage()
-                                                                );
-                                                            }
-                                                        } ?>
-                                                    </select>
-                                                </div>
+                                                <!-- REMOVED: Discipline Field - moved to transmittal level -->
+                                                <!-- REMOVED: Deliverable Type Field - moved to transmittal level -->
                                                 
                                             <?php endif; ?>
 
                                             <!-- File Title (shown to everyone) -->
                                             <div class="form-group">
                                                 <label><?php _e(
-                                                    "Title",
+                                                    "File Name",
                                                     "cftp_admin"
                                                 ); ?></label>
                                                 <input type="text" name="file[<?php echo $i; ?>][name]" value="<?php echo $file->title; ?>" class="form-control" 
                                                        placeholder="<?php _e(
-                                                           "Enter here the required file title.",
+                                                           "Enter here the required file name.",
                                                            "cftp_admin"
                                                        ); ?>" />
                                             </div>
@@ -784,6 +768,7 @@ EOL;
             }
         }
         ?>
+        
     </div> <!-- container -->
 
     <div class="after_form_buttons">
@@ -813,26 +798,19 @@ EOL;
     <!-- JavaScript only for admin users -->
     <script>
     document.addEventListener('DOMContentLoaded', function() {
-        // JavaScript for discipline/deliverable type dynamic dropdowns
-        const disciplineSelects = document.querySelectorAll('.discipline-select');
+        // NEW: JavaScript for transmittal-level discipline/deliverable type dependency
+        const transmittalDisciplineSelect = document.getElementById('transmittal_discipline');
+        const transmittalDeliverableTypeSelect = document.getElementById('transmittal_deliverable_type');
         
-        disciplineSelects.forEach(function(disciplineSelect) {
-            const fileIndex = disciplineSelect.id.split('_').pop();
-            const deliverableTypeSelect = document.getElementById('deliverable_type_' + fileIndex);
-            
-            if (!deliverableTypeSelect) {
-                console.error('Deliverable type select not found for file index:', fileIndex);
-                return;
-            }
-
-            disciplineSelect.addEventListener('change', function() {
+        if (transmittalDisciplineSelect && transmittalDeliverableTypeSelect) {
+            transmittalDisciplineSelect.addEventListener('change', function() {
                 const selectedDiscipline = this.value;
-                deliverableTypeSelect.innerHTML = '<option value="">Loading...</option>';
-                deliverableTypeSelect.disabled = true;
+                transmittalDeliverableTypeSelect.innerHTML = '<option value="">Loading...</option>';
+                transmittalDeliverableTypeSelect.disabled = true;
 
                 if (!selectedDiscipline) {
-                    deliverableTypeSelect.innerHTML = '<option value="">Select Discipline First</option>';
-                    deliverableTypeSelect.disabled = false;
+                    transmittalDeliverableTypeSelect.innerHTML = '<option value="">Select Discipline First</option>';
+                    transmittalDeliverableTypeSelect.disabled = false;
                     return;
                 }
 
@@ -844,33 +822,35 @@ EOL;
                         return response.json();
                     })
                     .then(data => {
-                        deliverableTypeSelect.innerHTML = '<option value="">Select Deliverable Type</option>';
+                        transmittalDeliverableTypeSelect.innerHTML = '<option value="">Select Deliverable Type</option>';
 
                         if (Array.isArray(data) && data.length > 0) {
                             data.forEach(item => {
                                 const option = document.createElement('option');
                                 option.value = item.value;
                                 option.textContent = item.text;
-                                deliverableTypeSelect.appendChild(option);
+                                transmittalDeliverableTypeSelect.appendChild(option);
                             });
                         } else {
-                            deliverableTypeSelect.innerHTML = '<option value="">No types available</option>';
+                            transmittalDeliverableTypeSelect.innerHTML = '<option value="">No types available</option>';
                         }
 
-                        deliverableTypeSelect.disabled = false;
+                        transmittalDeliverableTypeSelect.disabled = false;
                     })
                     .catch(error => {
                         console.error('Error fetching deliverable types:', error);
-                        deliverableTypeSelect.innerHTML = '<option value="">Error loading types</option>';
-                        deliverableTypeSelect.disabled = false;
+                        transmittalDeliverableTypeSelect.innerHTML = '<option value="">Error loading types</option>';
+                        transmittalDeliverableTypeSelect.disabled = false;
                     });
             });
 
             // Trigger change event on page load if discipline is already selected
-            if (disciplineSelect.value) {
-                disciplineSelect.dispatchEvent(new Event('change'));
+            if (transmittalDisciplineSelect.value) {
+                transmittalDisciplineSelect.dispatchEvent(new Event('change'));
             }
-        });
+        }
+
+        // REMOVED: File-specific discipline/deliverable type JavaScript (no longer needed)
 
         // "Apply to All Files" button functionality
         
@@ -947,4 +927,5 @@ EOL;
     });
     </script>
     <?php endif; ?>
+<?php endif; ?>
 </form>

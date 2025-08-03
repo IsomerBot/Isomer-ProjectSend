@@ -104,6 +104,9 @@ if (isset($_POST["save"])) {
             $global_package_description = $_POST["package_description"] ?? "";
             $global_issue_status = $_POST["issue_status"] ?? "";
             $global_comments = $_POST["comments"] ?? "";
+            $global_discipline = $_POST["transmittal_discipline"] ?? "";
+            $global_deliverable_type =
+                $_POST["transmittal_deliverable_type"] ?? "";
 
             // Get the next transmittal number for this project
             // This will be the SAME for all files in this upload batch
@@ -143,8 +146,8 @@ if (isset($_POST["save"])) {
                            project_number = :project_number,
                            package_description = :package_description,
                            issue_status = :issue_status,
-                           discipline = :discipline,
                            deliverable_type = :deliverable_type,
+                            discipline = :discipline,
                            document_title = :document_title,
                            revision_number = :revision_number,
                            comments = :comments,
@@ -160,10 +163,8 @@ if (isset($_POST["save"])) {
                         ":project_number" => $global_project_number,
                         ":package_description" => $global_package_description,
                         ":issue_status" => $global_issue_status,
-                        ":discipline" =>
-                            $file_data_from_post["discipline"] ?? "",
-                        ":deliverable_type" =>
-                            $file_data_from_post["deliverable_type"] ?? "",
+                        ":discipline" => $global_discipline,
+                        ":deliverable_type" => $global_deliverable_type,
                         ":document_title" =>
                             $file_data_from_post["document_title"] ?? "",
                         ":revision_number" =>
