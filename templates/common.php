@@ -216,6 +216,11 @@ if (!empty($found_all_files_array)) {
         $params[":transmittal_number"] = $GLOBALS["TRANSMITTAL_FILTER"];
     }
 
+    if (!empty($_GET["issue_status"])) {
+        $files_query .= " AND issue_status = :issue_status";
+        $params[":issue_status"] = $_GET["issue_status"];
+    }
+
     /** Add the search terms */
     if (isset($_GET["search"]) && !empty($_GET["search"])) {
         $files_query .=

@@ -12,6 +12,9 @@ $filter_by_category = isset($_GET["category"]) ? $_GET["category"] : null;
 $filter_by_transmittal = isset($_GET["transmittal"])
     ? $_GET["transmittal"]
     : null;
+$filter_by_issue_status = isset($_GET["issue_status"])
+    ? $_GET["issue_status"]
+    : null;
 
 $current_url = get_form_action_with_existing_parameters("index.php");
 
@@ -90,12 +93,61 @@ function get_user_transmittals_for_filter($client_id)
     return $statement->fetchAll(PDO::FETCH_ASSOC);
 }
 
+function get_user_issue_statuses_for_filter($client_id)
+{
+    global $dbh;
+
+    // Get issue statuses from files assigned to this client (including via groups)
+    $query =
+        "SELECT DISTINCT f.issue_status, COUNT(*) as file_count
+              FROM " .
+        TABLE_FILES .
+        " f
+              LEFT JOIN " .
+        TABLE_FILES_RELATIONS .
+        " fr ON f.id = fr.file_id
+              WHERE (f.user_id = :client_id OR fr.client_id = :client_id2)
+              AND f.issue_status IS NOT NULL 
+              AND f.issue_status != ''
+              AND fr.hidden = '0'
+              GROUP BY f.issue_status 
+              ORDER BY f.issue_status ASC";
+
+    $statement = $dbh->prepare($query);
+    $statement->execute([
+        ":client_id" => $client_id,
+        ":client_id2" => $client_id,
+    ]);
+
+    return $statement->fetchAll(PDO::FETCH_ASSOC);
+}
+
 // Search + filters bar data
 $search_form_action = "index.php";
 $filters_form = [
     "action" => "",
     "items" => [],
 ];
+
+// Get issue statuses for filter dropdown
+$user_issue_statuses = get_user_issue_statuses_for_filter($client_info["id"]);
+if (!empty($user_issue_statuses)) {
+    $issue_status_filter = [];
+    foreach ($user_issue_statuses as $status) {
+        $display_name =
+            $status["issue_status"] . " (" . $status["file_count"] . " files)";
+        $issue_status_filter[$status["issue_status"]] = $display_name;
+    }
+
+    $filters_form["items"]["issue_status"] = [
+        "current" => $filter_by_issue_status,
+        "placeholder" => [
+            "value" => "",
+            "label" => __("Filter by issue status", "cftp_admin"),
+        ],
+        "options" => $issue_status_filter,
+    ];
+}
 // Add transmittal filter dropdown
 $user_transmittals = get_user_transmittals_for_filter($client_info["id"]);
 if (!empty($user_transmittals)) {
@@ -202,6 +254,25 @@ include_once LAYOUT_DIR . DS . "folders-nav.php";
         $unique_key = $transmittal["transmittal_number"];
         if ($unique_key == $display_transmittal) {
             echo " (" . $transmittal["file_count"] . " files)";
+            break;
+        }
+    } ?>
+    | <a href="index.php" class="alert-link" style="text-decoration: none;">🔄 Show All Files</a>
+</div>
+<?php endif; ?>
+
+<!-- Issue Status filter banner - only shows when filtering -->
+<?php if (!empty($filter_by_issue_status)): ?>
+<div class="alert alert-warning" style="margin: 20px 0; border-radius: 5px;">
+    <strong>📋 Issue Status Filter Active:</strong> 
+    Showing files with issue status <strong><?php echo htmlspecialchars(
+        $filter_by_issue_status
+    ); ?></strong>
+    <?php // Show file count for this status
+    // Show file count for this status
+    foreach ($user_issue_statuses as $status) {
+        if ($status["issue_status"] == $filter_by_issue_status) {
+            echo " (" . $status["file_count"] . " files)";
             break;
         }
     } ?>
