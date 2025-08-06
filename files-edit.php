@@ -151,7 +151,8 @@ if (isset($_POST["save"])) {
                            document_title = :document_title,
                            revision_number = :revision_number,
                            comments = :comments,
-                           file_bcc_addresses = :file_bcc_addresses
+                           file_bcc_addresses = :file_bcc_addresses,
+                           file_comments = :file_comments
                          WHERE id = :file_id";
 
                     $statement = $dbh->prepare($query);
@@ -171,6 +172,8 @@ if (isset($_POST["save"])) {
                             $file_data_from_post["revision_number"] ?? "",
                         ":comments" => $global_comments,
                         ":file_bcc_addresses" => $global_file_bcc_addresses,
+                        ":file_comments" =>
+                            $file_data_from_post["file_comments"] ?? "",
                     ]);
                 }
             }
@@ -421,7 +424,7 @@ include_once ADMIN_VIEWS_DIR . DS . "header.php";
                 }
             }
 
-            // UPDATED: Simplified table - removed Description and Public columns
+            // UPDATED: Simplified table
             $table = new \ProjectSend\Classes\Layout\Table([
                 "id" => "uploaded_files_tbl",
                 "class" => "footable table",

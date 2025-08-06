@@ -7,7 +7,7 @@ if (!empty($editable) && !isset($_GET["saved"]) && CURRENT_USER_LEVEL != 0) {
     global $dbh;
     $query = "SELECT transmittal_number, transmittal_name, project_name, project_number, package_description, 
                      issue_status, discipline, deliverable_type, document_title,
-                     revision_number, comments, file_bcc_addresses
+                     revision_number, comments, file_bcc_addresses, file_comments
               FROM tbl_files 
               WHERE id = :file_id";
     $statement = $dbh->prepare($query);
@@ -72,7 +72,7 @@ if (isset($_GET["confirm"])) {
                         </small>
                     </div>
 
-                    <!-- Project Name Manual Field -->
+                    <!-- Project Name -->
                     <div class="form-group">
                         <label for="project_name"><?php _e(
                             "Project Name",
@@ -89,6 +89,7 @@ if (isset($_GET["confirm"])) {
                                ); ?>" required />
                     </div>
 
+                    <!-- Project Number -->
                     <div class="form-group">
                         <label for="project_number"><?php _e(
                             "Project Number",
@@ -265,6 +266,9 @@ if (isset($_GET["confirm"])) {
                     </div>
                 </div>
 
+
+                    <!-- Transmittal Comments -->
+
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="comments"><?php _e(
@@ -287,6 +291,7 @@ if (isset($_GET["confirm"])) {
                 </div>
             </div>
 
+            <!-- BCC Email -->
             <div class="form-group">
                 <label for="file_bcc_addresses"><?php _e(
                     "BCC Recipients",
@@ -340,6 +345,7 @@ if (isset($_GET["confirm"])) {
                 </select>
             </div>
 
+            <!-- NEW: Transmittal-level Groups Assignment -->
             <div class="form-group">
                 <label for="transmittal_groups"><?php _e(
                     "Groups",
@@ -384,9 +390,7 @@ if (isset($_GET["confirm"])) {
                             "Select categories for this transmittal. Type to search.",
                             "cftp_admin"
                         ); ?>">
-                    <?php // Get all categories for transmittal assignment
-
-            if (!empty($get_categories["arranged"])) {
+                    <?php if (!empty($get_categories["arranged"])) {
                         $generate_categories_options = generate_categories_options(
                             $get_categories["arranged"],
                             0,
@@ -426,6 +430,8 @@ if (isset($_GET["confirm"])) {
                                 </div>
                             </div>
                         </div>
+
+                        <!-- File Information Section -->
                         <div class="row file_editor">
                             <div class="col-12">
                                 <div class="row gx-5">
@@ -442,7 +448,6 @@ if (isset($_GET["confirm"])) {
                                             <?php if (
                                                 CURRENT_USER_LEVEL != 0
                                             ): ?>
-                                                <!-- ADMIN USERS: Show file-specific transmittal fields -->
                                                 
                                                 <!-- Revision Number Manual Field -->
                                                 <div class="form-group">
@@ -483,7 +488,7 @@ if (isset($_GET["confirm"])) {
                                                 
                                             <?php endif; ?>
 
-                                            <!-- File Title (shown to everyone) -->
+                                            <!-- File Title  -->
                                             <div class="form-group">
                                                 <label><?php _e(
                                                     "File Name",
@@ -496,7 +501,7 @@ if (isset($_GET["confirm"])) {
                                                        ); ?>" />
                                             </div>
 
-                                            <!-- Custom Download Alias (restored) -->
+                                            <!-- Custom Download Alias  -->
                                             <?php if (
                                                 CURRENT_USER_LEVEL != 0 ||
                                                 current_user_can_upload_public()
@@ -550,11 +555,31 @@ EOL;
                                                     </p>
                                                 </div>
                                             <?php } ?>
-                                            
-                                            <!-- REMOVED: Description field - users can no longer set descriptions via UI -->
-                                            <!-- REMOVED: Expiration date section - users can no longer set expiration via UI -->
-                                            <!-- REMOVED: Public downloading section - users can no longer mark files public via UI -->
-                                        </div>
+
+                                             <!-- File Comments -->
+                                            <div class="form-group">
+                                                <label><?php _e(
+                                                    "File Comments",
+                                                    "cftp_admin"
+                                                ); ?></label>
+                                                <textarea id="file_comments_<?php echo $file->id; ?>" name="file[<?php echo $i; ?>][file_comments]" 
+                                                          class="<?php if (
+                                                              get_option(
+                                                                  "files_file_comments_use_ckeditor"
+                                                              ) == 1
+                                                          ) {
+                                                              echo "ckeditor";
+                                                          } ?> form-control textarea_file_comments" 
+                                                          placeholder="<?php _e(
+                                                              "Optionally, enter here a comment for the file.",
+                                                              "cftp_admin"
+                                                          ); ?>"><?php if (
+    !empty($file->file_comments)
+) {
+    echo $file->file_comments;
+} ?></textarea>
+                                            </div>
+                                         </div>
                                     </div>
 
                                     <?php // UPDATED: Removed client and group assignments - now handled at transmittal level
@@ -566,10 +591,9 @@ EOL;
                                                     "File Settings",
                                                     "cftp_admin"
                                                 ); ?></h3>
-                                                
-                                                <!-- REMOVED: Clients section - moved to transmittal level -->
-                                                <!-- REMOVED: Groups section - moved to transmittal level -->
 
+                                                <!-- Hidden Status -->
+                                                
                                                 <div class="checkbox">
                                                     <label for="hid_checkbox_<?php echo $i; ?>">
                                                         <input type="checkbox" class="checkbox_setting_hidden" id="hid_checkbox_<?php echo $i; ?>" 
@@ -585,16 +609,15 @@ EOL;
                                     <?php } ?>
                                     
                                     <div class="col">
-                                        <!-- REMOVED: Categories section - moved to transmittal level -->
                                     </div>
                                 </div>
 
                                 <?php
-                                // UPDATED: Apply to All Files buttons - only the ones we need
+                                // UPDATED: Apply to All Files buttons
                                 $copy_buttons = [];
                                 if (count($editable) > 1) {
                                     if (CURRENT_USER_LEVEL != 0) {
-                                        // Hidden status
+                                        // Hidden status setting
                                         $copy_buttons["hidden"] = [
                                             "label" => __(
                                                 "Hidden status",
@@ -607,7 +630,7 @@ EOL;
                                             ],
                                         ];
 
-                                        // File Comments (PLACEHOLDER - to be implemented)
+                                        // File Comments Button
                                         $copy_buttons["file_comments"] = [
                                             "label" => __(
                                                 "File Comments",
@@ -632,10 +655,10 @@ EOL;
                                                 "copy-from" =>
                                                     "client_doc_number_" . $i,
                                             ],
-                                            "disabled" => true, // Placeholder
+                                            "disabled" => true,
                                         ];
 
-                                        // Revision
+                                        // Revision Button
                                         $copy_buttons["revision"] = [
                                             "label" => __(
                                                 "Revision",
@@ -648,7 +671,7 @@ EOL;
                                             ],
                                         ];
 
-                                        // Custom Download Alias
+                                        // Custom Download Alias Button
                                         $copy_buttons["custom_download"] = [
                                             "label" => __(
                                                 "Custom Download Alias",
@@ -768,9 +791,9 @@ EOL;
             }
         }
         ?>
-        
-    </div> <!-- container -->
+    </div>
 
+    <!-- Styling for the form buttons -->
     <div class="after_form_buttons">
         <button type="submit" name="save" class="btn btn-wide btn-primary" id="upload-continue"><?php _e(
             "Save",
@@ -911,7 +934,7 @@ EOL;
             });
         });
 
-        // File Comments (placeholder - will be implemented when database field is added)
+        // File Comments 
         document.querySelectorAll('.copy-file-comments').forEach(function(button) {
             button.addEventListener('click', function() {
                 alert('File Comments feature coming soon - database field needs to be created first');

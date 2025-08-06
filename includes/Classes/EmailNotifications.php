@@ -135,7 +135,8 @@ class EmailNotifications
                     "comments" => $file->comments ?? "",
                     "transmittal_name" => $file->transmittal_name ?? "",
                     "uploader_name" => $uploader_name,
-                    "file_bcc_addresses" => $file->file_bcc_addresses ?? "", // ADDED THIS LINE
+                    "file_bcc_addresses" => $file->file_bcc_addresses ?? "",
+                    "file_comments" => $file->file_comments ?? "",
                 ];
             }
 
@@ -561,12 +562,12 @@ class EmailNotifications
         }
 
         // Issue Status (if available)
-        if (!empty($first_file_data["issue_status"])) {
-            $html .=
-                '<div class="isomer-body" style="margin-bottom: 20px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a;">ISSUE STATUS:</span><br>' .
-                htmlspecialchars($first_file_data["issue_status"]) .
-                "</div>";
-        }
+        // if (!empty($first_file_data["issue_status"])) {
+        //     $html .=
+        //         '<div class="isomer-body" style="margin-bottom: 20px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a;">ISSUE STATUS:</span><br>' .
+        //         htmlspecialchars($first_file_data["issue_status"]) .
+        //         "</div>";
+        // }
 
         // TO field
         $html .=
@@ -674,8 +675,8 @@ class EmailNotifications
             '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">File Name</th>';
         $html .=
             '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">Revision</th>';
-        $html .=
-            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">Issue Status</th>';
+        // $html .=
+        //     '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">Issue Status</th>';
         $html .=
             '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">Document Title</th>';
         $html .= "</tr>";
@@ -703,10 +704,10 @@ class EmailNotifications
                 "</td>";
 
             // Issue Status
-            $html .=
-                '<td style="border: 1px solid #ddd; padding: 8px;">Issued For: ' .
-                htmlspecialchars($file_data["issue_status"] ?? "") .
-                "</td>";
+            // $html .=
+            //     '<td style="border: 1px solid #ddd; padding: 8px;">Issued For: ' .
+            //     htmlspecialchars($file_data["issue_status"] ?? "") .
+            //     "</td>";
 
             // Document Title
             $doc_title = htmlspecialchars($file_data["document_title"] ?? "");
@@ -717,39 +718,36 @@ class EmailNotifications
 
             $html .= "</tr>";
 
-            // Description row for each file - UPDATED COLSPAN: Changed from 6 to 4
-            $html .= "<tr>";
-            $html .=
-                '<td colspan="4" style="border-left: 1px solid #ddd; border-right: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 0;">';
-
-            // Description container
-            $html .=
-                '<div style="padding: 8px; background: #f9f9f9; border-top: 1px solid #eee;">';
-
-            $description = $file_data["description"] ?? "";
-            if (!empty($description)) {
-                $description = html_entity_decode(
-                    strip_tags($description),
+            // File Comments row for each file - Only show if comments exist
+            $file_comments = $file_data["file_comments"] ?? "";
+            if (!empty($file_comments)) {
+                $file_comments = html_entity_decode(
+                    strip_tags($file_comments),
                     ENT_QUOTES,
                     "UTF-8"
                 );
-                $description = htmlspecialchars($description);
-            } else {
-                $description = "";
-            }
+                $file_comments = htmlspecialchars($file_comments);
 
-            $html .=
-                '<span style="font-weight: bold; font-size: 11px;">File Description:</span>';
-            if (!empty($description)) {
+                // Only add the comments row if there are actual comments
+                $html .= "<tr>";
+                $html .=
+                    '<td colspan="4" style="border-left: 1px solid #ddd; border-right: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 0;">';
+
+                // Comments container
+                $html .=
+                    '<div style="padding: 8px; background: #f9f9f9; border-top: 1px solid #eee;">';
+
+                $html .=
+                    '<span style="font-weight: bold; font-size: 11px;">File Comments:</span>';
                 $html .=
                     ' <span style="font-size: 11px;">' .
-                    $description .
+                    $file_comments .
                     "</span>";
-            }
 
-            $html .= "</div>";
-            $html .= "</td>";
-            $html .= "</tr>";
+                $html .= "</div>";
+                $html .= "</td>";
+                $html .= "</tr>";
+            }
         }
 
         $html .= "</table>";

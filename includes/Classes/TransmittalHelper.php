@@ -352,7 +352,9 @@ class TransmittalHelper
                     revision_number = :revision_number,
                     comments = :comments,
                     project_number = :project_number,
-                    transmittal_name = :transmittal_name
+                    transmittal_name = :transmittal_name,
+                    file_bcc_addresses = :file_bcc_addresses,
+                    file_comments = :file_comments
                   WHERE id = :file_id";
 
         $statement = $this->dbh->prepare($query);
@@ -372,6 +374,9 @@ class TransmittalHelper
             ":comments" => $transmittal_data["comments"] ?? "",
             ":project_number" => $transmittal_data["project_number"] ?? "",
             ":transmittal_name" => $transmittal_data["transmittal_name"] ?? "",
+            ":file_bcc_addresses" =>
+                $transmittal_data["file_bcc_addresses"] ?? "",
+            ":file_comments" => $transmittal_data["file_comments"] ?? "",
         ]);
     }
 }
