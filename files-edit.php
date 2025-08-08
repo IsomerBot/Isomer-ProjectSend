@@ -160,7 +160,8 @@ if (isset($_POST["save"])) {
                            comments = :comments,
                            file_bcc_addresses = :file_bcc_addresses,
                            file_cc_addresses = :file_cc_addresses,
-                           file_comments = :file_comments
+                           file_comments = :file_comments,
+                            client_document_number = :client_document_number
                          WHERE id = :file_id";
 
                     $statement = $dbh->prepare($query);
@@ -183,6 +184,9 @@ if (isset($_POST["save"])) {
                         ":file_cc_addresses" => $global_file_cc_addresses,
                         ":file_comments" =>
                             $file_data_from_post["file_comments"] ?? "",
+                        ":client_document_number" =>
+                            $file_data_from_post["client_document_number"] ??
+                            "",
                     ]);
                 }
             }

@@ -57,6 +57,7 @@ class Files
     public $file_bcc_addresses;
     public $file_cc_addresses; // ADD THIS
     public $file_comments;
+    public $client_document_number;
 
     private $use_date_folder;
     private $is_filetype_allowed;
@@ -194,6 +195,11 @@ class Files
         $this->file_comments = !empty($arguments["file_comments"])
             ? encode_html($arguments["file_comments"])
             : null;
+        $this->client_document_number = !empty(
+            $arguments["client_document_number"]
+        )
+            ? encode_html($arguments["client_document_number"])
+            : null;
 
         $this->comments = !empty($arguments["comments"])
             ? encode_html($arguments["comments"])
@@ -314,6 +320,9 @@ class Files
             );
             $this->file_comments = htmlentities_allowed(
                 $row["file_comments"] ?? ""
+            );
+            $this->client_document_number = html_output(
+                $row["client_document_number"] ?? ""
             );
         }
 
@@ -541,6 +550,7 @@ class Files
             "categories" => $this->categories,
             "folder_id" => $this->folder_id,
             "file_comments" => $this->file_comments,
+            "client_document_number" => $this->client_document_number,
         ];
 
         return $data;
@@ -1030,6 +1040,7 @@ class Files
         $this->file_bcc_addresses = "";
         $this->file_cc_addresses = "";
         $this->file_comments = "";
+        $this->client_document_number = "";
     }
 
     /**
@@ -1064,12 +1075,13 @@ class Files
         $this->file_bcc_addresses = $this->file_bcc_addresses ?? "";
         $this->file_cc_addresses = $this->file_cc_addresses ?? "";
         $this->file_comments = $this->file_comments ?? "";
+        $this->client_document_number = $this->client_document_number ?? "";
 
         $statement = $this->dbh->prepare(
             "INSERT INTO " .
                 TABLE_FILES .
-                " (user_id, url, original_url, filename, description, uploader, expires, expiry_date, public_allow, public_token, disk_folder_year, disk_folder_month, transmittal_number, project_name, package_description, issue_status, discipline, deliverable_type, document_title, revision_number, comments, project_number, transmittal_name, file_bcc_addresses, file_cc_addresses, file_comments)" .
-                " VALUES (:user_id, :url, :original_url, :title, :description, :uploader, :expires, :expiry_date, :public, :public_token, :disk_folder_year, :disk_folder_month, :transmittal_number, :project_name, :package_description, :issue_status, :discipline, :deliverable_type, :document_title, :revision_number, :comments, :project_number, :transmittal_name, :file_bcc_addresses, :file_cc_addresses, :file_comments)"
+                " (user_id, url, original_url, filename, description, uploader, expires, expiry_date, public_allow, public_token, disk_folder_year, disk_folder_month, transmittal_number, project_name, package_description, issue_status, discipline, deliverable_type, document_title, revision_number, comments, project_number, transmittal_name, file_bcc_addresses, file_cc_addresses, file_comments, client_document_number)" .
+                " VALUES (:user_id, :url, :original_url, :title, :description, :uploader, :expires, :expiry_date, :public, :public_token, :disk_folder_year, :disk_folder_month, :transmittal_number, :project_name, :package_description, :issue_status, :discipline, :deliverable_type, :document_title, :revision_number, :comments, :project_number, :transmittal_name, :file_bcc_addresses, :file_cc_addresses, :file_comments, :client_document_number)"
         );
 
         $statement->bindParam(":user_id", $this->uploader_id, PDO::PARAM_INT);
@@ -1109,6 +1121,10 @@ class Files
         $statement->bindParam(":file_bcc_addresses", $this->file_bcc_addresses);
         $statement->bindParam(":file_cc_addresses", $this->file_cc_addresses);
         $statement->bindParam(":file_comments", $this->file_comments);
+        $statement->bindParam(
+            ":client_document_number",
+            $this->client_document_number
+        );
 
         $statement->execute();
 
@@ -1238,7 +1254,8 @@ class Files
             transmittal_name = :transmittal_name,
             file_bcc_addresses = :file_bcc_addresses,
             file_cc_addresses = :file_cc_addresses,
-            file_comments = :file_comments
+            file_comments = :file_comments,
+            client_document_number = :client_document_number
 
             WHERE id = :id
         "
@@ -1268,6 +1285,10 @@ class Files
         $statement->bindParam(":file_bcc_addresses", $this->file_bcc_addresses);
         $statement->bindParam(":file_cc_addresses", $this->file_cc_addresses);
         $statement->bindParam(":file_comments", $this->file_comments);
+        $statement->bindParam(
+            ":client_document_number",
+            $this->client_document_number
+        );
         $statement->bindParam(":id", $this->id, PDO::PARAM_INT);
         $statement->execute();
         $hidden =

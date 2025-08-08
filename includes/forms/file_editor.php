@@ -475,7 +475,7 @@ if (isset($_GET["confirm"])) {
                                                                    ""
                                                            ); ?>" 
                                                            placeholder="<?php _e(
-                                                               "Enter Revision Number",
+                                                               "Enter Revision",
                                                                "cftp_admin"
                                                            ); ?>" required /> 
                                                 </div>
@@ -593,6 +593,30 @@ EOL;
     echo $file->file_comments;
 } ?></textarea>
                                             </div>
+
+                                            <!-- Client Document Number -->
+                                            <div class="form-group">
+                                                <label for="client_document_number_<?php echo $i; ?>"><?php _e(
+    "Client Document Number",
+    "cftp_admin"
+); ?></label>
+                                                <input type="text" 
+                                                       id="client_document_number_<?php echo $i; ?>" 
+                                                       name="file[<?php echo $i; ?>][client_document_number]" 
+                                                       class="form-control"
+                                                       value="<?php echo htmlspecialchars(
+                                                           $file->client_document_number ??
+                                                               ""
+                                                       ); ?>"   
+                                                       placeholder="<?php _e(
+                                                           "Enter Client Document Number",
+                                                           "cftp_admin"
+                                                       ); ?>" />
+                                                <p class="field_note form-text"><?php _e(
+                                                    "Optional: Enter the client's reference number for this document.",
+                                                    "cftp_admin"
+                                                ); ?></p>
+                                            </div>
                                          </div>
                                     </div>
 
@@ -644,19 +668,19 @@ EOL;
                                             ],
                                         ];
 
-                                        // File Comments Button
-                                        $copy_buttons["file_comments"] = [
-                                            "label" => __(
-                                                "File Comments",
-                                                "cftp_admin"
-                                            ),
-                                            "class" => "copy-file-comments",
-                                            "data" => [
-                                                "copy-from" =>
-                                                    "file_comments_" . $i,
-                                            ],
-                                            "disabled" => true, // Placeholder
-                                        ];
+                                        // // File Comments Button
+                                        // $copy_buttons["file_comments"] = [
+                                        //     "label" => __(
+                                        //         "File Comments",
+                                        //         "cftp_admin"
+                                        //     ),
+                                        //     "class" => "copy-file-comments",
+                                        //     "data" => [
+                                        //         "copy-from" =>
+                                        //             "file_comments_" . $i,
+                                        //     ],
+                                        //     "disabled" => true, // Placeholder
+                                        // ];
 
                                         // Client Document Number (PLACEHOLDER - to be implemented)
                                         $copy_buttons["client_doc_number"] = [
@@ -667,9 +691,10 @@ EOL;
                                             "class" => "copy-client-doc-number",
                                             "data" => [
                                                 "copy-from" =>
-                                                    "client_doc_number_" . $i,
+                                                    "client_document_number_" .
+                                                    $i,
                                             ],
-                                            "disabled" => true,
+                                            "disabled" => false, // Changed from true to false
                                         ];
 
                                         // Revision Button
@@ -955,10 +980,21 @@ EOL;
             });
         });
 
-        // Client Document Number (placeholder - will be implemented when database field is added)
+        // Client Document Number (now implemented)
         document.querySelectorAll('.copy-client-doc-number').forEach(function(button) {
             button.addEventListener('click', function() {
-                alert('Client Document Number feature coming soon - database field needs to be created first');
+                const sourceId = this.getAttribute('data-copy-from');
+                const sourceInput = document.getElementById(sourceId);
+                if (!sourceInput) return;
+                
+                const sourceValue = sourceInput.value;
+                
+                // Apply to all client document number inputs
+                document.querySelectorAll('[id^="client_document_number_"]').forEach(function(input) {
+                    input.value = sourceValue;
+                });
+                
+                alert('Client Document Number applied to all files');
             });
         });
     });

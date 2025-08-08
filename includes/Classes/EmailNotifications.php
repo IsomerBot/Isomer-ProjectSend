@@ -138,6 +138,8 @@ class EmailNotifications
                     "file_bcc_addresses" => $file->file_bcc_addresses ?? "",
                     "file_cc_addresses" => $file->file_cc_addresses ?? "",
                     "file_comments" => $file->file_comments ?? "",
+                    "client_document_number" =>
+                        $file->client_document_number ?? "",
                 ];
             }
 
@@ -668,7 +670,7 @@ class EmailNotifications
         $html .=
             '<div class="isomer-body" style="margin-bottom: 20px; text-align: center;">The following deliverables have been transmitted from Isomer Project Group</div>';
 
-        // FILES TABLE - UPDATED: Removed Discipline and Deliverable columns
+        // FILES TABLE - UPDATED: Added Client Document Number as a column
         $html .=
             '<table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd; font-size: 12px; margin-bottom: 0;">';
         $html .=
@@ -677,10 +679,10 @@ class EmailNotifications
             '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">File Name</th>';
         $html .=
             '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">Revision</th>';
-        // $html .=
-        //     '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">Issue Status</th>';
         $html .=
             '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">Document Title</th>';
+        $html .=
+            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">Client Doc #</th>';
         $html .= "</tr>";
 
         // CRITICAL FIX: Loop through ALL files and add a row for each
@@ -705,17 +707,20 @@ class EmailNotifications
                 htmlspecialchars($file_data["revision_number"] ?? "") .
                 "</td>";
 
-            // Issue Status
-            // $html .=
-            //     '<td style="border: 1px solid #ddd; padding: 8px;">Issued For: ' .
-            //     htmlspecialchars($file_data["issue_status"] ?? "") .
-            //     "</td>";
-
             // Document Title
             $doc_title = htmlspecialchars($file_data["document_title"] ?? "");
             $html .=
                 '<td style="border: 1px solid #ddd; padding: 8px; word-wrap: break-word;">' .
                 $doc_title .
+                "</td>";
+
+            // Client Document Number (new column)
+            $client_document_number = htmlspecialchars(
+                $file_data["client_document_number"] ?? ""
+            );
+            $html .=
+                '<td style="border: 1px solid #ddd; padding: 8px; word-wrap: break-word;">' .
+                $client_document_number .
                 "</td>";
 
             $html .= "</tr>";

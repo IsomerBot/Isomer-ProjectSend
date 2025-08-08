@@ -355,7 +355,8 @@ class TransmittalHelper
                     transmittal_name = :transmittal_name,
                     file_bcc_addresses = :file_bcc_addresses,
                     file_cc_addresses = :file_cc_addresses,
-                    file_comments = :file_comments
+                    file_comments = :file_comments,
+                    client_document_number = :client_document_number
                   WHERE id = :file_id";
 
         $statement = $this->dbh->prepare($query);
@@ -380,6 +381,8 @@ class TransmittalHelper
             ":file_cc_addresses" =>
                 $transmittal_data["file_cc_addresses"] ?? "",
             ":file_comments" => $transmittal_data["file_comments"] ?? "",
+            ":client_document_number" =>
+                $transmittal_data["client_document_number"] ?? "",
         ]);
     }
 }
