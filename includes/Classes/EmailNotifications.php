@@ -136,6 +136,7 @@ class EmailNotifications
                     "transmittal_name" => $file->transmittal_name ?? "",
                     "uploader_name" => $uploader_name,
                     "file_bcc_addresses" => $file->file_bcc_addresses ?? "",
+                    "file_cc_addresses" => $file->file_cc_addresses ?? "",
                     "file_comments" => $file->file_comments ?? "",
                 ];
             }
@@ -336,13 +337,13 @@ class EmailNotifications
                 }
 
                 // Get the full file data for the first file in the batch.
-                // Assuming all files in this notification batch (i.e., this transmittal)
-                // share the same file_bcc_addresses.
                 $first_file_data = $this->files_data[$files[0]["file_id"]];
 
-                // Extract the dynamic BCC addresses from the file data
+                // Extract both BCC and CC addresses
                 $dynamic_bcc_for_this_email =
                     $first_file_data["file_bcc_addresses"] ?? "";
+                $dynamic_cc_for_this_email =
+                    $first_file_data["file_cc_addresses"] ?? "";
 
                 $email = new \ProjectSend\Classes\Emails();
                 if (
@@ -351,7 +352,8 @@ class EmailNotifications
                         "address" => $this->mail_by_user[$mail_username],
                         "files_list" => $files_list_html,
                         "file_data" => $first_file_data,
-                        "dynamic_bcc_addresses" => $dynamic_bcc_for_this_email, // ADDED THIS LINE
+                        "dynamic_bcc_addresses" => $dynamic_bcc_for_this_email,
+                        "dynamic_cc_addresses" => $dynamic_cc_for_this_email,
                     ])
                 ) {
                     $this->notifications_sent = array_merge(

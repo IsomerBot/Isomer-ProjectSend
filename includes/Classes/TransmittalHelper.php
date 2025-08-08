@@ -354,6 +354,7 @@ class TransmittalHelper
                     project_number = :project_number,
                     transmittal_name = :transmittal_name,
                     file_bcc_addresses = :file_bcc_addresses,
+                    file_cc_addresses = :file_cc_addresses,
                     file_comments = :file_comments
                   WHERE id = :file_id";
 
@@ -376,6 +377,8 @@ class TransmittalHelper
             ":transmittal_name" => $transmittal_data["transmittal_name"] ?? "",
             ":file_bcc_addresses" =>
                 $transmittal_data["file_bcc_addresses"] ?? "",
+            ":file_cc_addresses" =>
+                $transmittal_data["file_cc_addresses"] ?? "",
             ":file_comments" => $transmittal_data["file_comments"] ?? "",
         ]);
     }

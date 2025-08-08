@@ -15,6 +15,7 @@ class Emails
     private $footer;
     private $email_successful;
     private $dynamic_bcc_addresses;
+    private $dynamic_cc_addresses; // Add this line
 
     function __construct()
     {
@@ -1460,6 +1461,11 @@ class Emails
         )
             ? $arguments["dynamic_bcc_addresses"]
             : "";
+        // Add this line for CC support
+        $this->dynamic_cc_addresses = !empty($arguments["dynamic_cc_addresses"])
+            ? $arguments["dynamic_cc_addresses"]
+            : "";
+
         $test_message = !empty($arguments["message"])
             ? filter_var($arguments["message"], FILTER_SANITIZE_STRING)
             : __("This is a test message", "cftp_admin");
@@ -1661,6 +1667,18 @@ class Emails
                 $email->AddAddress($this->addresses);
             }
 
+            // ADD CC SUPPORT HERE - Add this entire section
+            // Handle CC addresses for any email type that has them
+            if (!empty($this->dynamic_cc_addresses)) {
+                $cc_addresses_array = explode(",", $this->dynamic_cc_addresses);
+                foreach ($cc_addresses_array as $cc_email) {
+                    $cc_email = trim($cc_email);
+                    if (filter_var($cc_email, FILTER_VALIDATE_EMAIL)) {
+                        $email->AddCC($cc_email);
+                    }
+                }
+            }
+
             if ($this->try_bcc === true) {
                 $this->add_bcc_to = [];
 
@@ -1678,7 +1696,7 @@ class Emails
                     }
                 }
 
-                // NEW: Add the dynamic BCC addresses provided for this specific email
+                // Add the dynamic BCC addresses provided for this specific email
                 if (!empty($this->dynamic_bcc_addresses)) {
                     $dynamic_addresses_array = explode(
                         ",",

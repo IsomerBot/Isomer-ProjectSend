@@ -78,9 +78,9 @@ function create_custom_download($link, $file_id, $client_id)
 if (isset($_POST["save"])) {
     global $flash; // Make $flash available for use within this block
 
-    // --- NEW: Normalize the global BCC input here once for the whole batch ---
-    // This value comes from the top-level 'file_bcc_addresses' in $_POST
+    // --- NEW: Normalize the global cc/BCC input here once for the whole batch ---
     $global_file_bcc_addresses = $_POST["file_bcc_addresses"] ?? "";
+    $global_file_cc_addresses = $_POST["file_cc_addresses"] ?? "";
 
     if (!empty($global_file_bcc_addresses)) {
         $raw_bcc = $global_file_bcc_addresses;
@@ -91,7 +91,14 @@ if (isset($_POST["save"])) {
         $individual_emails = array_unique(array_filter($individual_emails));
         $global_file_bcc_addresses = implode(",", $individual_emails);
     }
-    // --- END NEW BCC NORMALIZATION ---
+
+    if (!empty($global_file_cc_addresses)) {
+        $raw_cc = $global_file_cc_addresses;
+        $cleaned_cc = str_replace(["\r\n", "\r", "\n"], ",", $raw_cc);
+        $individual_emails = array_map("trim", explode(",", $cleaned_cc));
+        $individual_emails = array_unique(array_filter($individual_emails));
+        $global_file_cc_addresses = implode(",", $individual_emails);
+    }
 
     // Process transmittal data - only if project data is provided
     if (isset($_POST["project_number"]) && !empty($_POST["project_number"])) {
@@ -152,6 +159,7 @@ if (isset($_POST["save"])) {
                            revision_number = :revision_number,
                            comments = :comments,
                            file_bcc_addresses = :file_bcc_addresses,
+                           file_cc_addresses = :file_cc_addresses,
                            file_comments = :file_comments
                          WHERE id = :file_id";
 
@@ -172,6 +180,7 @@ if (isset($_POST["save"])) {
                             $file_data_from_post["revision_number"] ?? "",
                         ":comments" => $global_comments,
                         ":file_bcc_addresses" => $global_file_bcc_addresses,
+                        ":file_cc_addresses" => $global_file_cc_addresses,
                         ":file_comments" =>
                             $file_data_from_post["file_comments"] ?? "",
                     ]);
@@ -209,6 +218,7 @@ if (isset($_POST["save"])) {
     foreach ($_POST["file"] as $file) {
         // Assign the normalized global BCC to each file's data array
         $file["file_bcc_addresses"] = $global_file_bcc_addresses;
+        $file["file_cc_addresses"] = $global_file_cc_addresses;
 
         // NEW: Apply transmittal-level client assignments to each file
         if (

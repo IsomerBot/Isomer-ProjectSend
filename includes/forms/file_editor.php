@@ -7,7 +7,7 @@ if (!empty($editable) && !isset($_GET["saved"]) && CURRENT_USER_LEVEL != 0) {
     global $dbh;
     $query = "SELECT transmittal_number, transmittal_name, project_name, project_number, package_description, 
                      issue_status, discipline, deliverable_type, document_title,
-                     revision_number, comments, file_bcc_addresses, file_comments
+                     revision_number, comments, file_bcc_addresses, file_cc_addresses, file_comments
               FROM tbl_files 
               WHERE id = :file_id";
     $statement = $dbh->prepare($query);
@@ -308,6 +308,20 @@ if (isset($_GET["confirm"])) {
                     "cftp_admin"
                 ); ?></p>
             </div>
+
+            <!-- CC Email -->
+            <div class="form-group">
+    <label for="file_cc_addresses"><?php _e(
+        "CC Recipients",
+        "cftp_admin"
+    ); ?></label>
+    <textarea name="file_cc_addresses" id="file_cc_addresses" class="form-control" rows="5" placeholder="<?php _e(
+        "Enter email addresses separated by commas.",
+        "cftp_admin"
+    ); ?>"><?php echo htmlspecialchars(
+    $existing_transmittal_data["file_cc_addresses"] ?? ""
+); ?></textarea>
+</div>
 
             <!-- NEW: Transmittal-level Client Assignment -->
             <div class="form-group">
