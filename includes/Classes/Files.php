@@ -55,7 +55,7 @@ class Files
     public $project_number;
     public $transmittal_name;
     public $file_bcc_addresses;
-    public $file_cc_addresses; // ADD THIS
+    public $file_cc_addresses; 
     public $file_comments;
     public $client_document_number;
 

@@ -371,7 +371,6 @@ class EmailNotifications
             }
         }
     }
-
     private function makeFilesListHtml($files, $uploader_username = null)
     {
         if (empty($files)) {
@@ -381,102 +380,100 @@ class EmailNotifications
 
         // BRAND-COMPLIANT EMAIL STYLES - Updated to match Isomer guidelines
         $html .= '<style>
-           /* Import Isomer Brand Fonts - Made Tommy and Metropolis */
-           @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&display=swap");
-           
-           /* Isomer Brand Typography Styles - Updated to match brand guide */
-           .isomer-h1 {
-               font-family: "Montserrat", "Made Tommy", Arial, sans-serif;
-               font-weight: 700;
-               font-size: 40px;
-               text-transform: uppercase;
-               letter-spacing: 10px;
-               color: #252c3a;
-               margin: 0;
-           }
-           
-           .isomer-h2 {
-               font-family: "Montserrat", "Made Tommy", Arial, sans-serif;
-               font-weight: 300;
-               font-size: 30px;
-               text-transform: uppercase;
-               color: #252c3a;
-               margin: 0;
-           }
-           
-           .isomer-h3 {
-               font-family: "Montserrat", "Metropolis", Arial, sans-serif;
-               font-weight: 800;
-               font-size: 14px;
-               text-transform: uppercase;
-               letter-spacing: 25px;
-               color: #252c3a;
-               margin: 0;
-           }
-           
-           .isomer-body {
-               font-family: "Montserrat", "Metropolis", Arial, sans-serif;
-               font-weight: 400;
-               font-size: 12px;
-               color: #252c3a;
-               line-height: 1.4;
-           }
-           
-           /* Field labels - using brand typography */
-           .field-label {
-               font-family: "Montserrat", "Metropolis", Arial, sans-serif;
-               font-weight: 800;
-               font-size: 14px;
-               text-transform: uppercase;
-               letter-spacing: 2px;
-               color: #252c3a;
-           }
-           
-           /* Email-specific scaling for readability */
-           .email-h1 {
-               font-family: "Montserrat", "Made Tommy", Arial, sans-serif;
-               font-weight: 700;
-               font-size: 20px;
-               text-transform: uppercase;
-               letter-spacing: 2px;
-               color: #252c3a;
-               margin: 0;
-           }
-           
-           .email-h2 {
-               font-family: "Montserrat", "Made Tommy", Arial, sans-serif;
-               font-weight: 300;
-               font-size: 16px;
-               text-transform: uppercase;
-               color: #252c3a;
-               margin: 0;
-           }
-           
-           .email-h3 {
-               font-family: "Montserrat", "Metropolis", Arial, sans-serif;
-               font-weight: 800;
-               font-size: 12px;
-               text-transform: uppercase;
-               letter-spacing: 2px;
-               color: #252c3a;
-               margin: 0;
-           }
-       </style>';
+       /* Import Isomer Brand Fonts - Made Tommy and Metropolis */
+       @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700;800&display=swap");
+       
+       /* Isomer Brand Typography Styles - Updated to match brand guide */
+       .isomer-h1 {
+           font-family: "Montserrat", "Made Tommy", Arial, sans-serif;
+           font-weight: 700;
+           font-size: 40px;
+           text-transform: uppercase;
+           letter-spacing: 10px;
+           color: #252c3a;
+           margin: 0;
+       }
+       
+       .isomer-h2 {
+           font-family: "Montserrat", "Made Tommy", Arial, sans-serif;
+           font-weight: 300;
+           font-size: 30px;
+           text-transform: uppercase;
+           color: #252c3a;
+           margin: 0;
+       }
+       
+       .isomer-h3 {
+           font-family: "Montserrat", "Metropolis", Arial, sans-serif;
+           font-weight: 800;
+           font-size: 14px;
+           text-transform: uppercase;
+           letter-spacing: 25px;
+           color: #252c3a;
+           margin: 0;
+       }
+       
+       .isomer-body {
+           font-family: "Montserrat", "Metropolis", Arial, sans-serif;
+           font-weight: 400;
+           font-size: 12px;
+           color: #252c3a;
+           line-height: 1.4;
+       }
+       
+       /* Field labels - using brand typography */
+       .field-label {
+           font-family: "Montserrat", "Metropolis", Arial, sans-serif;
+           font-weight: 800;
+           font-size: 14px;
+           text-transform: uppercase;
+           letter-spacing: 2px;
+           color: #252c3a;
+       }
+       
+       /* Email-specific scaling for readability */
+       .email-h1 {
+           font-family: "Montserrat", "Made Tommy", Arial, sans-serif;
+           font-weight: 700;
+           font-size: 20px;
+           text-transform: uppercase;
+           letter-spacing: 2px;
+           color: #252c3a;
+           margin: 0;
+       }
+       
+       .email-h2 {
+           font-family: "Montserrat", "Made Tommy", Arial, sans-serif;
+           font-weight: 300;
+           font-size: 16px;
+           text-transform: uppercase;
+           color: #252c3a;
+           margin: 0;
+       }
+       
+       .email-h3 {
+           font-family: "Montserrat", "Metropolis", Arial, sans-serif;
+           font-weight: 800;
+           font-size: 12px;
+           text-transform: uppercase;
+           letter-spacing: 2px;
+           color: #252c3a;
+           margin: 0;
+       }
+   </style>';
 
         // Header section with brand-compliant colors and spacing
         $html .=
-            '<div style="font-family: Montserrat, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #fff;">';
+            '<div style="font-family: Montserrat, Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #fff; display:flex justify-content:center; align-items:center; border-bottom: 4px solid #f56600;">';
 
         // Get the first file to extract transmittal information
         $first_file_data = $this->files_data[$files[0]["file_id"]];
 
-        // BRAND-COMPLIANT HEADER - Using exact brand colors
+        // BRAND-COMPLIANT HEADER - Using exact brand colors with FIXED ALIGNMENT
         $html .=
-            '<div style="background: #252c3a; padding: 15px; display: flex; justify-content: space-between; align-items: center;">';
-
+            '<div style="background:#252c3a; padding:15px; display:flex; justify-content:space-between; min-height:80px;">';
         // Left side - Logo with proper clear space (0.5X minimum)
-        $html .=
-            '<div style="margin-right: 20px; display: flex; align-items: center;">';
+        $html .= '<div style="display: flex; align-items: center;">';
 
         // Check if logo file exists and get proper URL
         $logo_file_info = $this->getLogoFileInfo();
@@ -491,48 +488,56 @@ class EmailNotifications
                 // Ensure minimum 5mm (approximately 50px) as per brand guide
                 $svg_content = str_replace(
                     "<svg",
-                    '<svg style="height: 50px; width: auto;"',
+                    '<svg style="height: 50px; width: auto; vertical-align: middle;"',
                     $svg_content
                 );
                 $html .= $svg_content;
             } else {
-                // Minimum 5mm size requirement
+                // Minimum 5mm size requirement with vertical alignment
                 $html .=
                     '<img src="' .
                     $logo_file_info["url"] .
-                    '" alt="Isomer Project Group" style="height: 50px; width: auto; max-width: 200px;" />';
+                    '" alt="Isomer Project Group" style="height: 50px; width: auto; max-width: 200px; vertical-align: middle;" />';
             }
 
             $html .= "</div>";
         } else {
-            // Fallback: Brand-compliant text using exact brand colors
+            // Fallback: Brand-compliant text using exact brand colors - CENTERED
             $html .=
                 '<div style="padding: 8px; display: flex; align-items: center; justify-content: center;">';
-            $html .= '<div style="color: white; text-align: left;">';
             $html .=
-                '<div class="email-h1" style="color: white; margin-bottom: 2px;">ISOMER</div>';
+                '<div style="color: white; text-align: left; line-height: 1;">';
             $html .=
-                '<div class="email-h2" style="color: #f56600; font-size: 14px;">PROJECT GROUP</div>';
+                '<div class="email-h1" style="color: white; margin: 0; line-height: 1;">ISOMER</div>';
+            $html .=
+                '<div class="email-h2" style="color: #f56600; font-size: 14px; margin: 0; line-height: 1;">PROJECT GROUP</div>';
             $html .= "</div>";
             $html .= "</div>";
         }
 
         $html .= "</div>";
 
-        // Right side - BIGGER, BOLDER "TRANSMITTAL"
-        $html .= '<div style="text-align: right; margin-left: auto;">';
+        // Right side - TRANSMITTAL TEXT
         $html .=
-            '<div style="color: white; font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 24px; text-transform: uppercase; letter-spacing: 3px; margin-bottom: 4px;">TRANSMITTAL</div>';
+            '<div style="text-align: right; line-height: 1; padding-top: 20px;">';
         $html .=
-            '<div class="email-h1" style="color: #f56600; font-weight: 800;">' .
-            htmlspecialchars($first_file_data["transmittal_name"] ?? "") .
+            '<div style="color: white; font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 24px; text-transform: uppercase; letter-spacing: 3px; margin: 0;">TRANSMITTAL</div>';
+        $html .=
+            '<div class="email-h1" style="color: #f56600; font-weight: 800; margin: 0;">' .
+            htmlspecialchars(
+                html_entity_decode(
+                    $first_file_data["transmittal_name"] ?? "",
+                    ENT_QUOTES,
+                    "UTF-8"
+                )
+            ) .
             "</div>";
         $html .= "</div>";
+
         $html .= "</div>"; // End header section
 
-        // Project information section - THREE-COLUMN LAYOUT WITH DISCIPLINE & DELIVERABLE TYPE
-        $html .=
-            '<div style="padding: 20px; border-bottom: 1px solid #c5e0ea; background: #fff;">';
+        // Project information section - MERGED LAYOUT (Transmittal Info + Recipients)
+        $html .= '<div style="padding: 20px; background: #fff;">';
 
         // Get recipients
         $recipients_text = "All Recipients";
@@ -551,126 +556,182 @@ class EmailNotifications
             }
         }
 
-        // THREE-COLUMN LAYOUT for transmittal information
-        $html .=
-            '<div style="display: flex; justify-content: space-between; gap: 30px;">';
-
-        // LEFT COLUMN
-        $html .= '<div style="flex: 1;">';
-
-        if (!empty($first_file_data["project_number"])) {
-            $html .=
-                '<div class="isomer-body" style="margin-bottom: 20px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a;">PROJECT NO:</span><br>' .
-                htmlspecialchars($first_file_data["project_number"]) .
-                "</div>";
+        // Get CC addresses from the first file data
+        $copies_to_text = "";
+        if (!empty($first_file_data["file_cc_addresses"])) {
+            $copies_to_text = $first_file_data["file_cc_addresses"];
         }
 
-        // Issue Status (if available)
-        // if (!empty($first_file_data["issue_status"])) {
-        //     $html .=
-        //         '<div class="isomer-body" style="margin-bottom: 20px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a;">ISSUE STATUS:</span><br>' .
-        //         htmlspecialchars($first_file_data["issue_status"]) .
-        //         "</div>";
-        // }
-
-        // TO field
+        // SINGLE TRANSMITTAL INFORMATION CARD (merged project info + recipients)
         $html .=
-            '<div class="isomer-body" style="margin-bottom: 20px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a;">TO:</span><br>' .
-            htmlspecialchars($recipients_text) .
-            "</div>";
+            '<div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding-top: 20px; ">';
+
+        $html .=
+            '<div style="font-family: Montserrat, Arial, sans-serif; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: #252c3a; margin-bottom: 15px; border-bottom: 2px solid #252c3a; padding-bottom: 8px;">TRANSMITTAL INFORMATION</div>';
+
+        // Three-column layout for project details
+        $html .=
+            '<div style="display: flex; width: 100%; margin-bottom: 20px;">';
+
+        // LEFT COLUMN (33.33%) - Project details only
+        $html .=
+            '<div style="width: 33.33%; padding-right: 15px; box-sizing: border-box; overflow: hidden;">';
+
+        $html .=
+            '<div style="margin-bottom: 15px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 600; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Project Number:</span><br><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; word-wrap: break-word; overflow-wrap: break-word;">' .
+            htmlspecialchars(
+                html_entity_decode(
+                    $first_file_data["project_number"] ?? "",
+                    ENT_QUOTES,
+                    "UTF-8"
+                )
+            ) .
+            "</span></div>";
+
+        $html .=
+            '<div style="margin-bottom: 15px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 600; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Discipline:</span><br><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; word-wrap: break-word; overflow-wrap: break-word;">' .
+            htmlspecialchars(
+                html_entity_decode(
+                    $first_file_data["discipline"] ?? "",
+                    ENT_QUOTES,
+                    "UTF-8"
+                )
+            ) .
+            "</span></div>";
 
         $html .= "</div>"; // End left column
 
-        // MIDDLE COLUMN
-        $html .= '<div style="flex: 1;">';
-
-        if (!empty($first_file_data["project_name"])) {
-            $html .=
-                '<div class="isomer-body" style="margin-bottom: 20px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a;">PROJECT NAME:</span><br>' .
-                htmlspecialchars($first_file_data["project_name"]) .
-                "</div>";
-        }
-
-        // DISCIPLINE
-        if (!empty($first_file_data["discipline"])) {
-            $html .=
-                '<div class="isomer-body" style="margin-bottom: 20px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a;">DISCIPLINE:</span><br>' .
-                htmlspecialchars($first_file_data["discipline"]) .
-                "</div>";
-        }
-
-        // FROM field
-        $from_text = !empty($first_file_data["uploader_name"])
-            ? htmlspecialchars($first_file_data["uploader_name"])
-            : "Isomer Project Group";
+        // MIDDLE COLUMN (33.33%) - Project details only
         $html .=
-            '<div class="isomer-body" style="margin-bottom: 20px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a;">FROM:</span><br>' .
-            $from_text .
-            "</div>";
+            '<div style="width: 33.33%; padding-left: 15px; padding-right: 15px; box-sizing: border-box; border-left: 1px solid #e9ecef; overflow: hidden;">';
+
+        $html .=
+            '<div style="margin-bottom: 15px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 600; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Project Name:</span><br><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; word-wrap: break-word; overflow-wrap: break-word;">' .
+            htmlspecialchars(
+                html_entity_decode(
+                    $first_file_data["project_name"] ?? "",
+                    ENT_QUOTES,
+                    "UTF-8"
+                )
+            ) .
+            "</span></div>";
+
+        // DELIVERABLE TYPE
+        $deliverable_type = "";
+        if (!empty($first_file_data["deliverable_type"])) {
+            $deliverable_type = html_entity_decode(
+                $first_file_data["deliverable_type"],
+                ENT_QUOTES,
+                "UTF-8"
+            );
+        }
+        $html .=
+            '<div style="margin-bottom: 15px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 600; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Deliverable Type:</span><br><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; word-wrap: break-word; overflow-wrap: break-word;">' .
+            htmlspecialchars($deliverable_type) .
+            "</span></div>";
 
         $html .= "</div>"; // End middle column
 
-        // RIGHT COLUMN
-        $html .= '<div style="flex: 1;">';
+        // RIGHT COLUMN (33.33%) - Date and From only
+        $html .=
+            '<div style="width: 33.33%; padding-left: 15px; box-sizing: border-box; border-left: 1px solid #e9ecef; overflow: hidden;">';
 
         // Transmittal Date
         $formatted_date = date("F jS, Y");
         $html .=
-            '<div class="isomer-body" style="margin-bottom: 20px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a;">TRANSMITTAL DATE:</span><br>' .
+            '<div style="margin-bottom: 15px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 600; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Transmittal Date:</span><br><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; word-wrap: break-word; overflow-wrap: break-word;">' .
             $formatted_date .
-            "</div>";
+            "</span></div>";
 
-        // DELIVERABLE TYPE
-        if (!empty($first_file_data["deliverable_type"])) {
-            $deliverable_type = html_entity_decode(
-                htmlspecialchars($first_file_data["deliverable_type"]),
-                ENT_QUOTES,
-                "UTF-8"
-            );
-            $html .=
-                '<div class="isomer-body" style="margin-bottom: 20px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a;">DELIVERABLE TYPE:</span><br>' .
-                $deliverable_type .
-                "</div>";
-        }
+        // FROM field
+        $from_text = !empty($first_file_data["uploader_name"])
+            ? htmlspecialchars(
+                html_entity_decode(
+                    $first_file_data["uploader_name"],
+                    ENT_QUOTES,
+                    "UTF-8"
+                )
+            )
+            : "Isomer Project Group";
+        $html .=
+            '<div style="margin-bottom: 15px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 600; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px;">From:</span><br><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; word-wrap: break-word; overflow-wrap: break-word;">' .
+            $from_text .
+            "</span></div>";
 
         $html .= "</div>"; // End right column
 
         $html .= "</div>"; // End three-column layout
+
+        // FULL-WIDTH RECIPIENT ROWS
+        // TO field - Full width row
+        $html .=
+            '<div style="margin-bottom: 15px; padding-top: 15px; border-top: 1px solid #e9ecef;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 600; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px;">To:</span><br><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; word-wrap: break-word; overflow-wrap: break-word;">' .
+            htmlspecialchars(
+                html_entity_decode($recipients_text, ENT_QUOTES, "UTF-8")
+            ) .
+            "</span></div>";
+
+        // COPIES TO field - Full width row (only show if there's data)
+        if (!empty($copies_to_text)) {
+            $html .=
+                '<div style="margin-bottom: 0;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 600; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Copies To:</span><br><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; word-wrap: break-word; overflow-wrap: break-word;">' .
+                htmlspecialchars(
+                    html_entity_decode($copies_to_text, ENT_QUOTES, "UTF-8")
+                ) .
+                "</span></div>";
+        }
+
+        $html .= "</div>"; // End transmittal information card
         $html .= "</div>"; // End project info section
 
-        // COMMENTS SECTION - Same boldness as project labels
+        // COMMENTS SECTION - Matching card style with REDUCED TOP SPACING
         $html .=
-            '<div style="padding: 20px; margin-bottom: 0; background: #fff;">';
+            '<div style="padding: 20px; margin-bottom: 20px; background: #fff;">';
+
         $html .=
-            '<div style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #252c3a; margin-bottom: 8px;">TRANSMITTAL COMMENTS:</div>';
+            '<div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px;">';
+
         $html .=
-            '<div style="border: 1px solid #c5e0ea; padding: 15px; min-height: 60px; background: #fafafa;">';
+            '<div style="font-family: Montserrat, Arial, sans-serif; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: #252c3a; margin-bottom: 15px; border-bottom: 2px solid #252c3a; padding-bottom: 8px;">TRANSMITTAL COMMENTS</div>';
+
+        $html .=
+            '<div style="border: 1px solid #e9ecef; border-radius: 4px; padding: 15px; min-height: 60px; background: #fff;">';
 
         $transmittal_comments = $this->getTransmittalComments(
             $first_file_data["transmittal_number"]
         );
         if (!empty($transmittal_comments)) {
-            $clean_comments = html_entity_decode(
-                strip_tags($transmittal_comments),
-                ENT_QUOTES,
-                "UTF-8"
-            );
+            // Since getTransmittalComments now returns decoded content, just strip tags and encode once
+            $clean_comments = strip_tags($transmittal_comments);
             $html .=
-                '<span class="isomer-body">' .
+                '<span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; line-height: 1.4;">' .
                 htmlspecialchars($clean_comments) .
                 "</span>";
         }
         $html .= "</div>";
         $html .= "</div>";
+        $html .= "</div>";
 
         // FILES SECTION - Same boldness for main header
-        $html .= '<div style="padding: 20px; background: #fff;">';
         $html .=
-            '<div style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 16px; text-transform: uppercase; letter-spacing: 2px; color: #252c3a; text-align: center; margin-bottom: 15px;">ISOMER TRANSMITTAL AVAILABLE FOR DOWNLOAD</div>';
+            '<div style="padding: 20px; background: #fff; border-top: 1px solid #c5e0ea;">';
+        $html .=
+            '<div style="font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 16px; text-transform: uppercase; letter-spacing: 2px; color: #252c3a; text-align: center; margin-bottom: 15px; margin-top:20px">ISOMER TRANSMITTAL AVAILABLE FOR DOWNLOAD</div>';
         $html .=
             '<div class="isomer-body" style="margin-bottom: 20px; text-align: center;">The following deliverables have been transmitted from Isomer Project Group</div>';
 
-        // FILES TABLE - UPDATED: Added Client Document Number as a column
+        // Check if any files have comments before showing the column
+        $has_file_comments = false;
+        foreach ($files as $file) {
+            $file_data = $this->files_data[$file["file_id"]];
+            $file_comments = $file_data["file_comments"] ?? "";
+            if (!empty(trim($file_comments))) {
+                $has_file_comments = true;
+                break;
+            }
+        }
+
+        // FILES TABLE - Conditionally show File Comments column
         $html .=
             '<table style="width: 100%; border-collapse: collapse; border: 1px solid #ddd; font-size: 12px; margin-bottom: 0;">';
         $html .=
@@ -681,11 +742,16 @@ class EmailNotifications
             '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">Revision</th>';
         $html .=
             '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">Document Title</th>';
-        $html .=
-            '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">Client Doc #</th>';
+
+        // Only show File Comments column if there are comments
+        if ($has_file_comments) {
+            $html .=
+                '<th style="border: 1px solid #ddd; padding: 8px; text-align: left; color: white;">File Comments</th>';
+        }
+
         $html .= "</tr>";
 
-        // CRITICAL FIX: Loop through ALL files and add a row for each
+        // Loop through ALL files and add a row for each
         foreach ($files as $file) {
             $file_data = $this->files_data[$file["file_id"]];
 
@@ -694,7 +760,11 @@ class EmailNotifications
 
             // File Title
             $filename = htmlspecialchars(
-                $file_data["filename"] ?? $file_data["title"]
+                html_entity_decode(
+                    $file_data["filename"] ?? $file_data["title"],
+                    ENT_QUOTES,
+                    "UTF-8"
+                )
             );
             $html .=
                 '<td style="border: 1px solid #ddd; padding: 8px; word-wrap: break-word;">' .
@@ -704,57 +774,48 @@ class EmailNotifications
             // Revision Number
             $html .=
                 '<td style="border: 1px solid #ddd; padding: 8px; text-align: center;">' .
-                htmlspecialchars($file_data["revision_number"] ?? "") .
+                htmlspecialchars(
+                    html_entity_decode(
+                        $file_data["revision_number"] ?? "",
+                        ENT_QUOTES,
+                        "UTF-8"
+                    )
+                ) .
                 "</td>";
 
             // Document Title
-            $doc_title = htmlspecialchars($file_data["document_title"] ?? "");
-            $html .=
-                '<td style="border: 1px solid #ddd; padding: 8px; word-wrap: break-word;">' .
-                $doc_title .
-                "</td>";
-
-            // Client Document Number (new column)
-            $client_document_number = htmlspecialchars(
-                $file_data["client_document_number"] ?? ""
-            );
-            $html .=
-                '<td style="border: 1px solid #ddd; padding: 8px; word-wrap: break-word;">' .
-                $client_document_number .
-                "</td>";
-
-            $html .= "</tr>";
-
-            // File Comments row for each file - Only show if comments exist
-            $file_comments = $file_data["file_comments"] ?? "";
-            if (!empty($file_comments)) {
-                $file_comments = html_entity_decode(
-                    strip_tags($file_comments),
+            $document_title = "";
+            if (!empty($file_data["document_title"])) {
+                // Decode first, then encode for display
+                $document_title = html_entity_decode(
+                    $file_data["document_title"],
                     ENT_QUOTES,
                     "UTF-8"
                 );
-                $file_comments = htmlspecialchars($file_comments);
-
-                // Only add the comments row if there are actual comments
-                $html .= "<tr>";
-                $html .=
-                    '<td colspan="4" style="border-left: 1px solid #ddd; border-right: 1px solid #ddd; border-bottom: 1px solid #ddd; padding: 0;">';
-
-                // Comments container
-                $html .=
-                    '<div style="padding: 8px; background: #f9f9f9; border-top: 1px solid #eee;">';
-
-                $html .=
-                    '<span style="font-weight: bold; font-size: 11px;">File Comments:</span>';
-                $html .=
-                    ' <span style="font-size: 11px;">' .
-                    $file_comments .
-                    "</span>";
-
-                $html .= "</div>";
-                $html .= "</td>";
-                $html .= "</tr>";
             }
+            $html .=
+                '<td style="border: 1px solid #ddd; padding: 8px; word-wrap: break-word;">' .
+                htmlspecialchars($document_title) .
+                "</td>";
+
+            // File Comments
+            if ($file_comments) {
+                $file_comments = $file_data["file_comments"] ?? "";
+                if (!empty($file_comments)) {
+                    $file_comments = html_entity_decode(
+                        strip_tags($file_comments),
+                        ENT_QUOTES,
+                        "UTF-8"
+                    );
+                    $file_comments = htmlspecialchars($file_comments);
+                }
+                $html .=
+                    '<td style="border: 1px solid #ddd; padding: 8px; word-wrap: break-word;">' .
+                    $file_comments .
+                    "</td>";
+            }
+
+            $html .= "</tr>";
         }
 
         $html .= "</table>";
@@ -801,7 +862,12 @@ class EmailNotifications
 
         if ($statement->rowCount() > 0) {
             $row = $statement->fetch(PDO::FETCH_ASSOC);
-            return $row["comments"] ?? "";
+            // FIX: Decode HTML entities from database before returning
+            return html_entity_decode(
+                $row["comments"] ?? "",
+                ENT_QUOTES,
+                "UTF-8"
+            );
         }
 
         return "";
