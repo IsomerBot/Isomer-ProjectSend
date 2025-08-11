@@ -1161,12 +1161,20 @@ class Emails
         if (!empty($file_data)) {
             $subject_parts = [];
 
-            // Only add the values, not the labels
+            // Only add the values, not the labels - DECODE HTML ENTITIES
             if (!empty($file_data["transmittal_number"])) {
-                $subject_parts[] = trim($file_data["transmittal_number"]);
+                $subject_parts[] = html_entity_decode(
+                    trim($file_data["transmittal_number"]),
+                    ENT_QUOTES,
+                    "UTF-8"
+                );
             }
             if (!empty($file_data["project_name"])) {
-                $subject_parts[] = trim($file_data["project_name"]);
+                $subject_parts[] = html_entity_decode(
+                    trim($file_data["project_name"]),
+                    ENT_QUOTES,
+                    "UTF-8"
+                );
                 if (!empty($file_data["package_description"])) {
                     $subject_parts[] = html_entity_decode(
                         trim($file_data["package_description"]),
@@ -1177,7 +1185,12 @@ class Emails
             }
             if (!empty($file_data["issue_status"])) {
                 $subject_parts[] =
-                    "Issued For: " . trim($file_data["issue_status"]);
+                    "Issued For: " .
+                    html_entity_decode(
+                        trim($file_data["issue_status"]),
+                        ENT_QUOTES,
+                        "UTF-8"
+                    );
             }
             if (!empty($subject_parts)) {
                 $custom_subject =

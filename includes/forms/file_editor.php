@@ -80,8 +80,13 @@ if (isset($_GET["confirm"])) {
                         ); ?>*</label>
                         <input type="text" name="project_name" id="project_name" class="form-control" 
                                value="<?php echo htmlspecialchars(
-                                   $existing_transmittal_data["project_name"] ??
-                                       ""
+                                   html_entity_decode(
+                                       $existing_transmittal_data[
+                                           "project_name"
+                                       ] ?? "",
+                                       ENT_QUOTES,
+                                       "UTF-8"
+                                   )
                                ); ?>"
                                placeholder="<?php _e(
                                    "Enter Project Name",
@@ -107,7 +112,7 @@ if (isset($_GET["confirm"])) {
                                ); ?>" required />
                     </div>
 
-                    <!-- Package Description Manual Field -->
+                    <!-- Package Description -->
                     <div class="form-group">
                         <label for="package_description"><?php _e(
                             "Package Description",
@@ -115,9 +120,13 @@ if (isset($_GET["confirm"])) {
                         ); ?>*</label>
                         <input type="text" name="package_description" id="package_description" class="form-control" 
                                value="<?php echo htmlspecialchars(
-                                   $existing_transmittal_data[
-                                       "package_description"
-                                   ] ?? ""
+                                   html_entity_decode(
+                                       $existing_transmittal_data[
+                                           "package_description"
+                                       ] ?? "",
+                                       ENT_QUOTES,
+                                       "UTF-8"
+                                   )
                                ); ?>"
                                placeholder="<?php _e(
                                    "Enter Package Description",
@@ -272,13 +281,14 @@ if (isset($_GET["confirm"])) {
                 <div class="col-md-6">
                     <div class="form-group">
                         <label for="comments"><?php _e(
-                            "Transmittal Comments",
+                            "Transmittal Comments*",
                             "cftp_admin"
                         ); ?></label>
                         <textarea id="comments" 
                                   name="comments" 
                                   class="form-control"
-                                  rows="6"
+                                  rows="3"
+                                  required
                                   placeholder="<?php _e(
                                       "Enter any additional comments",
                                       "cftp_admin"
@@ -287,138 +297,144 @@ if (isset($_GET["confirm"])) {
 ); ?></textarea>
                     </div>
 
+                    <!-- CC Email -->
+                    <div class="form-group">
+                        <label for="file_cc_addresses"><?php _e(
+                            "CC Recipients",
+                            "cftp_admin"
+                        ); ?></label>
+                        <textarea name="file_cc_addresses" id="file_cc_addresses" class="form-control" rows="3" placeholder="<?php _e(
+                            "Enter email addresses separated by commas.",
+                            "cftp_admin"
+                        ); ?>"><?php echo htmlspecialchars(
+    $existing_transmittal_data["file_cc_addresses"] ?? ""
+); ?></textarea>
+                    </div>
+
+                    <!-- BCC Email -->
+                    <div class="form-group">
+                        <label for="file_bcc_addresses"><?php _e(
+                            "BCC Recipients",
+                            "cftp_admin"
+                        ); ?></label>
+                        <textarea name="file_bcc_addresses" id="file_bcc_addresses" class="form-control" rows="3" placeholder="<?php _e(
+                            "Enter email addresses separated by commas.",
+                            "cftp_admin"
+                        ); ?>"><?php echo htmlspecialchars(
+    $existing_transmittal_data["file_bcc_addresses"] ?? ""
+); ?></textarea>
+                        <p class="field_note form-text"><?php _e(
+                            "These email addresses will receive a hidden copy of the notification for this specific transmittal.",
+                            "cftp_admin"
+                        ); ?></p>
+                    </div>
+
+                    <!-- MOVED: Assignments Section -->
+                    <h3><?php _e("Assignments", "cftp_admin"); ?></h3>
+                    
+                    <!-- Groups - FIRST -->
+                    <div class="form-group">
+                        <label for="transmittal_groups"><?php _e(
+                            "Groups",
+                            "cftp_admin"
+                        ); ?></label>
+                        <select class="form-select select2 none" multiple="multiple" 
+                                id="transmittal_groups" name="transmittal_groups[]" 
+                                data-placeholder="<?php _e(
+                                    "Select groups for this transmittal. Type to search.",
+                                    "cftp_admin"
+                                ); ?>">
+                            <?php
+                            // Get all groups for transmittal assignment
+                            $me = new \ProjectSend\Classes\Users(
+                                CURRENT_USER_ID
+                            );
+                            if (
+                                $me->shouldLimitUploadTo() &&
+                                !empty($me->limit_upload_to)
+                            ) {
+                                $transmittal_groups = file_editor_get_groups_by_members(
+                                    $me->limit_upload_to
+                                );
+                            } else {
+                                $transmittal_groups = file_editor_get_all_groups();
+                            }
+
+                            foreach ($transmittal_groups as $id => $name) { ?>
+                                <option value="<?php echo html_output($id); ?>">
+                                    <?php echo html_output($name); ?>
+                                </option>
+                            <?php }
+                            ?>
+                        </select>
+                    </div>
+
+                    <!-- Clients - SECOND -->
+                    <div class="form-group">
+                        <label for="transmittal_clients"><?php _e(
+                            "Clients",
+                            "cftp_admin"
+                        ); ?></label>
+                        <select class="form-select select2 none" multiple="multiple" 
+                                id="transmittal_clients" name="transmittal_clients[]" 
+                                data-placeholder="<?php _e(
+                                    "Select clients for this transmittal. Type to search.",
+                                    "cftp_admin"
+                                ); ?>">
+                            <?php
+                            // Get all clients for transmittal assignment
+                            if (
+                                $me->shouldLimitUploadTo() &&
+                                !empty($me->limit_upload_to)
+                            ) {
+                                $transmittal_clients = file_editor_get_clients_by_ids(
+                                    $me->limit_upload_to
+                                );
+                            } else {
+                                $transmittal_clients = file_editor_get_all_clients();
+                            }
+
+                            foreach ($transmittal_clients as $id => $name) { ?>
+                                <option value="<?php echo html_output($id); ?>">
+                                    <?php echo html_output($name); ?>
+                                </option>
+                            <?php }
+                            ?>
+                        </select>
+                    </div>
+
+                    <!-- Categories - THIRD -->
+                    <div class="form-group">
+                        <label for="transmittal_categories"><?php _e(
+                            "Categories",
+                            "cftp_admin"
+                        ); ?></label>
+                        <select class="form-select select2 none" multiple="multiple" 
+                                id="transmittal_categories" name="transmittal_categories[]" 
+                                data-placeholder="<?php _e(
+                                    "Select categories for this transmittal. Type to search.",
+                                    "cftp_admin"
+                                ); ?>">
+                            <?php if (!empty($get_categories["arranged"])) {
+                                $generate_categories_options = generate_categories_options(
+                                    $get_categories["arranged"],
+                                    0,
+                                    []
+                                );
+                                echo render_categories_options(
+                                    $generate_categories_options,
+                                    ["selected" => [], "ignore" => []]
+                                );
+                            } ?>
+                        </select>
+                    </div>
+
                     <div class="divider"></div>
                 </div>
             </div>
 
-            <!-- BCC Email -->
-            <div class="form-group">
-                <label for="file_bcc_addresses"><?php _e(
-                    "BCC Recipients",
-                    "cftp_admin"
-                ); ?></label>
-                <textarea name="file_bcc_addresses" id="file_bcc_addresses" class="form-control" rows="5" placeholder="<?php _e(
-                    "Enter email addresses separated by commas.",
-                    "cftp_admin"
-                ); ?>"><?php echo htmlspecialchars(
-    $existing_transmittal_data["file_bcc_addresses"] ?? ""
-); ?></textarea>
-                <p class="field_note form-text"><?php _e(
-                    "These email addresses will receive a hidden copy of the notification for this specific transmittal.",
-                    "cftp_admin"
-                ); ?></p>
-            </div>
-
-            <!-- CC Email -->
-            <div class="form-group">
-    <label for="file_cc_addresses"><?php _e(
-        "CC Recipients",
-        "cftp_admin"
-    ); ?></label>
-    <textarea name="file_cc_addresses" id="file_cc_addresses" class="form-control" rows="5" placeholder="<?php _e(
-        "Enter email addresses separated by commas.",
-        "cftp_admin"
-    ); ?>"><?php echo htmlspecialchars(
-    $existing_transmittal_data["file_cc_addresses"] ?? ""
-); ?></textarea>
-</div>
-
-            <!-- NEW: Transmittal-level Client Assignment -->
-            <div class="form-group">
-                <h3><?php _e("Assignments", "cftp_admin"); ?></h3>
-                <label for="transmittal_clients"><?php _e(
-                    "Clients",
-                    "cftp_admin"
-                ); ?></label>
-                <select class="form-select select2 none" multiple="multiple" 
-                        id="transmittal_clients" name="transmittal_clients[]" 
-                        data-placeholder="<?php _e(
-                            "Select clients for this transmittal. Type to search.",
-                            "cftp_admin"
-                        ); ?>">
-                    <?php
-                    // Get all clients for transmittal assignment
-                    $me = new \ProjectSend\Classes\Users(CURRENT_USER_ID);
-                    if (
-                        $me->shouldLimitUploadTo() &&
-                        !empty($me->limit_upload_to)
-                    ) {
-                        $transmittal_clients = file_editor_get_clients_by_ids(
-                            $me->limit_upload_to
-                        );
-                    } else {
-                        $transmittal_clients = file_editor_get_all_clients();
-                    }
-
-                    foreach ($transmittal_clients as $id => $name) { ?>
-                        <option value="<?php echo html_output($id); ?>">
-                            <?php echo html_output($name); ?>
-                        </option>
-                    <?php }
-                    ?>
-                </select>
-            </div>
-
-            <!-- NEW: Transmittal-level Groups Assignment -->
-            <div class="form-group">
-                <label for="transmittal_groups"><?php _e(
-                    "Groups",
-                    "cftp_admin"
-                ); ?></label>
-                <select class="form-select select2 none" multiple="multiple" 
-                        id="transmittal_groups" name="transmittal_groups[]" 
-                        data-placeholder="<?php _e(
-                            "Select groups for this transmittal. Type to search.",
-                            "cftp_admin"
-                        ); ?>">
-                    <?php
-                    // Get all groups for transmittal assignment
-                    if (
-                        $me->shouldLimitUploadTo() &&
-                        !empty($me->limit_upload_to)
-                    ) {
-                        $transmittal_groups = file_editor_get_groups_by_members(
-                            $me->limit_upload_to
-                        );
-                    } else {
-                        $transmittal_groups = file_editor_get_all_groups();
-                    }
-
-                    foreach ($transmittal_groups as $id => $name) { ?>
-                        <option value="<?php echo html_output($id); ?>">
-                            <?php echo html_output($name); ?>
-                        </option>
-                    <?php }
-                    ?>
-                </select>
-            </div>
-
-            <div class="form-group">
-                <label for="transmittal_categories"><?php _e(
-                    "Categories",
-                    "cftp_admin"
-                ); ?></label>
-                <select class="form-select select2 none" multiple="multiple" 
-                        id="transmittal_categories" name="transmittal_categories[]" 
-                        data-placeholder="<?php _e(
-                            "Select categories for this transmittal. Type to search.",
-                            "cftp_admin"
-                        ); ?>">
-                    <?php if (!empty($get_categories["arranged"])) {
-                        $generate_categories_options = generate_categories_options(
-                            $get_categories["arranged"],
-                            0,
-                            []
-                        );
-                        echo render_categories_options(
-                            $generate_categories_options,
-                            ["selected" => [], "ignore" => []]
-                        );
-                    } ?>
-                </select>
-            </div>
-
         <?php
+        // Remove the duplicate assignments section that was below
         $me = new \ProjectSend\Classes\Users(CURRENT_USER_ID);
         if ($me->shouldLimitUploadTo() && !empty($me->limit_upload_to)) {
             $clients = file_editor_get_clients_by_ids($me->limit_upload_to);
@@ -440,7 +456,11 @@ if (isset($_GET["confirm"])) {
                                     <button type="button" class="btn btn-md btn-secondary toggle_file_editor">
                                         <i class="fa fa-chevron-right" aria-hidden="true"></i>
                                     </button>
-                                    <p><?php echo $file->filename_original; ?></p>
+<p><?php
+// Remove file extension for display
+$display_filename = pathinfo($file->filename_original, PATHINFO_FILENAME);
+echo htmlspecialchars($display_filename);
+?></p>
                                 </div>
                             </div>
                         </div>
@@ -480,7 +500,7 @@ if (isset($_GET["confirm"])) {
                                                            ); ?>" required /> 
                                                 </div>
 
-                                                <!-- Document Title-->
+                                                <!-- Document Title -->
                                                 <div class="form-group">
                                                     <label for="document_title_<?php echo $i; ?>"><?php _e(
     "Document Title",
@@ -488,17 +508,18 @@ if (isset($_GET["confirm"])) {
 ); ?></label>
                                                     <input type="text" id="document_title_<?php echo $i; ?>" name="file[<?php echo $i; ?>][document_title]" class="form-control"
                                                            value="<?php echo htmlspecialchars(
-                                                               $file->document_title ??
-                                                                   ""
+                                                               html_entity_decode(
+                                                                   $file->document_title ??
+                                                                       "",
+                                                                   ENT_QUOTES,
+                                                                   "UTF-8"
+                                                               )
                                                            ); ?>"   
                                                            placeholder="<?php _e(
                                                                "Enter Document Title",
                                                                "cftp_admin"
                                                            ); ?>" />
                                                 </div>
-
-                                                <!-- REMOVED: Discipline Field - moved to transmittal level -->
-                                                <!-- REMOVED: Deliverable Type Field - moved to transmittal level -->
                                                 
                                             <?php endif; ?>
 
@@ -508,18 +529,77 @@ if (isset($_GET["confirm"])) {
                                                     "File Name",
                                                     "cftp_admin"
                                                 ); ?></label>
-                                                <input type="text" name="file[<?php echo $i; ?>][name]" value="<?php echo $file->title; ?>" class="form-control" 
+                                                <input type="text" name="file[<?php echo $i; ?>][name]" 
+                                                       value="<?php echo pathinfo(
+                                                           $file->title,
+                                                           PATHINFO_FILENAME
+                                                       ); ?>" 
+                                                       class="form-control" 
                                                        placeholder="<?php _e(
                                                            "Enter here the required file name.",
                                                            "cftp_admin"
                                                        ); ?>" />
                                             </div>
 
-                                            <!-- Custom Download Alias  -->
-                                            <?php if (
-                                                CURRENT_USER_LEVEL != 0 ||
-                                                current_user_can_upload_public()
-                                            ) { ?>
+                                            <!-- File Comments -->
+                                            <div class="form-group">
+                                                <label><?php _e(
+                                                    "File Comments",
+                                                    "cftp_admin"
+                                                ); ?></label>
+                                                <textarea id="file_comments_<?php echo $file->id; ?>" name="file[<?php echo $i; ?>][file_comments]" 
+                                                          class="<?php if (
+                                                              get_option(
+                                                                  "files_file_comments_use_ckeditor"
+                                                              ) == 1
+                                                          ) {
+                                                              echo "ckeditor";
+                                                          } ?> form-control textarea_file_comments" 
+                                                          placeholder="<?php _e(
+                                                              "Optionally, enter here a comment for the file.",
+                                                              "cftp_admin"
+                                                          ); ?>"><?php if (
+    !empty($file->file_comments)
+) {
+    echo $file->file_comments;
+} ?></textarea>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <?php if (CURRENT_USER_LEVEL != 0) { ?>
+                                        <div class="col assigns">
+                                            <div class="file_data">
+                                                <h3><?php _e(
+                                                    "Additional Information",
+                                                    "cftp_admin"
+                                                ); ?></h3>
+
+                                                <!-- Client Document Number - MOVED TO TOP -->
+                                                <div class="form-group">
+                                                    <label for="client_document_number_<?php echo $i; ?>"><?php _e(
+    "Client Document Number",
+    "cftp_admin"
+); ?></label>
+                                                    <input type="text" 
+                                                           id="client_document_number_<?php echo $i; ?>" 
+                                                           name="file[<?php echo $i; ?>][client_document_number]" 
+                                                           class="form-control"
+                                                           value="<?php echo htmlspecialchars(
+                                                               $file->client_document_number ??
+                                                                   ""
+                                                           ); ?>"   
+                                                           placeholder="<?php _e(
+                                                               "Enter Client Document Number",
+                                                               "cftp_admin"
+                                                           ); ?>" />
+                                                    <p class="field_note form-text"><?php _e(
+                                                        "Optional: Enter the client's reference number for this document.",
+                                                        "cftp_admin"
+                                                    ); ?></p>
+                                                </div>
+
+                                                <!-- Custom Download Alias - NOW SECOND -->
                                                 <div class="form-group">
                                                     <label for="custom_download_<?php echo $i; ?>"><?php _e(
     "Custom Download Alias",
@@ -568,70 +648,13 @@ EOL;
                                                         ); ?>
                                                     </p>
                                                 </div>
-                                            <?php } ?>
 
-                                             <!-- File Comments -->
-                                            <div class="form-group">
-                                                <label><?php _e(
-                                                    "File Comments",
-                                                    "cftp_admin"
-                                                ); ?></label>
-                                                <textarea id="file_comments_<?php echo $file->id; ?>" name="file[<?php echo $i; ?>][file_comments]" 
-                                                          class="<?php if (
-                                                              get_option(
-                                                                  "files_file_comments_use_ckeditor"
-                                                              ) == 1
-                                                          ) {
-                                                              echo "ckeditor";
-                                                          } ?> form-control textarea_file_comments" 
-                                                          placeholder="<?php _e(
-                                                              "Optionally, enter here a comment for the file.",
-                                                              "cftp_admin"
-                                                          ); ?>"><?php if (
-    !empty($file->file_comments)
-) {
-    echo $file->file_comments;
-} ?></textarea>
-                                            </div>
-
-                                            <!-- Client Document Number -->
-                                            <div class="form-group">
-                                                <label for="client_document_number_<?php echo $i; ?>"><?php _e(
-    "Client Document Number",
-    "cftp_admin"
-); ?></label>
-                                                <input type="text" 
-                                                       id="client_document_number_<?php echo $i; ?>" 
-                                                       name="file[<?php echo $i; ?>][client_document_number]" 
-                                                       class="form-control"
-                                                       value="<?php echo htmlspecialchars(
-                                                           $file->client_document_number ??
-                                                               ""
-                                                       ); ?>"   
-                                                       placeholder="<?php _e(
-                                                           "Enter Client Document Number",
-                                                           "cftp_admin"
-                                                       ); ?>" />
-                                                <p class="field_note form-text"><?php _e(
-                                                    "Optional: Enter the client's reference number for this document.",
-                                                    "cftp_admin"
-                                                ); ?></p>
-                                            </div>
-                                         </div>
-                                    </div>
-
-                                    <?php // UPDATED: Removed client and group assignments - now handled at transmittal level
-
-                    if (CURRENT_USER_LEVEL != 0) { ?>
-                                        <div class="col assigns">
-                                            <div class="file_data">
                                                 <h3><?php _e(
                                                     "File Settings",
                                                     "cftp_admin"
                                                 ); ?></h3>
 
                                                 <!-- Hidden Status -->
-                                                
                                                 <div class="checkbox">
                                                     <label for="hid_checkbox_<?php echo $i; ?>">
                                                         <input type="checkbox" class="checkbox_setting_hidden" id="hid_checkbox_<?php echo $i; ?>" 
@@ -642,12 +665,65 @@ EOL;
                                                         ); ?>
                                                     </label>
                                                 </div>
+
+                                                <!-- Issue Status Override -->
+                                                <div class="checkbox">
+                                                    <label for="issue_override_checkbox_<?php echo $i; ?>">
+                                                        <input type="checkbox" class="checkbox_setting_issue_override" id="issue_override_checkbox_<?php echo $i; ?>" 
+                                                               name="file[<?php echo $i; ?>][issue_status_override]" value="1" /> 
+                                                        <?php _e(
+                                                            "Issue Status Override (use custom status for this file only)",
+                                                            "cftp_admin"
+                                                        ); ?>
+                                                    </label>
+                                                </div>
+
+                                                <!-- Custom Issue Status Field (initially hidden) -->
+                                                <div class="form-group issue-status-override-field" id="issue_override_field_<?php echo $i; ?>" style="display: none; margin-top: 10px;">
+                                                    <label for="custom_issue_status_<?php echo $i; ?>"><?php _e(
+    "Custom Issue Status",
+    "cftp_admin"
+); ?></label>
+                                                    <select id="custom_issue_status_<?php echo $i; ?>" name="file[<?php echo $i; ?>][custom_issue_status]" class="form-select">
+                                                        <option value=""><?php _e(
+                                                            "Select Custom Issue Status",
+                                                            "cftp_admin"
+                                                        ); ?></option>
+                                                        <?php try {
+                                                            $helper = new \ProjectSend\Classes\TransmittalHelper();
+                                                            $statuses = $helper->getDropdownOptions(
+                                                                "issue_status"
+                                                            );
+                                                            foreach (
+                                                                $statuses
+                                                                as $status
+                                                            ) {
+                                                                echo '<option value="' .
+                                                                    htmlspecialchars(
+                                                                        $status
+                                                                    ) .
+                                                                    '">' .
+                                                                    htmlspecialchars(
+                                                                        $status
+                                                                    ) .
+                                                                    "</option>";
+                                                            }
+                                                        } catch (Exception $e) {
+                                                            error_log(
+                                                                "Error loading issue statuses: " .
+                                                                    $e->getMessage()
+                                                            );
+                                                            echo '<option value="">Error loading statuses</option>';
+                                                        } ?>
+                                                    </select>
+                                                    <p class="field_note form-text"><?php _e(
+                                                        "This will override the transmittal-level issue status for this specific file.",
+                                                        "cftp_admin"
+                                                    ); ?></p>
+                                                </div>
                                             </div>
                                         </div>
                                     <?php } ?>
-                                    
-                                    <div class="col">
-                                    </div>
                                 </div>
 
                                 <?php
@@ -859,6 +935,12 @@ EOL;
     <?php if (CURRENT_USER_LEVEL != 0): ?>
     <!-- JavaScript only for admin users -->
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+    // Auto-populate from filename parsing - only run on first load, not when editing
+    if (!document.querySelector('input[name="project_number"]').value) {
+        parseFilenamesAndPopulate();
+    }
+    });
     document.addEventListener('DOMContentLoaded', function() {
         // NEW: JavaScript for transmittal-level discipline/deliverable type dependency
         const transmittalDisciplineSelect = document.getElementById('transmittal_discipline');
@@ -998,6 +1080,114 @@ EOL;
             });
         });
     });
+    function parseFilenamesAndPopulate() {
+    // Get all file original names from the form
+    const fileInputs = document.querySelectorAll('input[name*="[original]"]');
+    
+    if (fileInputs.length === 0) return;
+    
+    // Use the first file to extract project-level data
+    const firstFilename = fileInputs[0].value;
+    
+    // Send AJAX request to parse filename
+    fetch('parse_filename.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            filename: firstFilename,
+            action: 'parse_filename'
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success && data.parsed_successfully) {
+            // Populate transmittal-level fields
+            if (data.project_number) {
+                const projectNumberField = document.getElementById('project_number');
+                if (projectNumberField && !projectNumberField.value) {
+                    projectNumberField.value = data.project_number;
+                }
+            }
+            
+            if (data.discipline) {
+                const disciplineField = document.getElementById('transmittal_discipline');
+                if (disciplineField && !disciplineField.value) {
+                    disciplineField.value = data.discipline;
+                    // Trigger change event to load deliverable types
+                    disciplineField.dispatchEvent(new Event('change'));
+                    
+                    // Set deliverable type after a short delay to allow loading
+                    if (data.deliverable_type) {
+                        setTimeout(() => {
+                            const deliverableField = document.getElementById('transmittal_deliverable_type');
+                            if (deliverableField) {
+                                deliverableField.value = data.deliverable_type;
+                            }
+                        }, 500);
+                    }
+                }
+            }
+            
+            // Show success message
+            showParsingMessage('success', `Filename parsed successfully! Project: ${data.project_number}, Discipline: ${data.discipline}`);
+        } else {
+            // Show partial success or info message
+            let message = 'Could not fully parse filename. ';
+            if (data.project_number) {
+                message += `Found project number: ${data.project_number}`;
+            } else {
+                message += 'Please fill in project information manually.';
+            }
+            showParsingMessage('info', message);
+        }
+    })
+    .catch(error => {
+        console.error('Error parsing filename:', error);
+        showParsingMessage('warning', 'Could not parse filename automatically. Please fill in fields manually.');
+    });
+}
+
+function showParsingMessage(type, message) {
+    // Create or update parsing message div
+    let messageDiv = document.getElementById('filename-parsing-message');
+    if (!messageDiv) {
+        messageDiv = document.createElement('div');
+        messageDiv.id = 'filename-parsing-message';
+        messageDiv.style.margin = '10px 0';
+        messageDiv.style.padding = '10px';
+        messageDiv.style.borderRadius = '4px';
+        
+        // Insert after the first form header
+        const firstHeader = document.querySelector('h3');
+        if (firstHeader) {
+            firstHeader.parentNode.insertBefore(messageDiv, firstHeader.nextSibling);
+        }
+    }
+    
+    // Set message style based on type
+    const styles = {
+        'success': { background: '#d4edda', border: '#c3e6cb', color: '#155724' },
+        'info': { background: '#d1ecf1', border: '#bee5eb', color: '#0c5460' },
+        'warning': { background: '#fff3cd', border: '#ffeaa7', color: '#856404' }
+    };
+    
+    const style = styles[type] || styles['info'];
+    messageDiv.style.backgroundColor = style.background;
+    messageDiv.style.borderColor = style.border;
+    messageDiv.style.color = style.color;
+    messageDiv.style.border = `1px solid ${style.border}`;
+    
+    messageDiv.innerHTML = `<i class="fa fa-info-circle"></i> ${message}`;
+    
+    // Auto-hide after 5 seconds for success messages
+    if (type === 'success') {
+        setTimeout(() => {
+            messageDiv.style.display = 'none';
+        }, 5000);
+    }
+}
     </script>
     <?php endif; ?>
 <?php endif; ?>

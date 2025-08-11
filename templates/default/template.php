@@ -216,6 +216,21 @@ $bulk_actions_items = [
     "zip" => __("Download zipped", "cftp_admin"),
 ];
 
+// Check if any filters are active - Define this early for use in the clear filters functionality
+$has_active_filters =
+    !empty($filter_by_transmittal) ||
+    !empty($filter_by_issue_status) ||
+    !empty($_GET["category"]) ||
+    !empty($_GET["search"]);
+
+// Add clear filters button to the filters form - always visible next to Filter button
+$filters_form["clear_button"] = [
+    "url" => "index.php",
+    "text" => __("Clear Filters", "cftp_admin"),
+    "class" => "btn btn-md btn-pslight", // Exact same as Filter button
+    "active" => $has_active_filters,
+];
+
 // Include layout files
 include_once ADMIN_VIEWS_DIR . DS . "header.php";
 
@@ -279,7 +294,6 @@ include_once LAYOUT_DIR . DS . "folders-nav.php";
     | <a href="index.php" class="alert-link" style="text-decoration: none;">🔄 Show All Files</a>
 </div>
 <?php endif; ?>
-
 
 <form action="" name="files_list" method="get" class="form-inline batch_actions">
     <div class="row">
@@ -491,8 +505,7 @@ include_once LAYOUT_DIR . DS . "folders-nav.php";
         </div>
     </div>
 </form>
-<?php
-if (!empty($table)) {
+<?php if (!empty($table)) {
     // PAGINATION
     $pagination = new \ProjectSend\Classes\Layout\Pagination();
     echo $pagination->make([
@@ -502,7 +515,28 @@ if (!empty($table)) {
         "items_per_page" => TEMPLATE_RESULTS_PER_PAGE,
     ]);
 }
+// Clear filters styling - matches Filter button and fixes alignment
+?>
+<style>
+.clear-filters-btn {
+    margin-left: 8px;
+    vertical-align: top;
+    display: inline-block;
+    margin-top: 0;
+}
 
+/* Alternative approach - align the parent container */
+.d-flex.align-items-center {
+    align-items: baseline !important;
+}
+
+/* Or specifically target the clear button's parent if needed */
+.d-flex.align-items-center .clear-filters-btn {
+    margin-top: -2px; /* Fine-tune this value as needed */
+}
+</style>
+
+<?php
 render_footer_text();
 
 render_json_variables();

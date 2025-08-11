@@ -307,7 +307,7 @@ class EmailNotifications
         }
         foreach ($files as $file) {
             $file_data = $this->files_data[$file["file_id"]];
-            $html .= '<li style="margin-bottom:11px;">';
+            $html .= '<li style="margin-bottom:12px;">';
             $html .=
                 '<p style="font-weight:bold; margin:0 0 5px 0; font-size:14px;">' .
                 $file_data["title"] .
@@ -371,6 +371,7 @@ class EmailNotifications
             }
         }
     }
+
     private function makeFilesListHtml($files, $uploader_username = null)
     {
         if (empty($files)) {
@@ -469,20 +470,19 @@ class EmailNotifications
         // Get the first file to extract transmittal information
         $first_file_data = $this->files_data[$files[0]["file_id"]];
 
-        // BRAND-COMPLIANT HEADER - Using exact brand colors with FIXED ALIGNMENT
+        // BRAND-COMPLIANT HEADER - Table-based layout with much closer spacing
         $html .=
-            '<div style="background:#252c3a; padding:15px; display:flex; justify-content:space-between; min-height:80px;">';
-        // Left side - Logo with proper clear space (0.5X minimum)
-        $html .= '<div style="display: flex; align-items: center;">';
+            '<table style="width: 100%; background: #252c3a; padding: 15px 80px; min-height: 80px; border-collapse: collapse; margin: 0; border: 0;" cellpadding="0" cellspacing="0">';
+        $html .= "<tr>";
+
+        // Left side - Logo cell
+        $html .=
+            '<td style="width: 40%; vertical-align: middle; text-align: right; padding: 8px 15px 8px 0;">';
 
         // Check if logo file exists and get proper URL
         $logo_file_info = $this->getLogoFileInfo();
 
         if ($logo_file_info["exists"] === true) {
-            // Logo with proper clear space - minimum 0.5X as per brand guide
-            $html .=
-                '<div style="padding: 8px; display: flex; align-items: center; justify-content: center;">';
-
             if ($logo_file_info["method"] === "svg_inline") {
                 $svg_content = $logo_file_info["svg_content"];
                 // Ensure minimum 5mm (approximately 50px) as per brand guide
@@ -497,33 +497,25 @@ class EmailNotifications
                 $html .=
                     '<img src="' .
                     $logo_file_info["url"] .
-                    '" alt="Isomer Project Group" style="height: 50px; width: auto; max-width: 200px; vertical-align: middle;" />';
+                    '" alt="Isomer Project Group" style="height: 50px; width: auto; max-width: 200px; vertical-align: middle; border: 0;" />';
             }
-
-            $html .= "</div>";
         } else {
-            // Fallback: Brand-compliant text using exact brand colors - CENTERED
+            // Fallback: Brand-compliant text using exact brand colors
             $html .=
-                '<div style="padding: 8px; display: flex; align-items: center; justify-content: center;">';
+                '<span style="color: white; font-family: Montserrat, Arial, sans-serif; font-weight: 700; font-size: 24px; text-transform: uppercase; letter-spacing: 3px;">ISOMER</span>';
             $html .=
-                '<div style="color: white; text-align: left; line-height: 1;">';
-            $html .=
-                '<div class="email-h1" style="color: white; margin: 0; line-height: 1;">ISOMER</div>';
-            $html .=
-                '<div class="email-h2" style="color: #f56600; font-size: 14px; margin: 0; line-height: 1;">PROJECT GROUP</div>';
-            $html .= "</div>";
-            $html .= "</div>";
+                '<span style="color: #f56600; font-family: Montserrat, Arial, sans-serif; font-weight: 300; font-size: 16px; text-transform: uppercase; letter-spacing: 2px; margin-left: 8px;">PROJECT GROUP</span>';
         }
 
-        $html .= "</div>";
+        $html .= "</td>";
 
-        // Right side - TRANSMITTAL TEXT
+        // Right side - Transmittal cell
         $html .=
-            '<div style="text-align: right; line-height: 1; padding-top: 20px;">';
+            '<td style="width: 50%; vertical-align: middle; text-align: left; padding: 8px 0 8px 50px;">';
         $html .=
-            '<div style="color: white; font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 24px; text-transform: uppercase; letter-spacing: 3px; margin: 0;">TRANSMITTAL</div>';
+            '<div style="color: white; font-family: Montserrat, Arial, sans-serif; font-weight: 800; font-size: 24px; text-transform: uppercase; letter-spacing: 3px; margin: 0; line-height: 1;">TRANSMITTAL</div>';
         $html .=
-            '<div class="email-h1" style="color: #f56600; font-weight: 800; margin: 0;">' .
+            '<div style="color: #f56600; font-weight: 800; margin: 4px 0 0 0; font-family: Montserrat, Arial, sans-serif; font-size: 16px; text-transform: uppercase; letter-spacing: 2px; line-height: 1;">' .
             htmlspecialchars(
                 html_entity_decode(
                     $first_file_data["transmittal_name"] ?? "",
@@ -532,9 +524,10 @@ class EmailNotifications
                 )
             ) .
             "</div>";
-        $html .= "</div>";
+        $html .= "</td>";
 
-        $html .= "</div>"; // End header section
+        $html .= "</tr>";
+        $html .= "</table>";
 
         // Project information section - MERGED LAYOUT (Transmittal Info + Recipients)
         $html .= '<div style="padding: 20px; background: #fff;">';
@@ -564,7 +557,7 @@ class EmailNotifications
 
         // SINGLE TRANSMITTAL INFORMATION CARD (merged project info + recipients)
         $html .=
-            '<div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding-top: 20px; ">';
+            '<div style="background: #f8f9fa; border: 1px solid #e9ecef; border-radius: 8px; padding: 20px;">';
 
         $html .=
             '<div style="font-family: Montserrat, Arial, sans-serif; font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: 2px; color: #252c3a; margin-bottom: 15px; border-bottom: 2px solid #252c3a; padding-bottom: 8px;">TRANSMITTAL INFORMATION</div>';
@@ -578,7 +571,7 @@ class EmailNotifications
             '<div style="width: 33.33%; padding-right: 15px; box-sizing: border-box; overflow: hidden;">';
 
         $html .=
-            '<div style="margin-bottom: 15px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 600; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Project Number:</span><br><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; word-wrap: break-word; overflow-wrap: break-word;">' .
+            '<div style="margin-bottom: 15px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 600; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Project Number:</span><br><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; word-wrap: break-word; overflow-wrap: break-word;">' .
             htmlspecialchars(
                 html_entity_decode(
                     $first_file_data["project_number"] ?? "",
@@ -589,7 +582,7 @@ class EmailNotifications
             "</span></div>";
 
         $html .=
-            '<div style="margin-bottom: 15px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 600; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Discipline:</span><br><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; word-wrap: break-word; overflow-wrap: break-word;">' .
+            '<div style="margin-bottom: 15px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 600; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Discipline:</span><br><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; word-wrap: break-word; overflow-wrap: break-word;">' .
             htmlspecialchars(
                 html_entity_decode(
                     $first_file_data["discipline"] ?? "",
@@ -606,7 +599,7 @@ class EmailNotifications
             '<div style="width: 33.33%; padding-left: 15px; padding-right: 15px; box-sizing: border-box; border-left: 1px solid #e9ecef; overflow: hidden;">';
 
         $html .=
-            '<div style="margin-bottom: 15px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 600; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Project Name:</span><br><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; word-wrap: break-word; overflow-wrap: break-word;">' .
+            '<div style="margin-bottom: 15px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 600; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Project Name:</span><br><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; word-wrap: break-word; overflow-wrap: break-word;">' .
             htmlspecialchars(
                 html_entity_decode(
                     $first_file_data["project_name"] ?? "",
@@ -626,7 +619,7 @@ class EmailNotifications
             );
         }
         $html .=
-            '<div style="margin-bottom: 15px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 600; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Deliverable Type:</span><br><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; word-wrap: break-word; overflow-wrap: break-word;">' .
+            '<div style="margin-bottom: 15px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 600; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Deliverable Type:</span><br><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; word-wrap: break-word; overflow-wrap: break-word;">' .
             htmlspecialchars($deliverable_type) .
             "</span></div>";
 
@@ -639,7 +632,7 @@ class EmailNotifications
         // Transmittal Date
         $formatted_date = date("F jS, Y");
         $html .=
-            '<div style="margin-bottom: 15px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 600; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Transmittal Date:</span><br><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; word-wrap: break-word; overflow-wrap: break-word;">' .
+            '<div style="margin-bottom: 15px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 600; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Transmittal Date:</span><br><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; word-wrap: break-word; overflow-wrap: break-word;">' .
             $formatted_date .
             "</span></div>";
 
@@ -654,7 +647,7 @@ class EmailNotifications
             )
             : "Isomer Project Group";
         $html .=
-            '<div style="margin-bottom: 15px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 600; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px;">From:</span><br><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; word-wrap: break-word; overflow-wrap: break-word;">' .
+            '<div style="margin-bottom: 15px;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 600; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px;">From:</span><br><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; word-wrap: break-word; overflow-wrap: break-word;">' .
             $from_text .
             "</span></div>";
 
@@ -665,7 +658,7 @@ class EmailNotifications
         // FULL-WIDTH RECIPIENT ROWS
         // TO field - Full width row
         $html .=
-            '<div style="margin-bottom: 15px; padding-top: 15px; border-top: 1px solid #e9ecef;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 600; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px;">To:</span><br><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; word-wrap: break-word; overflow-wrap: break-word;">' .
+            '<div style="margin-bottom: 15px; padding-top: 15px; border-top: 1px solid #e9ecef;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 600; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px;">To:</span><br><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; word-wrap: break-word; overflow-wrap: break-word;">' .
             htmlspecialchars(
                 html_entity_decode($recipients_text, ENT_QUOTES, "UTF-8")
             ) .
@@ -674,7 +667,7 @@ class EmailNotifications
         // COPIES TO field - Full width row (only show if there's data)
         if (!empty($copies_to_text)) {
             $html .=
-                '<div style="margin-bottom: 0;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 600; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Copies To:</span><br><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; word-wrap: break-word; overflow-wrap: break-word;">' .
+                '<div style="margin-bottom: 0;"><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 600; font-size: 12px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Copies To:</span><br><span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; word-wrap: break-word; overflow-wrap: break-word;">' .
                 htmlspecialchars(
                     html_entity_decode($copies_to_text, ENT_QUOTES, "UTF-8")
                 ) .
@@ -758,10 +751,18 @@ class EmailNotifications
             // File row in table
             $html .= "<tr>";
 
-            // File Title
+            // File Title - REMOVE EXTENSION
+            $filename_raw = $file_data["filename"] ?? $file_data["title"];
+
+            // Remove the file extension
+            $filename_without_extension = pathinfo(
+                $filename_raw,
+                PATHINFO_FILENAME
+            );
+
             $filename = htmlspecialchars(
                 html_entity_decode(
-                    $file_data["filename"] ?? $file_data["title"],
+                    $filename_without_extension,
                     ENT_QUOTES,
                     "UTF-8"
                 )
@@ -799,7 +800,7 @@ class EmailNotifications
                 "</td>";
 
             // File Comments
-            if ($file_comments) {
+            if ($has_file_comments) {
                 $file_comments = $file_data["file_comments"] ?? "";
                 if (!empty($file_comments)) {
                     $file_comments = html_entity_decode(

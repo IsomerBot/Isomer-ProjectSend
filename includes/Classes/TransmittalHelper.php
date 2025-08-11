@@ -204,6 +204,129 @@ class TransmittalHelper
     }
 
     /**
+     * Parse filename according to Isomer naming convention
+     * Format: AAA####-AA-AAA-####
+     * Example: DOM2502-PR-CAL-001
+     *
+     * @param string $filename - The original filename
+     * @return array - Parsed data or empty array if parsing fails
+     */
+    public function parseFilename($filename)
+    {
+        // Remove file extension
+        $name_without_ext = pathinfo($filename, PATHINFO_FILENAME);
+
+        // Pattern: AAA####-AA-AAA-####
+        // Groups: (project)(discipline)(deliverable)(sequence)
+        $pattern = '/^([A-Z]{3}\d{4})-([A-Z]{2})-([A-Z]{3})-(\d{3,4})$/';
+
+        if (preg_match($pattern, $name_without_ext, $matches)) {
+            $project_number = $matches[1]; // DOM2502
+            $discipline_abbr = $matches[2]; // PR
+            $deliverable_abbr = $matches[3]; // CAL
+            $sequence = $matches[4]; // 001
+
+            // Map abbreviations to full names using your database
+            $discipline_name = $this->getDisciplineByAbbreviation(
+                $discipline_abbr
+            );
+            $deliverable_type = $this->getDeliverableTypeByAbbreviation(
+                $deliverable_abbr,
+                $discipline_name
+            );
+
+            return [
+                "project_number" => $project_number,
+                "discipline" => $discipline_name,
+                "deliverable_type" => $deliverable_type,
+                "sequence_number" => $sequence,
+                "discipline_abbr" => $discipline_abbr,
+                "deliverable_abbr" => $deliverable_abbr,
+                "parsed_successfully" => true,
+            ];
+        }
+
+        // Try alternative patterns or partial parsing
+        return $this->tryAlternativePatterns($name_without_ext);
+    }
+
+    /**
+     * Get discipline name by abbreviation
+     * @param string $abbreviation - The discipline abbreviation
+     * @return string - Full discipline name or empty string if not found
+     */
+    private function getDisciplineByAbbreviation($abbreviation)
+    {
+        $query = "SELECT discipline_name FROM tbl_discipline 
+                  WHERE abbreviation = :abbr AND active = 1";
+
+        $statement = $this->dbh->prepare($query);
+        $statement->execute([":abbr" => $abbreviation]);
+        $result = $statement->fetch(PDO::FETCH_ASSOC);
+
+        return $result ? $result["discipline_name"] : "";
+    }
+
+    /**
+     * Get deliverable type by abbreviation and discipline
+     * @param string $abbreviation - The deliverable type abbreviation
+     * @param string $discipline_name - The discipline name
+     * @return string - Full deliverable type or empty string if not found
+     */
+    private function getDeliverableTypeByAbbreviation(
+        $abbreviation,
+        $discipline_name
+    ) {
+        if (empty($discipline_name)) {
+            return "";
+        }
+
+        $query = "SELECT dt.deliverable_type 
+                  FROM tbl_deliverable_type dt
+                  JOIN tbl_discipline d ON dt.discipline_id = d.id
+                  WHERE dt.abbreviation = :abbr 
+                  AND d.discipline_name = :discipline 
+                  AND dt.active = 1";
+
+        $statement = $this->dbh->prepare($query);
+        $statement->execute([
+            ":abbr" => $abbreviation,
+            ":discipline" => $discipline_name,
+        ]);
+        $result = $statement->fetch(PDO::FETCH_ASSOC);
+
+        return $result ? $result["deliverable_type"] : "";
+    }
+
+    /**
+     * Try alternative filename patterns for partial extraction
+     * @param string $filename - The filename without extension
+     * @return array - Parsed data with success flag
+     */
+    private function tryAlternativePatterns($filename)
+    {
+        $parsed_data = ["parsed_successfully" => false];
+
+        // Pattern 1: Just project number at start (DOM2502-anything)
+        if (preg_match("/^([A-Z]{3}\d{4})/", $filename, $matches)) {
+            $parsed_data["project_number"] = $matches[1];
+            $parsed_data["parsed_successfully"] = true;
+        }
+
+        // Pattern 2: Project + discipline (DOM2502-PR-anything)
+        if (preg_match("/^([A-Z]{3}\d{4})-([A-Z]{2})/", $filename, $matches)) {
+            $parsed_data["project_number"] = $matches[1];
+            $parsed_data["discipline_abbr"] = $matches[2];
+            $parsed_data["discipline"] = $this->getDisciplineByAbbreviation(
+                $matches[2]
+            );
+            $parsed_data["parsed_successfully"] = true;
+        }
+
+        return $parsed_data;
+    }
+
+    /**
      * Get transmittal data by transmittal number
      * @param string $transmittal_number - The transmittal number to look up
      * @return array|false - Transmittal data or false if not found
@@ -311,6 +434,7 @@ class TransmittalHelper
         $statement->execute([":transmittal_number" => $transmittal_number]);
         return $statement->fetchAll(PDO::FETCH_ASSOC);
     }
+
     /**
      * Get user information by user ID
      * @param int $user_id - The user ID to look up
@@ -386,3 +510,4 @@ class TransmittalHelper
         ]);
     }
 }
+?>
