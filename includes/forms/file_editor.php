@@ -334,31 +334,12 @@ if (isset($_GET["confirm"])) {
                     
                     <!-- Groups - FIRST -->
                     <div class="form-group">
-                        <label for="transmittal_groups"><?php _e(
-                            "Groups",
-                            "cftp_admin"
-                        ); ?></label>
-                        <select class="form-select select2 none" multiple="multiple" 
-                                id="transmittal_groups" name="transmittal_groups[]" 
-                                data-placeholder="<?php _e(
-                                    "Select groups for this transmittal. Type to search.",
-                                    "cftp_admin"
-                                ); ?>">
+                        
                             <?php
                             // Get all groups for transmittal assignment
                             $me = new \ProjectSend\Classes\Users(
                                 CURRENT_USER_ID
                             );
-                            if (
-                                $me->shouldLimitUploadTo() &&
-                                !empty($me->limit_upload_to)
-                            ) {
-                                $transmittal_groups = file_editor_get_groups_by_members(
-                                    $me->limit_upload_to
-                                );
-                            } else {
-                                $transmittal_groups = file_editor_get_all_groups();
-                            }
 
                             foreach ($transmittal_groups as $id => $name) { ?>
                                 <option value="<?php echo html_output($id); ?>">
@@ -372,13 +353,13 @@ if (isset($_GET["confirm"])) {
                     <!-- Clients - SECOND -->
                     <div class="form-group">
                         <label for="transmittal_clients"><?php _e(
-                            "Clients",
+                            "Project Contacts",
                             "cftp_admin"
                         ); ?></label>
                         <select class="form-select select2 none" multiple="multiple" 
                                 id="transmittal_clients" name="transmittal_clients[]" 
                                 data-placeholder="<?php _e(
-                                    "Select clients for this transmittal. Type to search.",
+                                    "Confirm or revise Project Contacts. Type to search.",
                                     "cftp_admin"
                                 ); ?>">
                             <?php
@@ -412,7 +393,7 @@ if (isset($_GET["confirm"])) {
                         <select class="form-select select2 none" multiple="multiple" 
                                 id="transmittal_categories" name="transmittal_categories[]" 
                                 data-placeholder="<?php _e(
-                                    "Select categories for this transmittal. Type to search.",
+                                    "Confirm or revise Categories.",
                                     "cftp_admin"
                                 ); ?>">
                             <?php if (!empty($get_categories["arranged"])) {

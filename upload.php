@@ -37,15 +37,21 @@ if (LOADED_LANG != "en") {
 message_no_clients();
 
 if (defined("UPLOAD_MAX_FILESIZE")) {
+
     $msg =
         __(
-            "Click on Add files to select all the files that you want to upload, and then click continue. On the next step, you will be able to set a name and description for each uploaded file. Remember that the maximum allowed file size (in mb.) is ",
+            "Click on Add files to select all the files that you want to upload, and then click Upload files. Remember that the maximum allowed file size (in mb.) is ",
             "cftp_admin"
         ) .
         " <strong>" .
         UPLOAD_MAX_FILESIZE .
         "</strong>";
     $flash->info($msg);
+    ?>
+    
+   
+    
+    <?php
 }
 
 include_once ADMIN_VIEWS_DIR . DS . "header.php";
@@ -53,6 +59,15 @@ $chunk_size = get_option("upload_chunk_size");
 ?>
 <div class="row">
     <div class="col-12">
+        <div class="alert alert-info">
+            <strong><?php _e("File Naming Format:", "cftp_admin"); ?></strong>
+            <?php _e(
+                "Please upload files in the following format for proper automations: ",
+                "cftp_admin"
+            ); ?>
+            <code>AAA####-AA-AAA-####</code>
+        </div>
+        
         <script type="text/javascript">
             $(function() {
                 $("#uploader").pluploadQueue({
@@ -64,24 +79,6 @@ $chunk_size = get_option("upload_chunk_size");
                     rename: true,
                     dragdrop: true,
                     multipart: true,
-                    init: {
-        BeforeUpload: function(up, file) {
-            console.log('About to upload file:', file);
-            console.log('File name:', file.name);
-            console.log('Upload URL:', up.settings.url);
-        },
-        UploadProgress: function(up, file) {
-            console.log('Progress:', file.name, file.percent + '%');
-        },
-        Error: function(up, err) {
-            console.log('Upload error:', err);
-            console.log('Error details:', err.message, err.details);
-        },
-        FileUploaded: function(up, file, response) {
-            console.log('Upload complete:', file.name);
-            console.log('Server response:', response.response);
-        }
-    },
                     filters: {
                         max_file_size: '<?php echo UPLOAD_MAX_FILESIZE; ?>mb'
                         <?php if (
@@ -95,14 +92,29 @@ $chunk_size = get_option("upload_chunk_size");
                             }]
                         <?php } ?>
                     },
-                    //flash_swf_url: 'vendor/moxiecode/plupload/js/Moxie.swf',
-                    //silverlight_xap_url: 'vendor/moxiecode/plupload/js/Moxie.xap',
                     preinit: {
                         Init: function(up, info) {
                             //$('#uploader_container').removeAttr("title");
                         }
                     },
-                    init: {}
+                    init: {
+                        BeforeUpload: function(up, file) {
+                            console.log('About to upload file:', file);
+                            console.log('File name:', file.name);
+                            console.log('Upload URL:', up.settings.url);
+                        },
+                        UploadProgress: function(up, file) {
+                            console.log('Progress:', file.name, file.percent + '%');
+                        },
+                        Error: function(up, err) {
+                            console.log('Upload error:', err);
+                            console.log('Error details:', err.message, err.details);
+                        },
+                        FileUploaded: function(up, file, response) {
+                            console.log('Upload complete:', file.name);
+                            console.log('Server response:', response.response);
+                        }
+                    }
                 });
             });
         </script>
@@ -110,4 +122,4 @@ $chunk_size = get_option("upload_chunk_size");
         <?php include_once FORMS_DIR . DS . "upload.php"; ?>
     </div>
 </div>
-<?php include_once ADMIN_VIEWS_DIR . DS . "footer.php";
+<?php include_once ADMIN_VIEWS_DIR . DS . "footer.php"; ?>
