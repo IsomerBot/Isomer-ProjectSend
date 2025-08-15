@@ -89,7 +89,7 @@ switch ($clients_form_type) {
 
     <div class="form-group row">
         <label for="name" class="col-sm-4 control-label"><?php _e(
-            "Contact Name",
+            "Name",
             "cftp_admin"
         ); ?></label>
         <div class="col-sm-8">
@@ -103,7 +103,7 @@ switch ($clients_form_type) {
 
     <div class="form-group row">
         <label for="username" class="col-sm-4 control-label"><?php _e(
-            "Log in username",
+            "Username",
             "cftp_admin"
         ); ?></label>
         <div class="col-sm-8">
@@ -162,19 +162,7 @@ switch ($clients_form_type) {
         </div>
     </div>
 
-    <div class="form-group row">
-        <label for="address" class="col-sm-4 control-label"><?php _e(
-            "Address",
-            "cftp_admin"
-        ); ?></label>
-        <div class="col-sm-8">
-            <input type="text" name="address" id="address" class="form-control" value="<?php echo isset(
-                $client_arguments["address"]
-            )
-                ? format_form_value($client_arguments["address"])
-                : ""; ?>" />
-        </div>
-    </div>
+  
 
     <div class="form-group row">
         <label for="phone" class="col-sm-4 control-label"><?php _e(
@@ -192,26 +180,7 @@ switch ($clients_form_type) {
 
    
 
-        <div class="form-group row">
-            <label for="max_file_size" class="col-sm-4 control-label"><?php _e(
-                "Max. upload filesize",
-                "cftp_admin"
-            ); ?></label>
-            <div class="col-sm-8">
-                <div class="input-group">
-                    <input type="text" name="max_file_size" id="max_file_size" class="form-control" value="<?php echo isset(
-                        $client_arguments["max_file_size"]
-                    )
-                        ? format_form_value($client_arguments["max_file_size"])
-                        : "0"; ?>" />
-                    <span class="input-group-text">MB</span>
-                </div>
-                <p class="field_note form-text"><?php _e(
-                    "Set to 0 to use the default system limit",
-                    "cftp_admin"
-                ); ?> (<?php echo MAX_FILESIZE; ?> MB)</p>
-            </div>
-        </div>
+       
         <?php
         if ($group_field == true) {
             /**
@@ -253,7 +222,7 @@ switch ($clients_form_type) {
                 <label for="groups_request" class="col-sm-4 control-label"><?php echo $group_label; ?></label>
                 <div class="col-sm-8">
                     <select class="form-select select2 none" multiple="multiple" name="groups_request[]" id="groups-select" data-placeholder="<?php _e(
-                        "Select one or more options. Type to search.",
+                        "Assign to one or more projects. Type to search.",
                         "cftp_admin"
                     ); ?>">
                         <?php foreach ($sql_groups as $group) { ?>

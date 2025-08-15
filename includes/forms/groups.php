@@ -38,7 +38,7 @@ switch ($groups_form_type) {
 
 	<div class="form-group row">
 		<label for="description" class="col-sm-4 control-label"><?php echo tm(
-      __("Project Description", "cftp_admin")
+      __("Project Name", "cftp_admin")
   ); ?> *</label>
 		<div class="col-sm-8">
 			<textarea name="description" id="description" class="ckeditor form-control" required><?php echo isset(
@@ -89,43 +89,11 @@ switch ($groups_form_type) {
 		</div>
 	</div>
 
-	<div class="form-group row">
-		<div class="col-sm-8 offset-sm-4">
-			<label for="public">
-				<input type="checkbox" name="public" id="public" <?php echo isset(
-        $group_arguments["public"]
-    ) && $group_arguments["public"] == 1
-        ? 'checked="checked"'
-        : ""; ?>> <?php echo tm(__("Public project", "cftp_admin")); ?>
-				<p class="field_note form-text"><?php echo tm(
-        __(
-            "Allows contacts to request access to this project in the registration process and when editing their own profile.",
-            "cftp_admin"
-        )
-    ); ?></p>
-                <?php if (get_option("public_listing_page_enable") != 1) {
-                    $msg =
-                        '<i class="fa fa-exclamation-triangle" aria-hidden="true"></i> ' .
-                        tm(
-                            __(
-                                "The project cannot be made publicly visible while the public page is disabled."
-                            )
-                        );
-                    $msg .=
-                        ' <a href="' .
-                        BASE_URI .
-                        'options.php?section=privacy" class="underline" targeT="_blank">' .
-                        __("Go to privacy options", "cftp_admin") .
-                        "</a>";
-                    echo system_message("warning", $msg);
-                } ?>
-			</label>
-		</div>
-    </div>
+
 
 	<div class="inside_form_buttons">
-		<button type="submit" class="btn btn-wide btn-primary"><?php echo html_output(
-      $submit_value
-  ); ?></button>
-	</div>
+        <button type="submit" class="btn btn-wide btn-primary"><?php echo html_output(
+            tm(__("Create project", "cftp_admin"))
+        ); ?></button>
+    </div>
 </form>
