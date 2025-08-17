@@ -164,19 +164,7 @@ switch ($clients_form_type) {
 
   
 
-    <div class="form-group row">
-        <label for="phone" class="col-sm-4 control-label"><?php _e(
-            "Telephone",
-            "cftp_admin"
-        ); ?></label>
-        <div class="col-sm-8">
-            <input type="text" name="phone" id="phone" class="form-control" value="<?php echo isset(
-                $client_arguments["phone"]
-            )
-                ? format_form_value($client_arguments["phone"])
-                : ""; ?>" />
-        </div>
-    </div>
+
 
    
 

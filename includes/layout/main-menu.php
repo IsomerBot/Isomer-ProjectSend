@@ -273,29 +273,10 @@ if (current_role_in([9, 8, 7])) {
 // Items for clients
 else {
     if (get_option("clients_can_upload") == 1) {
-        $items["upload"] = [
-            "nav" => "upload",
-            "level" => [9, 8, 7, 0],
-            "main" => [
-                "label" => __("Upload", "cftp_admin"),
-                "link" => "upload.php",
-                "icon" => "cloud-upload",
-            ],
-        ];
     }
 
-    $items["manage_files"] = [
-        "nav" => "manage",
-        "level" => [9, 8, 7, 0],
-        "main" => [
-            "label" => __("Manage files", "cftp_admin"),
-            "link" => "manage-files.php",
-            "icon" => "file",
-        ],
-    ];
-
-    $items["view_files"] = [
-        "nav" => "template",
+    $items["upload"] = [
+        "nav" => "upload",
         "level" => [9, 8, 7, 0],
         "main" => [
             "label" => __("View my files", "cftp_admin"),
