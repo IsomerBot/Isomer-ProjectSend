@@ -368,13 +368,13 @@ include_once LAYOUT_DIR . DS . 'search-filters-bar.php';
                             'hide' => 'phone,tablet',
                             'condition' => $conditions['is_not_client'],
                         ),
-                        array(
-                            'sortable' => true,
-                            'sort_url' => 'expires',
-                            'content' => __('Expiry', 'cftp_admin'),
-                            'hide' => 'phone',
-                            'condition' => $conditions['can_set_expiration'],
-                        ),
+                        // array(
+                        //     'sortable' => true,
+                        //     'sort_url' => 'expires',
+                        //     'content' => __('Expiry', 'cftp_admin'),
+                        //     'hide' => 'phone',
+                        //     'condition' => $conditions['can_set_expiration'],
+                        // ),
                         array(
                             'sortable' => true,
                             'sort_url' => 'download_count',
@@ -428,27 +428,27 @@ include_once LAYOUT_DIR . DS . 'search-filters-bar.php';
                         }
 
                         // Expiration
-                        $expires_date = $custom_download->expiry_date ?: ($file->expires ? $file->expiry_date : null);
-                        if (is_null($expires_date) && $file->isPublic()) {
-                            $expires_button = 'success';
-                            $expires_label = __('Does not expire', 'cftp_admin');
-                        } else {
-                            if (!$file->isPublic()) {
-                                $expires_button = 'danger';
-                                $expires_label = __('File is not public', 'cftp_admin');
-                            }
-                            else {
-                                $expires_date = date(get_option('timeformat'), strtotime($expires_date));
+                        // $expires_date = $custom_download->expiry_date ?: ($file->expires ? $file->expiry_date : null);
+                        // if (is_null($expires_date) && $file->isPublic()) {
+                        //     $expires_button = 'success';
+                        //     $expires_label = __('Does not expire', 'cftp_admin');
+                        // } else {
+                        //     if (!$file->isPublic()) {
+                        //         $expires_button = 'danger';
+                        //         $expires_label = __('File is not public', 'cftp_admin');
+                        //     }
+                        //     else {
+                        //         $expires_date = date(get_option('timeformat'), strtotime($expires_date));
 
-                                if ($expires_date < new \DateTime()) {
-                                    $expires_button = 'danger';
-                                    $expires_label = __('Expired on', 'cftp_admin') . ' ' . $expires_date;
-                                } else {
-                                    $expires_button = 'info';
-                                    $expires_label = __('Expires on', 'cftp_admin') . ' ' . $expires_date;
-                                }
-                            }
-                        }
+                        //         if ($expires_date < new \DateTime()) {
+                        //             $expires_button = 'danger';
+                        //             $expires_label = __('Expired on', 'cftp_admin') . ' ' . $expires_date;
+                        //         } else {
+                        //             $expires_button = 'info';
+                        //             $expires_label = __('Expires on', 'cftp_admin') . ' ' . $expires_date;
+                        //         }
+                        //     }
+                        // }
 
                         $custom_download_uri = get_option('custom_download_uri');
                         if (!$custom_download_uri) $custom_download_uri = 'custom-download.php?link=';
