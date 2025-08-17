@@ -1061,7 +1061,7 @@ EOL;
             });
         });
     });
-    function parseFilenamesAndPopulate() {
+function parseFilenamesAndPopulate() {
     // Get all file original names from the form
     const fileInputs = document.querySelectorAll('input[name*="[original]"]');
     
@@ -1111,8 +1111,44 @@ EOL;
                 }
             }
             
+            // NEW: Auto-populate categories based on parsed data
+            if (data.category_ids && data.category_ids.length > 0) {
+                setTimeout(() => {
+                    const categoryField = document.getElementById('transmittal_categories');
+                    if (categoryField) {
+                        // Handle Select2 multi-select
+                        if (typeof $ !== 'undefined' && $(categoryField).data('select2')) {
+                            // Get current values and add new ones
+                            let currentValues = $(categoryField).val() || [];
+                            
+                            // Add detected categories if not already selected
+                            data.category_ids.forEach(catId => {
+                                if (!currentValues.includes(catId.toString())) {
+                                    currentValues.push(catId.toString());
+                                }
+                            });
+                            
+                            $(categoryField).val(currentValues).trigger('change');
+                        } else {
+                            // Standard multi-select fallback
+                            data.category_ids.forEach(catId => {
+                                const option = categoryField.querySelector(`option[value="${catId}"]`);
+                                if (option) {
+                                    option.selected = true;
+                                }
+                            });
+                        }
+                    }
+                }, 750); // Delay to ensure category dropdown is populated
+            }
+            
             // Show success message
-            showParsingMessage('success', `Filename parsed successfully! Project: ${data.project_number}, Discipline: ${data.discipline}`);
+            let message = `Filename parsed successfully! Project: ${data.project_number}, Discipline: ${data.discipline}`;
+            if (data.category_ids && data.category_ids.length > 0) {
+                message += ', Categories auto-selected';
+            }
+            showParsingMessage('success', message);
+            
         } else {
             // Show partial success or info message
             let message = 'Could not fully parse filename. ';
@@ -1129,6 +1165,53 @@ EOL;
         showParsingMessage('warning', 'Could not parse filename automatically. Please fill in fields manually.');
     });
 }
+
+// Enhanced manual category selection when discipline/deliverable changes
+document.addEventListener('DOMContentLoaded', function() {
+    const disciplineSelect = document.getElementById('transmittal_discipline');
+    const deliverableSelect = document.getElementById('transmittal_deliverable_type');
+    const categorySelect = document.getElementById('transmittal_categories');
+    
+    // Function to suggest category based on current discipline + deliverable selection
+    function suggestCategory() {
+        const discipline = disciplineSelect?.value;
+        const deliverable = deliverableSelect?.value;
+        
+        if (discipline && deliverable && categorySelect) {
+            // Look for category option that matches the discipline + deliverable pattern
+            const options = categorySelect.querySelectorAll('option');
+            
+            for (let option of options) {
+                const optionText = option.textContent.toLowerCase();
+                const disciplineLower = discipline.toLowerCase();
+                const deliverableLower = deliverable.toLowerCase();
+                
+                // Check if option text contains both discipline and deliverable
+                if (optionText.includes(disciplineLower) && optionText.includes(deliverableLower)) {
+                    if (typeof $ !== 'undefined' && $(categorySelect).data('select2')) {
+                        // Select2 multi-select
+                        let currentValues = $(categorySelect).val() || [];
+                        if (!currentValues.includes(option.value)) {
+                            currentValues.push(option.value);
+                            $(categorySelect).val(currentValues).trigger('change');
+                        }
+                    } else {
+                        // Standard multi-select
+                        if (!option.selected) {
+                            option.selected = true;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+    
+    // Suggest category when deliverable type changes
+    if (deliverableSelect) {
+        deliverableSelect.addEventListener('change', suggestCategory);
+    }
+});
 
 function showParsingMessage(type, message) {
     // Create or update parsing message div

@@ -21,7 +21,7 @@ switch ($groups_form_type) {
 
 	<div class="form-group row">
 		<label for="name" class="col-sm-4 control-label"><?php echo tm(
-      __("Project Number", "cftp_admin")
+      __("Project Number/Group Name", "cftp_admin")
   ); ?> *</label>
 		<div class="col-sm-8">
 			<input type="text" name="name" id="name" class="form-control required" value="<?php echo isset(
@@ -38,7 +38,7 @@ switch ($groups_form_type) {
 
 	<div class="form-group row">
 		<label for="description" class="col-sm-4 control-label"><?php echo tm(
-      __("Project Name", "cftp_admin")
+      __("Group Description", "cftp_admin")
   ); ?> *</label>
 		<div class="col-sm-8">
 			<textarea name="description" id="description" class="ckeditor form-control" required><?php echo isset(
@@ -51,7 +51,7 @@ switch ($groups_form_type) {
 
 	<div class="form-group row assigns">
 		<label for="members" class="col-sm-4 control-label"><?php echo tm(
-      __("Contacts", "cftp_admin")
+      __("Contacts/Group Members", "cftp_admin")
   ); ?></label>
 		<div class="col-sm-8">
 			<select class="select2 none" multiple="multiple" id="members" name="members[]" data-placeholder="<?php echo tm(
