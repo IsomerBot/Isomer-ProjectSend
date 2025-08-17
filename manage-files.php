@@ -662,11 +662,6 @@ include_once LAYOUT_DIR . DS . "folders-nav.php";
                         "hide" => "phone,tablet",
                     ],
                     [
-                        "sortable" => true,
-                        "sort_url" => "description",
-                        "content" => __("Description", "cftp_admin"),
-                    ],
-                    [
                         "content" => __("Size", "cftp_admin"),
                     ],
                     [
@@ -927,9 +922,10 @@ include_once LAYOUT_DIR . DS . "folders-nav.php";
                         [
                             "content" => $file->extension,
                         ],
-                        [
-                            "content" => $file->description,
-                        ],
+                        // COMMENT OUT THE DESCRIPTION CELL:
+                        // [
+                        //     "content" => $file->description,
+                        // ],
                         [
                             "content" => $file->size_formatted,
                         ],

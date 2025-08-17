@@ -21,7 +21,7 @@ switch ($groups_form_type) {
 
 	<div class="form-group row">
 		<label for="name" class="col-sm-4 control-label"><?php echo tm(
-      __("Project Number/Group Name", "cftp_admin")
+      __("Project Number", "cftp_admin")
   ); ?> *</label>
 		<div class="col-sm-8">
 			<input type="text" name="name" id="name" class="form-control required" value="<?php echo isset(
@@ -30,7 +30,7 @@ switch ($groups_form_type) {
        ? html_output(stripslashes($group_arguments["name"]))
        : ""; ?>" required />
 			<p class="field_note form-text"><?php _e(
-       "Format: 3 letters + 4 digits (e.g., DOM2505)",
+       "Format: 3 letters + 4 digits (e.g., DOM2501)",
        "cftp_admin"
    ); ?></p>
 		</div>
@@ -38,8 +38,8 @@ switch ($groups_form_type) {
 
 	<div class="form-group row">
 		<label for="description" class="col-sm-4 control-label"><?php echo tm(
-      __("Group Description", "cftp_admin")
-  ); ?> *</label>
+      __("Project Name", "cftp_admin")
+  ); ?> </label>
 		<div class="col-sm-8">
 			<textarea name="description" id="description" class="ckeditor form-control" required><?php echo isset(
        $group_arguments["description"]
@@ -51,7 +51,7 @@ switch ($groups_form_type) {
 
 	<div class="form-group row assigns">
 		<label for="members" class="col-sm-4 control-label"><?php echo tm(
-      __("Contacts/Group Members", "cftp_admin")
+      __("Project Contacts", "cftp_admin")
   ); ?></label>
 		<div class="col-sm-8">
 			<select class="select2 none" multiple="multiple" id="members" name="members[]" data-placeholder="<?php echo tm(

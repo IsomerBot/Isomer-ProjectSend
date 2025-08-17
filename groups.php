@@ -233,12 +233,12 @@ include_once LAYOUT_DIR . DS . "search-filters-bar.php";
                     [
                         "sortable" => true,
                         "sort_url" => "name",
-                        "content" => __("Project name", "cftp_admin"),
+                        "content" => __("Project Number", "cftp_admin"),
                     ],
                     [
                         "sortable" => true,
                         "sort_url" => "description",
-                        "content" => __("Description", "cftp_admin"),
+                        "content" => __("Project Name", "cftp_admin"),
                         "hide" => "phone",
                     ],
                     [
