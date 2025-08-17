@@ -233,14 +233,6 @@ include_once LAYOUT_DIR . DS . "search-filters-bar.php";
                         "hide" => "phone,tablet",
                     ],
                     [
-                        "content" => __("Files: Direct", "cftp_admin"),
-                        "hide" => "phone",
-                    ],
-                    [
-                        "content" => __("Files: Projects", "cftp_admin"),
-                        "hide" => "phone",
-                    ],
-                    [
                         "sortable" => true,
                         "sort_url" => "active",
                         "content" => __("Status", "cftp_admin"),
@@ -252,12 +244,6 @@ include_once LAYOUT_DIR . DS . "search-filters-bar.php";
                     [
                         "content" => __("Notify", "cftp_admin"),
                         "hide" => "phone,tablet",
-                    ],
-                    [
-                        "sortable" => true,
-                        "sort_url" => "max_file_size",
-                        "content" => __("Max. upload size", "cftp_admin"),
-                        "hide" => "phone",
                     ],
                     [
                         "content" => __("View", "cftp_admin"),
@@ -351,17 +337,6 @@ include_once LAYOUT_DIR . DS . "search-filters-bar.php";
                             "content" => $client->email,
                         ],
                         [
-                            "content" => !empty($client->files)
-                                ? count($client->files)
-                                : null,
-                        ],
-                        [
-                            "content" => $own_files,
-                        ],
-                        [
-                            "content" => $groups_files,
-                        ],
-                        [
                             "content" =>
                                 '<span class="badge ' .
                                 $badge_class .
@@ -377,12 +352,6 @@ include_once LAYOUT_DIR . DS . "search-filters-bar.php";
                                 $client->notify_upload == "1"
                                     ? __("Yes", "cftp_admin")
                                     : __("No", "cftp_admin"),
-                        ],
-                        [
-                            "content" =>
-                                $client->max_file_size == "0"
-                                    ? __("Default", "cftp_admin")
-                                    : $client->max_file_size . " " . "MB",
                         ],
                         [
                             "actions" => true,
