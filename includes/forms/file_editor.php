@@ -1154,35 +1154,43 @@ EOL;
                         });
                     }
                     
-// NEW: Auto-populate categories based on parsed data
-if (data.category_ids && data.category_ids.length > 0) {
+// NEW: Auto-populate categories based on parsed discipline + deliverable
+if (data.discipline && data.deliverable_type) {
     setTimeout(() => {
         const categoryField = document.getElementById('transmittal_categories');
+        const selectedDiscipline = data.discipline;
+        const selectedDeliverable = data.deliverable_type;
+        
         if (categoryField) {
-            // Handle Select2 multi-select
-            if (typeof $ !== 'undefined' && $(categoryField).data('select2')) {
-                // Get current values and add new ones
-                let currentValues = $(categoryField).val() || [];
-                
-                // Add detected categories and deduplicate before setting the value
-                const newCategoryIds = new Set(currentValues.map(String)); // Map to string for consistent comparison
-                data.category_ids.forEach(catId => {
-                    newCategoryIds.add(catId.toString());
-                });
-                
-                $(categoryField).val(Array.from(newCategoryIds)).trigger('change');
-                
-            } else {
-                // Standard multi-select fallback
-                data.category_ids.forEach(catId => {
-                    const option = categoryField.querySelector(`option[value="${catId}"]`);
-                    if (option) {
-                        option.selected = true;
+            // Make AJAX call to find the specific category ID for this discipline + deliverable combination
+            fetch('api/get_category_by_discipline_deliverable.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    discipline: selectedDiscipline,
+                    deliverable_type: selectedDeliverable
+                })
+            })
+            .then(response => response.json())
+            .then(categoryData => {
+                if (categoryData.success && categoryData.category_id) {
+                    if (typeof $ !== 'undefined' && $(categoryField).data('select2')) {
+                        let currentValues = $(categoryField).val() || [];
+                        if (!currentValues.includes(categoryData.category_id.toString())) {
+                            currentValues.push(categoryData.category_id.toString());
+                            $(categoryField).val(currentValues).trigger('change');
+                        }
                     }
-                });
-            }
+                    showParsingMessage('success', `Selected specific category: ${categoryData.category_name}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error finding specific category:', error);
+            });
         }
-    }, 750); // Delay to ensure category dropdown is populated
+    }, 750);
 }
                     
                     // Show success message
