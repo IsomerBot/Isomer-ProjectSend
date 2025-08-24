@@ -153,16 +153,42 @@ if (isset($_POST["save"])) {
                            project_number = :project_number,
                            package_description = :package_description,
                            issue_status = :issue_status,
+                           issue_status_override = :issue_status_override,
+                           original_issue_status = :original_issue_status,
                            deliverable_type = :deliverable_type,
-                            discipline = :discipline,
+                           discipline = :discipline,
                            document_title = :document_title,
                            revision_number = :revision_number,
                            comments = :comments,
                            file_bcc_addresses = :file_bcc_addresses,
                            file_cc_addresses = :file_cc_addresses,
                            file_comments = :file_comments,
-                            client_document_number = :client_document_number
+                           client_document_number = :client_document_number
                          WHERE id = :file_id";
+
+                    // FIXED: Ensure original_issue_status is ALWAYS set to transmittal-level status
+                    $original_issue_status = $global_issue_status; // This is the transmittal-level status
+                    $file_issue_status = $global_issue_status; // Default to transmittal-level status
+                    $issue_status_override = 0; // Default: no override
+
+                    // Check if this file has an issue status override
+                    if (
+                        isset($file_data_from_post["issue_status_override"]) &&
+                        $file_data_from_post["issue_status_override"] == "1" &&
+                        !empty($file_data_from_post["custom_issue_status"])
+                    ) {
+                        $file_issue_status =
+                            $file_data_from_post["custom_issue_status"];
+                        $issue_status_override = 1; // Mark as override
+
+                        error_log(
+                            "File {$file_data_from_post["id"]}: OVERRIDE - Transmittal: '{$original_issue_status}' → File: '{$file_issue_status}'"
+                        );
+                    } else {
+                        error_log(
+                            "File {$file_data_from_post["id"]}: Using transmittal issue status '{$file_issue_status}' (no override)"
+                        );
+                    }
 
                     $statement = $dbh->prepare($query);
                     $statement->execute([
@@ -172,7 +198,9 @@ if (isset($_POST["save"])) {
                         ":project_name" => $global_project_name,
                         ":project_number" => $global_project_number,
                         ":package_description" => $global_package_description,
-                        ":issue_status" => $global_issue_status,
+                        ":issue_status" => $file_issue_status, // Current status (override if set, otherwise global)
+                        ":issue_status_override" => $issue_status_override, // Track override status
+                        ":original_issue_status" => $original_issue_status, // ALWAYS store transmittal-level status
                         ":discipline" => $global_discipline,
                         ":deliverable_type" => $global_deliverable_type,
                         ":document_title" =>

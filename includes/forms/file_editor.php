@@ -626,7 +626,16 @@ EOL;
                                                 <div class="checkbox">
                                                     <label for="issue_override_checkbox_<?php echo $i; ?>">
                                                         <input type="checkbox" class="checkbox_setting_issue_override" id="issue_override_checkbox_<?php echo $i; ?>" 
-                                                                    name="file[<?php echo $i; ?>][issue_status_override]" value="1" /> 
+                                                                    name="file[<?php echo $i; ?>][issue_status_override]" value="1"
+                                                                    <?php if (
+                                                                        isset(
+                                                                            $file->issue_status_override
+                                                                        ) &&
+                                                                        $file->issue_status_override ==
+                                                                            1
+                                                                    ) {
+                                                                        echo " checked";
+                                                                    } ?> /> 
                                                         <?php _e(
                                                             "Issue Status Override (use custom status for this file only)",
                                                             "cftp_admin"
@@ -634,48 +643,51 @@ EOL;
                                                     </label>
                                                 </div>
 
-                                                <div class="form-group issue-status-override-field" id="issue_override_field_<?php echo $i; ?>" style="display: none; margin-top: 10px;">
-                                                    <label for="custom_issue_status_<?php echo $i; ?>"><?php _e(
+                                                <div class="form-group issue-status-override-field" id="issue_override_field_<?php echo $i; ?>" 
+     style="display: <?php echo isset($file->issue_status_override) &&
+     $file->issue_status_override == 1
+         ? "block"
+         : "none"; ?>; margin-top: 10px;">
+    <label for="custom_issue_status_<?php echo $i; ?>"><?php _e(
     "Custom Issue Status",
     "cftp_admin"
 ); ?></label>
-                                                    <select id="custom_issue_status_<?php echo $i; ?>" name="file[<?php echo $i; ?>][custom_issue_status]" class="form-select">
-                                                        <option value=""><?php _e(
-                                                            "Select Custom Issue Status",
-                                                            "cftp_admin"
-                                                        ); ?></option>
-                                                        <?php try {
-                                                            $helper = new \ProjectSend\Classes\TransmittalHelper();
-                                                            $statuses = $helper->getDropdownOptions(
-                                                                "issue_status"
-                                                            );
-                                                            foreach (
-                                                                $statuses
-                                                                as $status
-                                                            ) {
-                                                                echo '<option value="' .
-                                                                    htmlspecialchars(
-                                                                        $status
-                                                                    ) .
-                                                                    '">' .
-                                                                    htmlspecialchars(
-                                                                        $status
-                                                                    ) .
-                                                                    "</option>";
-                                                            }
-                                                        } catch (Exception $e) {
-                                                            error_log(
-                                                                "Error loading issue statuses: " .
-                                                                    $e->getMessage()
-                                                            );
-                                                            echo '<option value="">Error loading statuses</option>';
-                                                        } ?>
-                                                    </select>
-                                                    <p class="field_note form-text"><?php _e(
-                                                        "This will override the transmittal-level issue status for this specific file.",
-                                                        "cftp_admin"
-                                                    ); ?></p>
-                                                </div>
+    <select id="custom_issue_status_<?php echo $i; ?>" name="file[<?php echo $i; ?>][custom_issue_status]" class="form-select">
+        <option value=""><?php _e(
+            "Select Custom Issue Status",
+            "cftp_admin"
+        ); ?></option>
+        <?php try {
+            $helper = new \ProjectSend\Classes\TransmittalHelper();
+            $statuses = $helper->getDropdownOptions("issue_status");
+            foreach ($statuses as $status) {
+                $selected = "";
+                // If override is enabled and this status matches the file's current issue_status, select it
+                if (
+                    isset($file->issue_status_override) &&
+                    $file->issue_status_override == 1 &&
+                    $status == ($file->issue_status ?? "")
+                ) {
+                    $selected = " selected";
+                }
+                echo '<option value="' .
+                    htmlspecialchars($status) .
+                    '"' .
+                    $selected .
+                    ">" .
+                    htmlspecialchars($status) .
+                    "</option>";
+            }
+        } catch (Exception $e) {
+            error_log("Error loading issue statuses: " . $e->getMessage());
+            echo '<option value="">Error loading statuses</option>';
+        } ?>
+    </select>
+    <p class="field_note form-text"><?php _e(
+        "This will override the transmittal-level issue status for this specific file.",
+        "cftp_admin"
+    ); ?></p>
+</div>
                                             </div>
                                         </div>
                                     <?php } ?>
@@ -751,6 +763,20 @@ EOL;
                                             "data" => [
                                                 "copy-from" =>
                                                     "custom_download_" . $i,
+                                            ],
+                                        ];
+
+                                        // Issue Status Override Button (ADD THIS)
+                                        $copy_buttons["issue_override"] = [
+                                            "label" => __(
+                                                "Issue Status Override",
+                                                "cftp_admin"
+                                            ),
+                                            "class" => "copy-issue-override",
+                                            "data" => [
+                                                "copy-from" =>
+                                                    "issue_override_checkbox_" .
+                                                    $i,
                                             ],
                                         ];
                                     }
@@ -884,6 +910,35 @@ EOL;
         border-color: #dee2e6 !important;
         box-shadow: none !important;
     }
+
+    /* Issue Status Override styling */
+.issue-status-override-field {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 4px;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+.checkbox_setting_issue_override:checked + label {
+    font-weight: bold;
+    color: #856404;
+}
+
+.issue-status-override-field select {
+    border-color: #ffc107;
+}
+
+.issue-status-override-field label {
+    font-weight: bold;
+    color: #856404;
+}
+
+.issue-status-override-field .field_note {
+    font-style: italic;
+    color: #856404;
+    margin-top: 5px;
+}
     </style>
 
    <?php if (CURRENT_USER_LEVEL != 0): ?>
@@ -1024,8 +1079,93 @@ EOL;
                     alert('Client Document Number applied to all files');
                 });
             });
+
+            // Issue Status Override
+            document.querySelectorAll('.copy-issue-override').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    const sourceId = this.getAttribute('data-copy-from');
+                    const sourceCheckbox = document.getElementById(sourceId);
+                    if (!sourceCheckbox) return;
+                    
+                    // Apply to all issue override checkboxes
+                    document.querySelectorAll('[id^="issue_override_checkbox_"]').forEach(function(checkbox) {
+                        checkbox.checked = sourceCheckbox.checked;
+                    });
+                    
+                    alert('Issue Status Override applied to all files');
+                });
+            });
         });
 
+        // Add this inside the existing <script> tag, after the other "Apply to All Files" functions
+
+        // Issue Status Override functionality
+        document.querySelectorAll('.checkbox_setting_issue_override').forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                const fileIndex = this.id.replace('issue_override_checkbox_', '');
+                const overrideField = document.getElementById('issue_override_field_' + fileIndex);
+                const customStatusSelect = document.getElementById('custom_issue_status_' + fileIndex);
+                
+                if (this.checked) {
+                    // Show the override field
+                    overrideField.style.display = 'block';
+                    customStatusSelect.required = true;
+                } else {
+                    // Hide the override field and clear selection
+                    overrideField.style.display = 'none';
+                    customStatusSelect.value = '';
+                    customStatusSelect.required = false;
+                }
+            });
+            
+            // Check initial state on page load
+            const fileIndex = checkbox.id.replace('issue_override_checkbox_', '');
+            const overrideField = document.getElementById('issue_override_field_' + fileIndex);
+            if (checkbox.checked) {
+                overrideField.style.display = 'block';
+            }
+        });
+
+        // Apply Issue Status Override to All Files
+        document.querySelectorAll('.copy-issue-override').forEach(function(button) {
+            button.addEventListener('click', function() {
+                const sourceId = this.getAttribute('data-copy-from');
+                const sourceCheckbox = document.getElementById(sourceId);
+                const sourceFileIndex = sourceId.replace('issue_override_checkbox_', '');
+                const sourceCustomStatus = document.getElementById('custom_issue_status_' + sourceFileIndex);
+                
+                if (!sourceCheckbox) return;
+                
+                const isChecked = sourceCheckbox.checked;
+                const customStatusValue = sourceCustomStatus ? sourceCustomStatus.value : '';
+                
+                // Apply to all issue override checkboxes and custom status dropdowns
+                document.querySelectorAll('[id^="issue_override_checkbox_"]').forEach(function(checkbox) {
+                    const fileIndex = checkbox.id.replace('issue_override_checkbox_', '');
+                    const overrideField = document.getElementById('issue_override_field_' + fileIndex);
+                    const customStatusSelect = document.getElementById('custom_issue_status_' + fileIndex);
+                    
+                    // Set checkbox state
+                    checkbox.checked = isChecked;
+                    
+                    // Show/hide override field
+                    if (isChecked) {
+                        overrideField.style.display = 'block';
+                        customStatusSelect.required = true;
+                        if (customStatusValue) {
+                            customStatusSelect.value = customStatusValue;
+                        }
+                    } else {
+                        overrideField.style.display = 'none';
+                        customStatusSelect.value = '';
+                        customStatusSelect.required = false;
+                    }
+                });
+                
+                alert('Issue Status Override applied to all files');
+            });
+        });
+        
         function parseFilenamesAndPopulate() {
             // Get all file original names from the form
             const fileInputs = document.querySelectorAll('input[name*="[original]"]');
