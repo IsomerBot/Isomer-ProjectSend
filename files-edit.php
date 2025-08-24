@@ -541,6 +541,9 @@ include_once ADMIN_VIEWS_DIR . DS . "header.php";
                     "content" => __("File Name", "cftp_admin"),
                 ],
                 [
+                    "content" => __("Recipients", "cftp_admin"), // NEW: Added this header
+                ],
+                [
                     "content" => __("Actions", "cftp_admin"),
                     "hide" => "phone",
                 ],
@@ -552,14 +555,32 @@ include_once ADMIN_VIEWS_DIR . DS . "header.php";
                 if ($file->recordExists()) {
                     $table->addRow();
 
+                    // --- BEGIN: NEW RECIPIENT DISPLAY LOGIC ---
+                    $recipients_text = "All Recipients";
+                    if (!empty($file->transmittal_number)) {
+                        $transmittal_helper = new \ProjectSend\Classes\TransmittalHelper();
+                        $recipients = $transmittal_helper->getTransmittalRecipients(
+                            $file->transmittal_number
+                        );
+
+                        if (!empty($recipients)) {
+                            $recipient_names = [];
+                            foreach ($recipients as $recipient) {
+                                $recipient_names[] = $recipient["name"];
+                            }
+                            $recipients_text = implode(", ", $recipient_names);
+                        }
+                    }
+                    // --- END: NEW RECIPIENT DISPLAY LOGIC ---
+
                     $col_actions =
                         '<a href="files-edit.php?ids=' .
                         $file->id .
                         '" class="btn-primary btn btn-sm">
-                        <i class="fa fa-pencil"></i><span class="button_label">' .
+                <i class="fa fa-pencil"></i><span class="button_label">' .
                         __("Edit file", "cftp_admin") .
                         '</span>
-                    </a>';
+            </a>';
 
                     // Show the "My files" button only to clients
                     if (CURRENT_USER_LEVEL == 0) {
@@ -578,6 +599,9 @@ include_once ADMIN_VIEWS_DIR . DS . "header.php";
                         ],
                         [
                             "content" => $file->filename_original,
+                        ],
+                        [
+                            "content" => $recipients_text, // NEW: Displays the fetched recipient names
                         ],
                         [
                             "content" => $col_actions,
@@ -599,7 +623,6 @@ include_once ADMIN_VIEWS_DIR . DS . "header.php";
                 include_once FORMS_DIR . DS . "file_editor.php";
             }
         }
-        ?>
-    </div>
+        ?></div>
 </div>
 <?php include_once ADMIN_VIEWS_DIR . DS . "footer.php"; ?>

@@ -518,6 +518,11 @@ class TransmittalHelper
      */
     public function getTransmittalRecipients($transmittal_number)
     {
+        error_log(
+            "DEBUG: getTransmittalRecipients called with: " .
+                $transmittal_number
+        );
+
         // First, get the centralized transmittal data
         $query =
             "SELECT contacts FROM tbl_transmittal_summary WHERE transmittal_number = :transmittal_number";
@@ -525,25 +530,119 @@ class TransmittalHelper
         $statement->execute([":transmittal_number" => $transmittal_number]);
         $result = $statement->fetch(PDO::FETCH_ASSOC);
 
+        error_log("DEBUG: Summary table result: " . print_r($result, true));
+
         if (empty($result) || empty($result["contacts"])) {
-            return [];
+            error_log(
+                "DEBUG: No contacts found in summary table, falling back to direct query"
+            );
+            return $this->getRecipientsFromFileRelations($transmittal_number);
         }
 
         // Decode the JSON string to get the user IDs
         $contact_ids = json_decode($result["contacts"], true);
+        error_log("DEBUG: Decoded contact IDs: " . print_r($contact_ids, true));
 
         if (empty($contact_ids)) {
-            return [];
+            error_log("DEBUG: No contact IDs after JSON decode");
+            return $this->getRecipientsFromFileRelations($transmittal_number);
         }
 
-        // Now, get the user details for those IDs
+        // FIXED: Correct SQL query without alias issue
         $in_clause = implode(",", array_fill(0, count($contact_ids), "?"));
-        $query_users = "SELECT name, email, user as username FROM tbl_users WHERE id IN ($in_clause) AND active = '1'";
-
+        $query_users = "SELECT id, name, email, user FROM tbl_users WHERE id IN ($in_clause) AND active = '1'";
         $statement_users = $this->dbh->prepare($query_users);
         $statement_users->execute($contact_ids);
 
-        return $statement_users->fetchAll(PDO::FETCH_ASSOC);
+        $recipients = $statement_users->fetchAll(PDO::FETCH_ASSOC);
+        error_log("DEBUG: Found recipients: " . print_r($recipients, true));
+
+        return $recipients;
+    }
+
+    /**
+     * Fallback method to get recipients directly from file relations
+     * @param string $transmittal_number - The transmittal number
+     * @return array - Array of recipient data
+     */
+    private function getRecipientsFromFileRelations($transmittal_number)
+    {
+        error_log(
+            "DEBUG: Using fallback method for transmittal: " .
+                $transmittal_number
+        );
+
+        try {
+            // Get all clients assigned to files with this transmittal number
+            $query = "SELECT DISTINCT u.id, u.name, u.email, u.user 
+                  FROM tbl_files f
+                  INNER JOIN tbl_files_relations fr ON f.id = fr.file_id
+                  INNER JOIN tbl_users u ON fr.client_id = u.id
+                  WHERE f.transmittal_number = :transmittal_number
+                  AND u.level = '0'
+                  AND u.active = '1'
+                  ORDER BY u.name";
+
+            $statement = $this->dbh->prepare($query);
+            $statement->execute([":transmittal_number" => $transmittal_number]);
+
+            $recipients = [];
+            while ($row = $statement->fetch(PDO::FETCH_ASSOC)) {
+                $recipients[] = $row;
+            }
+
+            if (!empty($recipients)) {
+                error_log(
+                    "DEBUG: Found " .
+                        count($recipients) .
+                        " recipients via direct client query"
+                );
+                return $recipients;
+            }
+
+            // If no individual clients found, try to get from groups
+            $query_groups = "SELECT DISTINCT u.id, u.name, u.email, u.user 
+                        FROM tbl_files f
+                        INNER JOIN tbl_files_relations fr ON f.id = fr.file_id
+                        INNER JOIN tbl_groups g ON fr.group_id = g.id
+                        INNER JOIN tbl_members m ON g.id = m.group_id
+                        INNER JOIN tbl_users u ON m.client_id = u.id
+                        WHERE f.transmittal_number = :transmittal_number
+                        AND u.level = '0'
+                        AND u.active = '1'
+                        ORDER BY u.name";
+
+            $statement_groups = $this->dbh->prepare($query_groups);
+            $statement_groups->execute([
+                ":transmittal_number" => $transmittal_number,
+            ]);
+
+            $group_recipients = [];
+            while ($row = $statement_groups->fetch(PDO::FETCH_ASSOC)) {
+                $group_recipients[] = $row;
+            }
+
+            if (!empty($group_recipients)) {
+                error_log(
+                    "DEBUG: Found " .
+                        count($group_recipients) .
+                        " recipients via group query"
+                );
+                return $group_recipients;
+            }
+
+            error_log(
+                "DEBUG: No recipients found for transmittal: " .
+                    $transmittal_number
+            );
+            return [];
+        } catch (Exception $e) {
+            error_log(
+                "ERROR: Failed to get recipients from file relations: " .
+                    $e->getMessage()
+            );
+            return [];
+        }
     }
 
     /**
