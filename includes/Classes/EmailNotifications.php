@@ -1,7 +1,7 @@
 <?php
 /**
  * Prepare and send email notifications
- * @todo: completely remake this class. Right now It's just a cleaner port of upload-send-notifications.php
+ * UPDATED: Now uses centralized tbl_transmittal_summary table for performance
  */
 namespace ProjectSend\Classes;
 use \PDO;
@@ -16,6 +16,7 @@ class EmailNotifications
     private $clients_data;
     private $files_data;
     private $creators;
+    private $transmittal_summaries; // NEW: Cache for transmittal summary data
 
     private $dbh;
 
@@ -32,6 +33,7 @@ class EmailNotifications
         $this->clients_data = [];
         $this->files_data = [];
         $this->creators = [];
+        $this->transmittal_summaries = []; // NEW: Initialize transmittal cache
     }
 
     public function getNotificationsSent()
@@ -102,11 +104,20 @@ class EmailNotifications
                     $row["upload_type"] == "0" ? "client" : "user",
             ];
 
-            // Add the file data to the global array
+            // UPDATED: Load file data with transmittal summary integration
             if (!array_key_exists($row["file_id"], $this->files_data)) {
                 $file = new \ProjectSend\Classes\Files($row["file_id"]);
 
-                $uploader_name = "Isomer Project Group"; // fallback
+                // Get transmittal summary data if this file has a transmittal number
+                $transmittal_summary = null;
+                if (!empty($file->transmittal_number)) {
+                    $transmittal_summary = $this->getTransmittalSummaryData(
+                        $file->transmittal_number
+                    );
+                }
+
+                // Default uploader name
+                $uploader_name = "Isomer Project Group";
                 if (!empty($file->user_id)) {
                     $transmittal_helper = new \ProjectSend\Classes\TransmittalHelper();
                     $uploader = $transmittal_helper->getUserById(
@@ -117,33 +128,56 @@ class EmailNotifications
                     }
                 }
 
+                // Use transmittal summary data if available, otherwise fall back to file data
                 $this->files_data[$file->id] = [
                     "id" => $file->id,
                     "filename" => $file->filename_original,
                     "title" => $file->title,
                     "description" => $file->description,
-                    // Add transmittal fields
-                    "transmittal_number" => $file->transmittal_number ?? "",
-                    "project_name" => $file->project_name ?? "",
-                    "project_number" => $file->project_number ?? "",
-                    "package_description" => $file->package_description ?? "",
+                    // Transmittal fields - use summary data if available
+                    "transmittal_number" => $transmittal_summary
+                        ? $transmittal_summary["transmittal_number"]
+                        : $file->transmittal_number ?? "",
+                    "project_name" => $transmittal_summary
+                        ? $transmittal_summary["project_name"]
+                        : $file->project_name ?? "",
+                    "project_number" => $transmittal_summary
+                        ? $transmittal_summary["project_number"]
+                        : $file->project_number ?? "",
+                    "package_description" => $transmittal_summary
+                        ? $transmittal_summary["package_description"]
+                        : $file->package_description ?? "",
                     "issue_status" => $file->issue_status ?? "",
-                    "discipline" => $file->discipline ?? "",
-                    "deliverable_type" => $file->deliverable_type ?? "",
+                    "discipline" => $transmittal_summary
+                        ? $transmittal_summary["discipline_name"]
+                        : $file->discipline ?? "",
+                    "deliverable_type" => $transmittal_summary
+                        ? $transmittal_summary["deliverable_type"]
+                        : $file->deliverable_type ?? "",
                     "document_title" => $file->document_title ?? "",
                     "revision_number" => $file->revision_number ?? "",
-                    "comments" => $file->comments ?? "",
-                    "transmittal_name" => $file->transmittal_name ?? "",
-                    "uploader_name" => $uploader_name,
-                    "file_bcc_addresses" => $file->file_bcc_addresses ?? "",
-                    "file_cc_addresses" => $file->file_cc_addresses ?? "",
+                    "comments" => $transmittal_summary
+                        ? $transmittal_summary["comments"]
+                        : $file->comments ?? "",
+                    "transmittal_name" => $transmittal_summary
+                        ? $transmittal_summary["transmittal_number"]
+                        : $file->transmittal_name ?? "",
+                    "uploader_name" => $transmittal_summary
+                        ? $transmittal_summary["uploader_name"]
+                        : $uploader_name,
+                    "file_bcc_addresses" => $transmittal_summary
+                        ? $transmittal_summary["bcc_addresses"]
+                        : $file->file_bcc_addresses ?? "",
+                    "file_cc_addresses" => $transmittal_summary
+                        ? $transmittal_summary["cc_addresses"]
+                        : $file->file_cc_addresses ?? "",
                     "file_comments" => $file->file_comments ?? "",
                     "client_document_number" =>
                         $file->client_document_number ?? "",
                 ];
             }
 
-            // Add the client data to the global array
+            // Add the client data to the global array (unchanged)
             if (!array_key_exists($row["client_id"], $this->clients_data)) {
                 $client = get_client_by_id($row["client_id"]);
 
@@ -169,7 +203,7 @@ class EmailNotifications
             }
         }
 
-        // Prepare the list of clients and admins that will be notified
+        // Prepare the list of clients and admins that will be notified (unchanged)
         if (!empty($this->clients_data)) {
             foreach ($this->clients_data as $client) {
                 foreach ($notifications["pending"] as $notification) {
@@ -203,6 +237,39 @@ class EmailNotifications
         return $notifications;
     }
 
+    /**
+     * NEW: Get transmittal summary data with joined reference information
+     */
+    private function getTransmittalSummaryData($transmittal_number)
+    {
+        // Check cache first
+        if (isset($this->transmittal_summaries[$transmittal_number])) {
+            return $this->transmittal_summaries[$transmittal_number];
+        }
+
+        $query = "SELECT ts.*, 
+                         g.name as group_name, g.description as group_description,
+                         d.discipline_name, d.abbreviation as discipline_abbr,
+                         dt.deliverable_type, dt.abbreviation as deliverable_abbr,
+                         u.name as uploader_name, u.email as uploader_email
+                  FROM tbl_transmittal_summary ts
+                  LEFT JOIN tbl_groups g ON ts.group_id = g.id
+                  LEFT JOIN tbl_discipline d ON ts.discipline_id = d.id
+                  LEFT JOIN tbl_deliverable_type dt ON ts.deliverable_type_id = dt.id
+                  LEFT JOIN tbl_users u ON ts.uploader_user_id = u.id
+                  WHERE ts.transmittal_number = :transmittal_number";
+
+        $statement = $this->dbh->prepare($query);
+        $statement->execute([":transmittal_number" => $transmittal_number]);
+
+        $result = $statement->fetch(PDO::FETCH_ASSOC);
+
+        // Cache the result
+        $this->transmittal_summaries[$transmittal_number] = $result ?: null;
+
+        return $this->transmittal_summaries[$transmittal_number];
+    }
+
     public function sendNotifications()
     {
         $notifications = $this->getPendingNotificationsFromDatabase();
@@ -224,6 +291,7 @@ class EmailNotifications
         );
     }
 
+    // Admin notification methods remain unchanged
     private function sendNotificationsToAdmins($notifications = [])
     {
         $system_admin_email = get_option("admin_email_address");
@@ -249,10 +317,9 @@ class EmailNotifications
                     $processed_notifications = [];
 
                     foreach ($admin_files as $client_uploader => $files) {
-                        // ORIGINAL BEHAVIOR: Process each file individually for admin notifications
                         foreach ($files as $file) {
                             $files_list_html = $this->makeSimpleFilesListHtml(
-                                [$file], // Pass single file array to maintain original behavior
+                                [$file],
                                 $client_uploader
                             );
 
@@ -291,10 +358,6 @@ class EmailNotifications
         }
     }
 
-    /**
-     * Make the list of files for client uploads - SIMPLE ORIGINAL STYLING
-     * This is the original simple styling for when clients upload files
-     */
     private function makeSimpleFilesListHtml($files, $uploader_username = null)
     {
         $html = "";
@@ -327,6 +390,7 @@ class EmailNotifications
         return $html;
     }
 
+    // Client notification method - enhanced with transmittal summary data
     private function sendNotificationsToClients($notifications = [])
     {
         if (!empty($notifications)) {
@@ -338,10 +402,10 @@ class EmailNotifications
                     $processed_notifications[] = $file["notification_id"];
                 }
 
-                // Get the full file data for the first file in the batch.
+                // Get the full file data for the first file in the batch
                 $first_file_data = $this->files_data[$files[0]["file_id"]];
 
-                // Extract both BCC and CC addresses
+                // Extract both BCC and CC addresses - now from centralized data
                 $dynamic_bcc_for_this_email =
                     $first_file_data["file_bcc_addresses"] ?? "";
                 $dynamic_cc_for_this_email =
@@ -372,11 +436,13 @@ class EmailNotifications
         }
     }
 
+    // UPDATED: Enhanced makeFilesListHtml method with better transmittal data integration
     private function makeFilesListHtml($files, $uploader_username = null)
     {
         if (empty($files)) {
             return "";
         }
+
         $html = "";
 
         // BRAND-COMPLIANT EMAIL STYLES - Updated to match Isomer guidelines
@@ -532,7 +598,7 @@ class EmailNotifications
         // Project information section - MERGED LAYOUT (Transmittal Info + Recipients)
         $html .= '<div style="padding: 20px; background: #fff;">';
 
-        // Get recipients
+        // Get recipients - UPDATED: Use TransmittalHelper if available, otherwise fallback
         $recipients_text = "All Recipients";
         if (!empty($first_file_data["transmittal_number"])) {
             $transmittal_helper = new \ProjectSend\Classes\TransmittalHelper();
@@ -690,11 +756,9 @@ class EmailNotifications
         $html .=
             '<div style="border: 1px solid #e9ecef; border-radius: 4px; padding: 15px; min-height: 60px; background: #fff;">';
 
-        $transmittal_comments = $this->getTransmittalComments(
-            $first_file_data["transmittal_number"]
-        );
+        // UPDATED: Use centralized comments data
+        $transmittal_comments = $first_file_data["comments"] ?? "";
         if (!empty($transmittal_comments)) {
-            // Since getTransmittalComments now returns decoded content, just strip tags and encode once
             $clean_comments = strip_tags($transmittal_comments);
             $html .=
                 '<span style="font-family: Montserrat, Arial, sans-serif; font-weight: 400; font-size: 14px; color: #252c3a; line-height: 1.4;">' .
@@ -787,7 +851,6 @@ class EmailNotifications
             // Document Title
             $document_title = "";
             if (!empty($file_data["document_title"])) {
-                // Decode first, then encode for display
                 $document_title = html_entity_decode(
                     $file_data["document_title"],
                     ENT_QUOTES,
@@ -821,7 +884,7 @@ class EmailNotifications
 
         $html .= "</table>";
 
-        // FIXED LOGIN LINK SECTION - This was missing the %URI% replacement
+        // FIXED LOGIN LINK SECTION
         $html .=
             '<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee;">';
         $html .=
@@ -842,13 +905,28 @@ class EmailNotifications
         return $html;
     }
 
+    /**
+     * UPDATED: Simplified getTransmittalComments method - now uses centralized data
+     */
     private function getTransmittalComments($transmittal_number)
     {
+        // First try to get from transmittal summary
+        $transmittal_summary = $this->getTransmittalSummaryData(
+            $transmittal_number
+        );
+        if ($transmittal_summary && !empty($transmittal_summary["comments"])) {
+            return html_entity_decode(
+                $transmittal_summary["comments"],
+                ENT_QUOTES,
+                "UTF-8"
+            );
+        }
+
+        // Fallback to original method
         if (empty($transmittal_number)) {
             return "";
         }
 
-        // Get comments from the most recent file with this transmittal number that has comments
         $statement = $this->dbh->prepare(
             "SELECT comments FROM " .
                 TABLE_FILES .
@@ -863,7 +941,6 @@ class EmailNotifications
 
         if ($statement->rowCount() > 0) {
             $row = $statement->fetch(PDO::FETCH_ASSOC);
-            // FIX: Decode HTML entities from database before returning
             return html_entity_decode(
                 $row["comments"] ?? "",
                 ENT_QUOTES,
@@ -874,6 +951,7 @@ class EmailNotifications
         return "";
     }
 
+    // Database update methods remain unchanged
     private function updateDatabaseNotificationsSent($notifications = [])
     {
         if (!empty($notifications) && count($notifications) > 0) {
@@ -917,12 +995,11 @@ class EmailNotifications
     }
 
     /**
-     * REPLACE YOUR getLogoFileInfo() METHOD WITH THIS VERSION (handles large files better)
+     * Logo handling methods remain unchanged from original
      */
     private function getLogoFileInfo()
     {
         try {
-            // Use ProjectSend's actual function name
             if (function_exists("generate_logo_url")) {
                 $logo_file_info = generate_logo_url();
 
@@ -931,20 +1008,13 @@ class EmailNotifications
                     isset($logo_file_info["exists"]) &&
                     $logo_file_info["exists"] === true
                 ) {
-                    // Check if it's a local file that we can embed
                     if (
                         isset($logo_file_info["dir"]) &&
                         file_exists($logo_file_info["dir"])
                     ) {
-                        // Check file size - if too large, use URL instead of embedding
                         $file_size = filesize($logo_file_info["dir"]);
 
-                        // INCREASED LIMIT: Try to embed files up to 500KB
-                        // If larger than 500KB, use absolute URL instead
                         if ($file_size <= 512000) {
-                            // 500KB limit
-
-                            // Get file extension
                             $file_extension = strtolower(
                                 pathinfo(
                                     $logo_file_info["dir"],
@@ -952,9 +1022,7 @@ class EmailNotifications
                                 )
                             );
 
-                            // Handle SVG files differently
                             if ($file_extension === "svg") {
-                                // For SVG, we can inline it directly in HTML
                                 $svg_content = file_get_contents(
                                     $logo_file_info["dir"]
                                 );
@@ -966,14 +1034,12 @@ class EmailNotifications
                                     "path" => $logo_file_info["dir"],
                                 ];
                             } else {
-                                // For other image types, convert to base64
                                 $image_data = file_get_contents(
                                     $logo_file_info["dir"]
                                 );
                                 if ($image_data !== false) {
                                     $base64 = base64_encode($image_data);
 
-                                    // Get mime type properly
                                     $mime_types = [
                                         "jpg" => "image/jpeg",
                                         "jpeg" => "image/jpeg",
@@ -996,7 +1062,6 @@ class EmailNotifications
                             }
                         }
 
-                        // If file is too large for embedding OR base64 failed, use absolute URL
                         $absolute_url = $this->makeAbsoluteUrl(
                             $logo_file_info["url"]
                         );
@@ -1009,7 +1074,6 @@ class EmailNotifications
                             "file_size" => $file_size,
                         ];
                     } else {
-                        // If file doesn't exist locally, try to use the URL directly
                         $absolute_url = $this->makeAbsoluteUrl(
                             $logo_file_info["url"]
                         );
@@ -1024,11 +1088,9 @@ class EmailNotifications
                 }
             }
         } catch (Exception $e) {
-            // Log error but continue with fallback
             error_log("Logo loading error: " . $e->getMessage());
         }
 
-        // Fallback to text logo
         return [
             "exists" => false,
             "url" => "",
@@ -1036,17 +1098,13 @@ class EmailNotifications
             "method" => "safe_fallback",
         ];
     }
-    /**
-     * Convert relative URL to absolute URL for emails
-     */
+
     private function makeAbsoluteUrl($relative_url)
     {
-        // If already absolute, return as-is
         if (filter_var($relative_url, FILTER_VALIDATE_URL)) {
             return $relative_url;
         }
 
-        // Get the base URL from ProjectSend configuration
         $protocol =
             !empty($_SERVER["HTTPS"]) && $_SERVER["HTTPS"] !== "off"
                 ? "https://"
@@ -1054,12 +1112,10 @@ class EmailNotifications
         $host = $_SERVER["HTTP_HOST"] ?? "localhost";
         $base_url = $protocol . $host;
 
-        // If BASE_URI is defined, use it
         if (defined("BASE_URI")) {
             $base_url .= rtrim(BASE_URI, "/");
         }
 
-        // Combine with relative URL
         return $base_url . "/" . ltrim($relative_url, "/");
     }
 }

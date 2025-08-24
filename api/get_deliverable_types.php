@@ -4,7 +4,7 @@
  */
 
 // Include your ProjectSend configuration
-require_once "bootstrap.php";
+require_once "../bootstrap.php"; // Adjust path as needed
 
 // Check if user is logged in (adjust this based on your authentication system)
 if (!defined("CURRENT_USER_ID") || !CURRENT_USER_ID) {

@@ -512,23 +512,38 @@ class TransmittalHelper
     }
 
     /**
-     * Get all recipients for a transmittal (clients assigned to files)
+     * Get all recipients for a transmittal from the centralized table
      * @param string $transmittal_number - The transmittal number
      * @return array - Array of recipient data
      */
     public function getTransmittalRecipients($transmittal_number)
     {
-        $query = "SELECT DISTINCT u.name, u.email, u.user as username
-                  FROM tbl_files f
-                  JOIN tbl_files_relations fr ON f.id = fr.file_id  
-                  JOIN tbl_users u ON fr.client_id = u.id
-                  WHERE f.transmittal_number = :transmittal_number 
-                  AND u.active = '1'
-                  AND u.level = '0'";
-
+        // First, get the centralized transmittal data
+        $query =
+            "SELECT contacts FROM tbl_transmittal_summary WHERE transmittal_number = :transmittal_number";
         $statement = $this->dbh->prepare($query);
         $statement->execute([":transmittal_number" => $transmittal_number]);
-        return $statement->fetchAll(PDO::FETCH_ASSOC);
+        $result = $statement->fetch(PDO::FETCH_ASSOC);
+
+        if (empty($result) || empty($result["contacts"])) {
+            return [];
+        }
+
+        // Decode the JSON string to get the user IDs
+        $contact_ids = json_decode($result["contacts"], true);
+
+        if (empty($contact_ids)) {
+            return [];
+        }
+
+        // Now, get the user details for those IDs
+        $in_clause = implode(",", array_fill(0, count($contact_ids), "?"));
+        $query_users = "SELECT name, email, user as username FROM tbl_users WHERE id IN ($in_clause) AND active = '1'";
+
+        $statement_users = $this->dbh->prepare($query_users);
+        $statement_users->execute($contact_ids);
+
+        return $statement_users->fetchAll(PDO::FETCH_ASSOC);
     }
 
     /**

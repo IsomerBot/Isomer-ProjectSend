@@ -201,6 +201,94 @@ if (isset($_POST["save"])) {
                     $next_transmittal_number
                 )
             );
+
+            // ADD THIS CODE RIGHT AFTER THE SUCCESS MESSAGE (around line 176)
+            // After the flash->success message and before the catch block
+
+            // *** TRANSMITTAL SUMMARY TABLE INTEGRATION ***
+            try {
+                // Instantiate the TransmittalSummaryManager
+                $transmittalManager = new \ProjectSend\Classes\TransmittalSummaryManager();
+
+                // Look up the discipline_id and deliverable_type_id from the text values
+                $discipline_id = null;
+                $deliverable_type_id = null;
+
+                if (!empty($global_discipline)) {
+                    $discipline_query =
+                        "SELECT id FROM tbl_discipline WHERE discipline_name = :discipline_name LIMIT 1";
+                    $discipline_stmt = $dbh->prepare($discipline_query);
+                    $discipline_stmt->execute([
+                        ":discipline_name" => $global_discipline,
+                    ]);
+                    $discipline_result = $discipline_stmt->fetch(
+                        PDO::FETCH_ASSOC
+                    );
+                    $discipline_id = $discipline_result
+                        ? $discipline_result["id"]
+                        : null;
+                }
+
+                if (!empty($global_deliverable_type) && $discipline_id) {
+                    $deliverable_query =
+                        "SELECT id FROM tbl_deliverable_type WHERE deliverable_type = :deliverable_type AND discipline_id = :discipline_id LIMIT 1";
+                    $deliverable_stmt = $dbh->prepare($deliverable_query);
+                    $deliverable_stmt->execute([
+                        ":deliverable_type" => $global_deliverable_type,
+                        ":discipline_id" => $discipline_id,
+                    ]);
+                    $deliverable_result = $deliverable_stmt->fetch(
+                        PDO::FETCH_ASSOC
+                    );
+                    $deliverable_type_id = $deliverable_result
+                        ? $deliverable_result["id"]
+                        : null;
+                }
+
+                // Look up group_id from project_number
+                $group_id = null;
+                if (!empty($global_project_number)) {
+                    $group_query =
+                        "SELECT id FROM tbl_groups WHERE name = :project_number LIMIT 1";
+                    $group_stmt = $dbh->prepare($group_query);
+                    $group_stmt->execute([
+                        ":project_number" => $global_project_number,
+                    ]);
+                    $group_result = $group_stmt->fetch(PDO::FETCH_ASSOC);
+                    $group_id = $group_result ? $group_result["id"] : null;
+                }
+
+                // Prepare transmittal summary data
+                $transmittal_data = [
+                    "project_number" => $global_project_number,
+                    "group_id" => $group_id,
+                    "discipline_id" => $discipline_id,
+                    "deliverable_type_id" => $deliverable_type_id,
+                    "uploader_user_id" => CURRENT_USER_ID,
+                    "project_name" => $global_project_name,
+                    "package_description" => $global_package_description,
+                    "comments" => $global_comments,
+                    "cc_addresses" => $global_file_cc_addresses,
+                    "bcc_addresses" => $global_file_bcc_addresses,
+                    "file_count" => count($_POST["file"]),
+                ];
+
+                // Save to the centralized summary table
+                $summary_saved = $transmittalManager->createOrUpdate(
+                    $generated_transmittal_name,
+                    $transmittal_data
+                );
+
+                if (!$summary_saved) {
+                    error_log(
+                        "Warning: Failed to save transmittal summary for " .
+                            $generated_transmittal_name
+                    );
+                }
+            } catch (Exception $e) {
+                // Log error but don't break the main flow
+                error_log("TransmittalSummary save error: " . $e->getMessage());
+            }
         } catch (Exception $e) {
             // Log error and show user-friendly message
             error_log("Transmittal save error: " . $e->getMessage());
