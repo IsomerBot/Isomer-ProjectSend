@@ -28,8 +28,7 @@ jobs:
       - name: Set IMAGE_NAME (user namespace)
         run: |
           OWNER=$(echo "${{ github.repository_owner }}" | tr '[:upper:]' '[:lower:]')
-          REPO=$(echo "${{ github.event.repository.name }}" | tr '[:upper:]' '[:lower:]')
-          echo "IMAGE_NAME=ghcr.io/${OWNER}/${REPO}" >> $GITHUB_ENV
+          echo "IMAGE_NAME=ghcr.io/${OWNER}/isomer-projectsend" >> $GITHUB_ENV
 
       - name: Build Docker image
         run: docker build -t $IMAGE_NAME:latest .
