@@ -1,0 +1,7 @@
+.git
+.github
+node_modules
+vendor
+.cache
+__MACOSX
+.DS_Store
