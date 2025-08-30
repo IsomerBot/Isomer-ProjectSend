@@ -4547,9 +4547,7 @@ msgstr ""
 msgid "Size"
 msgstr ""
 
-#: manage-files.php:567
-msgid "Public permissions"
-msgstr ""
+
 
 #: manage-files.php:669
 msgid "View information"

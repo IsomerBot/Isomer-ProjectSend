@@ -108,10 +108,10 @@ include_once LAYOUT_DIR . DS . 'search-filters-bar.php';
                         'sort_default' => true,
                         'content' => __('Date', 'cftp_admin'),
                     ),
-                    array(
-                        'content' => __('Expiry', 'cftp_admin'),
-                        'hide' => 'phone',
-                    ),
+                    // array(
+                    //     'content' => __('Expiry', 'cftp_admin'),
+                    //     'hide' => 'phone',
+                    // ),
                     array(
                         'content' => __('Preview', 'cftp_admin'),
                         'hide' => 'phone,tablet',
@@ -150,38 +150,38 @@ include_once LAYOUT_DIR . DS . 'search-filters-bar.php';
                     $date = format_date($file->uploaded_date);
 
                     /** Expiration */
-                    if ($file->expires == '1') {
-                        if ($file->expired == false) {
-                            $badge_class = 'bg-primary';
-                        } else {
-                            $badge_class = 'bg-danger';
-                        }
+                    // if ($file->expires == '1') {
+                    //     if ($file->expired == false) {
+                    //         $badge_class = 'bg-primary';
+                    //     } else {
+                    //         $badge_class = 'bg-danger';
+                    //     }
 
-                        $value = date(get_option('timeformat'), strtotime($file->expiry_date));
-                    } else {
-                        $badge_class = 'bg-success';
-                        $badge_label = __('Never', 'cftp_template');
-                    }
+                    //     $value = date(get_option('timeformat'), strtotime($file->expiry_date));
+                    // } else {
+                    //     $badge_class = 'bg-success';
+                    //     $badge_label = __('Never', 'cftp_template');
+                    // }
 
-                    $expiration_cell = '<span class="badge ' . $badge_class . ' label_big">' . $badge_label . '</span>';
+                    // $expiration_cell = '<span class="badge ' . $badge_class . ' label_big">' . $badge_label . '</span>';
 
-                    /** Thumbnail */
-                    $preview_cell = '';
-                    if ($file->expired == false) {
-                        if ($file->isImage()) {
-                            $thumbnail = make_thumbnail($file->full_path, null, 50, 50);
-                            if (!empty($thumbnail['thumbnail']['url'])) {
-                                $preview_cell = '
-                                        <a href="#" class="get-preview" data-url="' . BASE_URI . 'process.php?do=get_preview&file_id=' . $file->id . '">
-                                            <img src="' . $thumbnail['thumbnail']['url'] . '" class="thumbnail" alt="' . $file->title . '" />
-                                        </a>';
-                            }
-                        } else {
-                            if ($file->embeddable) {
-                                $preview_cell = '<button class="btn btn-warning btn-sm btn-wide get-preview" data-url="' . BASE_URI . 'process.php?do=get_preview&file_id=' . $file->id . '">' . __('Preview', 'cftp_admin') . '</button>';
-                            }
-                        }
-                    }
+                    // /** Thumbnail */
+                    // $preview_cell = '';
+                    // if ($file->expired == false) {
+                    //     if ($file->isImage()) {
+                    //         $thumbnail = make_thumbnail($file->full_path, null, 50, 50);
+                    //         if (!empty($thumbnail['thumbnail']['url'])) {
+                    //             $preview_cell = '
+                    //                     <a href="#" class="get-preview" data-url="' . BASE_URI . 'process.php?do=get_preview&file_id=' . $file->id . '">
+                    //                         <img src="' . $thumbnail['thumbnail']['url'] . '" class="thumbnail" alt="' . $file->title . '" />
+                    //                     </a>';
+                    //         }
+                    //     } else {
+                    //         if ($file->embeddable) {
+                    //             $preview_cell = '<button class="btn btn-warning btn-sm btn-wide get-preview" data-url="' . BASE_URI . 'process.php?do=get_preview&file_id=' . $file->id . '">' . __('Preview', 'cftp_admin') . '</button>';
+                    //         }
+                    //     }
+                    // }
 
                     /** Download */
                     if ($file->expired == true) {

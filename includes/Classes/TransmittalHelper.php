@@ -17,6 +17,225 @@ class TransmittalHelper
     }
 
     /**
+     * Parse filename and return data including matching category
+     * Expected format: AAA####-AA-AAA-####
+     * Example: TVT2502-PR-PFD-0001
+     */
+    public function parseFilename($filename)
+    {
+        // Remove file extension
+        $filename_no_ext = pathinfo($filename, PATHINFO_FILENAME);
+
+        // Parse the filename pattern: PROJECT-DISCIPLINE-DELIVERABLE-NUMBER
+        if (
+            preg_match(
+                '/^([A-Z]{3}\d{4})-([A-Z]{2})-([A-Z]{3})-(\d{4})$/',
+                $filename_no_ext,
+                $matches
+            )
+        ) {
+            $project_number = $matches[1];
+            $discipline_abbr = $matches[2];
+            $deliverable_abbr = $matches[3];
+            $document_number = $matches[4];
+
+            // Get discipline name from abbreviation
+            $discipline_name = $this->getDisciplineNameByAbbr($discipline_abbr);
+            $deliverable_type = null;
+            $category_ids = [];
+
+            if ($discipline_name) {
+                // Get deliverable type name
+                $deliverable_type = $this->getDeliverableTypeByAbbr(
+                    $discipline_name,
+                    $deliverable_abbr
+                );
+
+                if ($deliverable_type) {
+                    // Find matching category IDs
+                    $category_ids = $this->findCategoryIds(
+                        $discipline_name,
+                        $deliverable_type
+                    );
+                }
+            }
+
+            return [
+                "parsed_successfully" => true,
+                "project_number" => $project_number,
+                "discipline" => $discipline_name,
+                "discipline_abbr" => $discipline_abbr,
+                "deliverable_type" => $deliverable_type,
+                "deliverable_abbr" => $deliverable_abbr,
+                "document_number" => $document_number,
+                "category_ids" => $category_ids,
+                "category_id" => !empty($category_ids)
+                    ? $category_ids[0]
+                    : null, // For single-select compatibility
+            ];
+        }
+
+        return [
+            "parsed_successfully" => false,
+            "message" =>
+                "Could not parse filename format. Expected: AAA####-AA-AAA-####",
+            "category_ids" => [],
+        ];
+    }
+
+    /**
+     * Get discipline name by abbreviation
+     */
+    private function getDisciplineNameByAbbr($abbreviation)
+    {
+        $query = "SELECT discipline_name FROM tbl_discipline 
+              WHERE abbreviation = :abbr AND active = 1 LIMIT 1";
+        $stmt = $this->dbh->prepare($query);
+        $stmt->execute([":abbr" => $abbreviation]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ? $result["discipline_name"] : null;
+    }
+
+    /**
+     * Get deliverable type by abbreviation within a specific discipline
+     */
+    private function getDeliverableTypeByAbbr($discipline_name, $abbreviation)
+    {
+        $query = "SELECT dt.deliverable_type 
+              FROM tbl_deliverable_type dt
+              JOIN tbl_discipline d ON dt.discipline_id = d.id
+              WHERE d.discipline_name = :discipline 
+              AND dt.abbreviation = :abbr 
+              AND dt.active = 1 AND d.active = 1 
+              LIMIT 1";
+
+        $stmt = $this->dbh->prepare($query);
+        $stmt->execute([
+            ":discipline" => $discipline_name,
+            ":abbr" => $abbreviation,
+        ]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ? $result["deliverable_type"] : null;
+    }
+
+    /**
+     * FIXED: Find category IDs that match YOUR specific category structure
+     * Your categories use pattern: "(PFD) - PFDs" under parent "(PR) - All Process"
+     */
+    private function findCategoryIds($discipline_name, $deliverable_type)
+    {
+        $category_ids = [];
+
+        // Get discipline abbreviation for matching your category pattern
+        $discipline_abbr = $this->getDisciplineAbbrByName($discipline_name);
+        $deliverable_abbr = $this->getDeliverableAbbrByName(
+            $discipline_name,
+            $deliverable_type
+        );
+
+        // Strategy 1: Look for deliverable abbreviation pattern in your structure
+        // Your pattern: "(PFD) - PFDs"
+        if ($deliverable_abbr) {
+            $query = "SELECT id FROM tbl_categories 
+                  WHERE name LIKE :abbr_pattern AND active = 1";
+
+            $stmt = $this->dbh->prepare($query);
+            $stmt->execute([
+                ":abbr_pattern" => "(" . $deliverable_abbr . ") - %",
+            ]);
+
+            while ($result = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $category_ids[] = $result["id"];
+            }
+        }
+
+        // Strategy 2: Look for deliverable type name pattern
+        if (empty($category_ids) && $deliverable_type) {
+            $deliverable_patterns = [
+                "% - " . $deliverable_type,
+                "% " . $deliverable_type,
+                "% - " . $deliverable_type . " %",
+            ];
+
+            foreach ($deliverable_patterns as $pattern) {
+                $query = "SELECT id FROM tbl_categories 
+                      WHERE name LIKE :pattern
+                      AND parent IS NOT NULL 
+                      AND active = 1";
+
+                $stmt = $this->dbh->prepare($query);
+                $stmt->execute([":pattern" => $pattern]);
+
+                while ($result = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                    $category_ids[] = $result["id"];
+                }
+            }
+        }
+
+        // Strategy 3: Look for child categories under discipline parent
+        // Your parent pattern: "(PR) - All Process"
+        if (empty($category_ids) && $discipline_abbr) {
+            $query = "SELECT child.id 
+                  FROM tbl_categories child
+                  JOIN tbl_categories parent ON child.parent = parent.id
+                  WHERE parent.name LIKE :discipline_pattern
+                  AND (child.name LIKE :deliverable_pattern1 
+                       OR child.name LIKE :deliverable_pattern2)
+                  AND child.active = 1";
+
+            $stmt = $this->dbh->prepare($query);
+            $stmt->execute([
+                ":discipline_pattern" => "(" . $discipline_abbr . ") - All %",
+                ":deliverable_pattern1" => "%" . $deliverable_type . "%",
+                ":deliverable_pattern2" => "%" . $deliverable_abbr . "%",
+            ]);
+
+            while ($result = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $category_ids[] = $result["id"];
+            }
+        }
+
+        return array_unique($category_ids);
+    }
+
+    /**
+     * Get discipline abbreviation by name
+     */
+    private function getDisciplineAbbrByName($discipline_name)
+    {
+        $query = "SELECT abbreviation FROM tbl_discipline 
+              WHERE discipline_name = :name AND active = 1 LIMIT 1";
+        $stmt = $this->dbh->prepare($query);
+        $stmt->execute([":name" => $discipline_name]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ? $result["abbreviation"] : null;
+    }
+
+    /**
+     * Get deliverable type abbreviation by name and discipline
+     */
+    private function getDeliverableAbbrByName(
+        $discipline_name,
+        $deliverable_type
+    ) {
+        $query = "SELECT dt.abbreviation 
+              FROM tbl_deliverable_type dt
+              JOIN tbl_discipline d ON dt.discipline_id = d.id
+              WHERE d.discipline_name = :discipline 
+              AND dt.deliverable_type = :deliverable_type 
+              AND dt.active = 1 AND d.active = 1 
+              LIMIT 1";
+
+        $stmt = $this->dbh->prepare($query);
+        $stmt->execute([
+            ":discipline" => $discipline_name,
+            ":deliverable_type" => $deliverable_type,
+        ]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $result ? $result["abbreviation"] : null;
+    }
+
+    /**
      * Get dropdown options for various transmittal fields
      * @param string $type - The type of dropdown (issue_status, discipline, etc.)
      * @return array - Array of option values
@@ -204,129 +423,6 @@ class TransmittalHelper
     }
 
     /**
-     * Parse filename according to Isomer naming convention
-     * Format: AAA####-AA-AAA-####
-     * Example: DOM2502-PR-CAL-001
-     *
-     * @param string $filename - The original filename
-     * @return array - Parsed data or empty array if parsing fails
-     */
-    public function parseFilename($filename)
-    {
-        // Remove file extension
-        $name_without_ext = pathinfo($filename, PATHINFO_FILENAME);
-
-        // Pattern: AAA####-AA-AAA-####
-        // Groups: (project)(discipline)(deliverable)(sequence)
-        $pattern = '/^([A-Z]{3}\d{4})-([A-Z]{2})-([A-Z]{3})-(\d{3,4})$/';
-
-        if (preg_match($pattern, $name_without_ext, $matches)) {
-            $project_number = $matches[1]; // DOM2502
-            $discipline_abbr = $matches[2]; // PR
-            $deliverable_abbr = $matches[3]; // CAL
-            $sequence = $matches[4]; // 001
-
-            // Map abbreviations to full names using your database
-            $discipline_name = $this->getDisciplineByAbbreviation(
-                $discipline_abbr
-            );
-            $deliverable_type = $this->getDeliverableTypeByAbbreviation(
-                $deliverable_abbr,
-                $discipline_name
-            );
-
-            return [
-                "project_number" => $project_number,
-                "discipline" => $discipline_name,
-                "deliverable_type" => $deliverable_type,
-                "sequence_number" => $sequence,
-                "discipline_abbr" => $discipline_abbr,
-                "deliverable_abbr" => $deliverable_abbr,
-                "parsed_successfully" => true,
-            ];
-        }
-
-        // Try alternative patterns or partial parsing
-        return $this->tryAlternativePatterns($name_without_ext);
-    }
-
-    /**
-     * Get discipline name by abbreviation
-     * @param string $abbreviation - The discipline abbreviation
-     * @return string - Full discipline name or empty string if not found
-     */
-    private function getDisciplineByAbbreviation($abbreviation)
-    {
-        $query = "SELECT discipline_name FROM tbl_discipline 
-                  WHERE abbreviation = :abbr AND active = 1";
-
-        $statement = $this->dbh->prepare($query);
-        $statement->execute([":abbr" => $abbreviation]);
-        $result = $statement->fetch(PDO::FETCH_ASSOC);
-
-        return $result ? $result["discipline_name"] : "";
-    }
-
-    /**
-     * Get deliverable type by abbreviation and discipline
-     * @param string $abbreviation - The deliverable type abbreviation
-     * @param string $discipline_name - The discipline name
-     * @return string - Full deliverable type or empty string if not found
-     */
-    private function getDeliverableTypeByAbbreviation(
-        $abbreviation,
-        $discipline_name
-    ) {
-        if (empty($discipline_name)) {
-            return "";
-        }
-
-        $query = "SELECT dt.deliverable_type 
-                  FROM tbl_deliverable_type dt
-                  JOIN tbl_discipline d ON dt.discipline_id = d.id
-                  WHERE dt.abbreviation = :abbr 
-                  AND d.discipline_name = :discipline 
-                  AND dt.active = 1";
-
-        $statement = $this->dbh->prepare($query);
-        $statement->execute([
-            ":abbr" => $abbreviation,
-            ":discipline" => $discipline_name,
-        ]);
-        $result = $statement->fetch(PDO::FETCH_ASSOC);
-
-        return $result ? $result["deliverable_type"] : "";
-    }
-
-    /**
-     * Try alternative filename patterns for partial extraction
-     * @param string $filename - The filename without extension
-     * @return array - Parsed data with success flag
-     */
-    private function tryAlternativePatterns($filename)
-    {
-        $parsed_data = ["parsed_successfully" => false];
-
-        // Pattern 1: Just project number at start (DOM2502-anything)
-        if (preg_match("/^([A-Z]{3}\d{4})/", $filename, $matches)) {
-            $parsed_data["project_number"] = $matches[1];
-            $parsed_data["parsed_successfully"] = true;
-        }
-
-        // Pattern 2: Project + discipline (DOM2502-PR-anything)
-        if (preg_match("/^([A-Z]{3}\d{4})-([A-Z]{2})/", $filename, $matches)) {
-            $parsed_data["project_number"] = $matches[1];
-            $parsed_data["discipline_abbr"] = $matches[2];
-            $parsed_data["discipline"] = $this->getDisciplineByAbbreviation(
-                $matches[2]
-            );
-            $parsed_data["parsed_successfully"] = true;
-        }
-
-        return $parsed_data;
-    }
-
-    /**
      * Get transmittal data by transmittal number
      * @param string $transmittal_number - The transmittal number to look up
      * @return array|false - Transmittal data or false if not found
@@ -416,23 +512,137 @@ class TransmittalHelper
     }
 
     /**
-     * Get all recipients for a transmittal (clients assigned to files)
+     * Get all recipients for a transmittal from the centralized table
      * @param string $transmittal_number - The transmittal number
      * @return array - Array of recipient data
      */
     public function getTransmittalRecipients($transmittal_number)
     {
-        $query = "SELECT DISTINCT u.name, u.email, u.user as username
-                  FROM tbl_files f
-                  JOIN tbl_files_relations fr ON f.id = fr.file_id  
-                  JOIN tbl_users u ON fr.client_id = u.id
-                  WHERE f.transmittal_number = :transmittal_number 
-                  AND u.active = '1'
-                  AND u.level = '0'";
+        error_log(
+            "DEBUG: getTransmittalRecipients called with: " .
+                $transmittal_number
+        );
 
+        // First, get the centralized transmittal data
+        $query =
+            "SELECT contacts FROM tbl_transmittal_summary WHERE transmittal_number = :transmittal_number";
         $statement = $this->dbh->prepare($query);
         $statement->execute([":transmittal_number" => $transmittal_number]);
-        return $statement->fetchAll(PDO::FETCH_ASSOC);
+        $result = $statement->fetch(PDO::FETCH_ASSOC);
+
+        error_log("DEBUG: Summary table result: " . print_r($result, true));
+
+        if (empty($result) || empty($result["contacts"])) {
+            error_log(
+                "DEBUG: No contacts found in summary table, falling back to direct query"
+            );
+            return $this->getRecipientsFromFileRelations($transmittal_number);
+        }
+
+        // Decode the JSON string to get the user IDs
+        $contact_ids = json_decode($result["contacts"], true);
+        error_log("DEBUG: Decoded contact IDs: " . print_r($contact_ids, true));
+
+        if (empty($contact_ids)) {
+            error_log("DEBUG: No contact IDs after JSON decode");
+            return $this->getRecipientsFromFileRelations($transmittal_number);
+        }
+
+        // FIXED: Correct SQL query without alias issue
+        $in_clause = implode(",", array_fill(0, count($contact_ids), "?"));
+        $query_users = "SELECT id, name, email, user FROM tbl_users WHERE id IN ($in_clause) AND active = '1'";
+        $statement_users = $this->dbh->prepare($query_users);
+        $statement_users->execute($contact_ids);
+
+        $recipients = $statement_users->fetchAll(PDO::FETCH_ASSOC);
+        error_log("DEBUG: Found recipients: " . print_r($recipients, true));
+
+        return $recipients;
+    }
+
+    /**
+     * Fallback method to get recipients directly from file relations
+     * @param string $transmittal_number - The transmittal number
+     * @return array - Array of recipient data
+     */
+    private function getRecipientsFromFileRelations($transmittal_number)
+    {
+        error_log(
+            "DEBUG: Using fallback method for transmittal: " .
+                $transmittal_number
+        );
+
+        try {
+            // Get all clients assigned to files with this transmittal number
+            $query = "SELECT DISTINCT u.id, u.name, u.email, u.user 
+                  FROM tbl_files f
+                  INNER JOIN tbl_files_relations fr ON f.id = fr.file_id
+                  INNER JOIN tbl_users u ON fr.client_id = u.id
+                  WHERE f.transmittal_number = :transmittal_number
+                  AND u.level = '0'
+                  AND u.active = '1'
+                  ORDER BY u.name";
+
+            $statement = $this->dbh->prepare($query);
+            $statement->execute([":transmittal_number" => $transmittal_number]);
+
+            $recipients = [];
+            while ($row = $statement->fetch(PDO::FETCH_ASSOC)) {
+                $recipients[] = $row;
+            }
+
+            if (!empty($recipients)) {
+                error_log(
+                    "DEBUG: Found " .
+                        count($recipients) .
+                        " recipients via direct client query"
+                );
+                return $recipients;
+            }
+
+            // If no individual clients found, try to get from groups
+            $query_groups = "SELECT DISTINCT u.id, u.name, u.email, u.user 
+                        FROM tbl_files f
+                        INNER JOIN tbl_files_relations fr ON f.id = fr.file_id
+                        INNER JOIN tbl_groups g ON fr.group_id = g.id
+                        INNER JOIN tbl_members m ON g.id = m.group_id
+                        INNER JOIN tbl_users u ON m.client_id = u.id
+                        WHERE f.transmittal_number = :transmittal_number
+                        AND u.level = '0'
+                        AND u.active = '1'
+                        ORDER BY u.name";
+
+            $statement_groups = $this->dbh->prepare($query_groups);
+            $statement_groups->execute([
+                ":transmittal_number" => $transmittal_number,
+            ]);
+
+            $group_recipients = [];
+            while ($row = $statement_groups->fetch(PDO::FETCH_ASSOC)) {
+                $group_recipients[] = $row;
+            }
+
+            if (!empty($group_recipients)) {
+                error_log(
+                    "DEBUG: Found " .
+                        count($group_recipients) .
+                        " recipients via group query"
+                );
+                return $group_recipients;
+            }
+
+            error_log(
+                "DEBUG: No recipients found for transmittal: " .
+                    $transmittal_number
+            );
+            return [];
+        } catch (Exception $e) {
+            error_log(
+                "ERROR: Failed to get recipients from file relations: " .
+                    $e->getMessage()
+            );
+            return [];
+        }
     }
 
     /**

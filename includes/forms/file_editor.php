@@ -45,7 +45,6 @@ if (isset($_GET["confirm"])) {
         <?php $i = 1; ?>
         
         <?php if (CURRENT_USER_LEVEL != 0): ?>
-            <!-- ADMIN USERS: Show full transmittal information form -->
             <div class="row">
                 <div class="col-md-6">
                     <h3><?php _e(
@@ -53,7 +52,6 @@ if (isset($_GET["confirm"])) {
                         "cftp_admin"
                     ); ?></h3>
 
-                    <!-- Transmittal Number - Auto-generated (Read-only) -->
                     <div class="form-group">
                         <label for="transmittal_number"><?php _e(
                             "Transmittal Number",
@@ -72,7 +70,6 @@ if (isset($_GET["confirm"])) {
                         </small>
                     </div>
 
-                    <!-- Project Name -->
                     <div class="form-group">
                         <label for="project_name"><?php _e(
                             "Project Name",
@@ -94,7 +91,6 @@ if (isset($_GET["confirm"])) {
                                ); ?>" required />
                     </div>
 
-                    <!-- Project Number -->
                     <div class="form-group">
                         <label for="project_number"><?php _e(
                             "Project Number",
@@ -112,7 +108,6 @@ if (isset($_GET["confirm"])) {
                                ); ?>" required />
                     </div>
 
-                    <!-- Package Description -->
                     <div class="form-group">
                         <label for="package_description"><?php _e(
                             "Package Description",
@@ -134,7 +129,6 @@ if (isset($_GET["confirm"])) {
                                ); ?>" required />
                     </div>
 
-                    <!-- Issue_Status Dropdown Field -->
                     <div class="form-group">
                         <label for="issue_status"><?php _e(
                             "Issue Status",
@@ -177,7 +171,6 @@ if (isset($_GET["confirm"])) {
                         </select>
                     </div>
 
-                    <!-- NEW: Transmittal-level Discipline -->
                     <div class="form-group">
                         <label for="transmittal_discipline"><?php _e(
                             "Discipline",
@@ -207,7 +200,6 @@ if (isset($_GET["confirm"])) {
                         ); ?></p>
                     </div>
 
-                    <!-- NEW: Transmittal-level Deliverable Type -->
                     <div class="form-group">
                         <label for="transmittal_deliverable_type"><?php _e(
                             "Deliverable Type",
@@ -276,28 +268,25 @@ if (isset($_GET["confirm"])) {
                 </div>
 
 
-                    <!-- Transmittal Comments -->
-
-                <div class="col-md-6">
+                    <div class="col-md-6">
                     <div class="form-group">
                         <label for="comments"><?php _e(
                             "Transmittal Comments*",
                             "cftp_admin"
                         ); ?></label>
                         <textarea id="comments" 
-                                  name="comments" 
-                                  class="form-control"
-                                  rows="3"
-                                  required
-                                  placeholder="<?php _e(
-                                      "Enter any additional comments",
-                                      "cftp_admin"
-                                  ); ?>"><?php echo htmlspecialchars(
+                                     name="comments" 
+                                     class="form-control"
+                                     rows="3"
+                                     required
+                                     placeholder="<?php _e(
+                                         "Enter any additional comments",
+                                         "cftp_admin"
+                                     ); ?>"><?php echo htmlspecialchars(
     $existing_transmittal_data["comments"] ?? ""
 ); ?></textarea>
                     </div>
 
-                    <!-- CC Email -->
                     <div class="form-group">
                         <label for="file_cc_addresses"><?php _e(
                             "CC Recipients",
@@ -311,7 +300,6 @@ if (isset($_GET["confirm"])) {
 ); ?></textarea>
                     </div>
 
-                    <!-- BCC Email -->
                     <div class="form-group">
                         <label for="file_bcc_addresses"><?php _e(
                             "BCC Recipients",
@@ -329,36 +317,15 @@ if (isset($_GET["confirm"])) {
                         ); ?></p>
                     </div>
 
-                    <!-- MOVED: Assignments Section -->
                     <h3><?php _e("Assignments", "cftp_admin"); ?></h3>
                     
-                    <!-- Groups - FIRST -->
                     <div class="form-group">
-                        <label for="transmittal_groups"><?php _e(
-                            "Groups",
-                            "cftp_admin"
-                        ); ?></label>
-                        <select class="form-select select2 none" multiple="multiple" 
-                                id="transmittal_groups" name="transmittal_groups[]" 
-                                data-placeholder="<?php _e(
-                                    "Select groups for this transmittal. Type to search.",
-                                    "cftp_admin"
-                                ); ?>">
+                        
                             <?php
                             // Get all groups for transmittal assignment
                             $me = new \ProjectSend\Classes\Users(
                                 CURRENT_USER_ID
                             );
-                            if (
-                                $me->shouldLimitUploadTo() &&
-                                !empty($me->limit_upload_to)
-                            ) {
-                                $transmittal_groups = file_editor_get_groups_by_members(
-                                    $me->limit_upload_to
-                                );
-                            } else {
-                                $transmittal_groups = file_editor_get_all_groups();
-                            }
 
                             foreach ($transmittal_groups as $id => $name) { ?>
                                 <option value="<?php echo html_output($id); ?>">
@@ -369,18 +336,17 @@ if (isset($_GET["confirm"])) {
                         </select>
                     </div>
 
-                    <!-- Clients - SECOND -->
                     <div class="form-group">
                         <label for="transmittal_clients"><?php _e(
-                            "Clients",
+                            "Project Contacts",
                             "cftp_admin"
                         ); ?></label>
                         <select class="form-select select2 none" multiple="multiple" 
-                                id="transmittal_clients" name="transmittal_clients[]" 
-                                data-placeholder="<?php _e(
-                                    "Select clients for this transmittal. Type to search.",
-                                    "cftp_admin"
-                                ); ?>">
+                                 id="transmittal_clients" name="transmittal_clients[]" 
+                                 data-placeholder="<?php _e(
+                                     "Confirm or revise Project Contacts. Type to search.",
+                                     "cftp_admin"
+                                 ); ?>">
                             <?php
                             // Get all clients for transmittal assignment
                             if (
@@ -403,18 +369,17 @@ if (isset($_GET["confirm"])) {
                         </select>
                     </div>
 
-                    <!-- Categories - THIRD -->
                     <div class="form-group">
                         <label for="transmittal_categories"><?php _e(
                             "Categories",
                             "cftp_admin"
                         ); ?></label>
                         <select class="form-select select2 none" multiple="multiple" 
-                                id="transmittal_categories" name="transmittal_categories[]" 
-                                data-placeholder="<?php _e(
-                                    "Select categories for this transmittal. Type to search.",
-                                    "cftp_admin"
-                                ); ?>">
+                                 id="transmittal_categories" name="transmittal_categories[]" 
+                                 data-placeholder="<?php _e(
+                                     "Confirm or revise Categories.",
+                                     "cftp_admin"
+                                 ); ?>">
                             <?php if (!empty($get_categories["arranged"])) {
                                 $generate_categories_options = generate_categories_options(
                                     $get_categories["arranged"],
@@ -465,7 +430,6 @@ echo htmlspecialchars($display_filename);
                             </div>
                         </div>
 
-                        <!-- File Information Section -->
                         <div class="row file_editor">
                             <div class="col-12">
                                 <div class="row gx-5">
@@ -483,7 +447,6 @@ echo htmlspecialchars($display_filename);
                                                 CURRENT_USER_LEVEL != 0
                                             ): ?>
                                                 
-                                                <!-- Revision Number Manual Field -->
                                                 <div class="form-group">
                                                     <label for="revision_number_<?php echo $i; ?>"><?php _e(
     "Revision",
@@ -500,7 +463,6 @@ echo htmlspecialchars($display_filename);
                                                            ); ?>" required /> 
                                                 </div>
 
-                                                <!-- Document Title -->
                                                 <div class="form-group">
                                                     <label for="document_title_<?php echo $i; ?>"><?php _e(
     "Document Title",
@@ -514,7 +476,7 @@ echo htmlspecialchars($display_filename);
                                                                    ENT_QUOTES,
                                                                    "UTF-8"
                                                                )
-                                                           ); ?>"   
+                                                           ); ?>"  
                                                            placeholder="<?php _e(
                                                                "Enter Document Title",
                                                                "cftp_admin"
@@ -523,7 +485,6 @@ echo htmlspecialchars($display_filename);
                                                 
                                             <?php endif; ?>
 
-                                            <!-- File Title  -->
                                             <div class="form-group">
                                                 <label><?php _e(
                                                     "File Name",
@@ -541,24 +502,23 @@ echo htmlspecialchars($display_filename);
                                                        ); ?>" />
                                             </div>
 
-                                            <!-- File Comments -->
                                             <div class="form-group">
                                                 <label><?php _e(
                                                     "File Comments",
                                                     "cftp_admin"
                                                 ); ?></label>
                                                 <textarea id="file_comments_<?php echo $file->id; ?>" name="file[<?php echo $i; ?>][file_comments]" 
-                                                          class="<?php if (
-                                                              get_option(
-                                                                  "files_file_comments_use_ckeditor"
-                                                              ) == 1
-                                                          ) {
-                                                              echo "ckeditor";
-                                                          } ?> form-control textarea_file_comments" 
-                                                          placeholder="<?php _e(
-                                                              "Optionally, enter here a comment for the file.",
-                                                              "cftp_admin"
-                                                          ); ?>"><?php if (
+                                                        class="<?php if (
+                                                            get_option(
+                                                                "files_file_comments_use_ckeditor"
+                                                            ) == 1
+                                                        ) {
+                                                            echo "ckeditor";
+                                                        } ?> form-control textarea_file_comments" 
+                                                        placeholder="<?php _e(
+                                                            "Optionally, enter here a comment for the file.",
+                                                            "cftp_admin"
+                                                        ); ?>"><?php if (
     !empty($file->file_comments)
 ) {
     echo $file->file_comments;
@@ -575,7 +535,6 @@ echo htmlspecialchars($display_filename);
                                                     "cftp_admin"
                                                 ); ?></h3>
 
-                                                <!-- Client Document Number - MOVED TO TOP -->
                                                 <div class="form-group">
                                                     <label for="client_document_number_<?php echo $i; ?>"><?php _e(
     "Client Document Number",
@@ -588,7 +547,7 @@ echo htmlspecialchars($display_filename);
                                                            value="<?php echo htmlspecialchars(
                                                                $file->client_document_number ??
                                                                    ""
-                                                           ); ?>"   
+                                                           ); ?>"  
                                                            placeholder="<?php _e(
                                                                "Enter Client Document Number",
                                                                "cftp_admin"
@@ -599,7 +558,6 @@ echo htmlspecialchars($display_filename);
                                                     ); ?></p>
                                                 </div>
 
-                                                <!-- Custom Download Alias - NOW SECOND -->
                                                 <div class="form-group">
                                                     <label for="custom_download_<?php echo $i; ?>"><?php _e(
     "Custom Download Alias",
@@ -654,11 +612,10 @@ EOL;
                                                     "cftp_admin"
                                                 ); ?></h3>
 
-                                                <!-- Hidden Status -->
                                                 <div class="checkbox">
                                                     <label for="hid_checkbox_<?php echo $i; ?>">
                                                         <input type="checkbox" class="checkbox_setting_hidden" id="hid_checkbox_<?php echo $i; ?>" 
-                                                               name="file[<?php echo $i; ?>][hidden]" value="1" /> 
+                                                                    name="file[<?php echo $i; ?>][hidden]" value="1" /> 
                                                         <?php _e(
                                                             "Hidden (will not send notifications or show into the files list)",
                                                             "cftp_admin"
@@ -666,11 +623,19 @@ EOL;
                                                     </label>
                                                 </div>
 
-                                                <!-- Issue Status Override -->
                                                 <div class="checkbox">
                                                     <label for="issue_override_checkbox_<?php echo $i; ?>">
                                                         <input type="checkbox" class="checkbox_setting_issue_override" id="issue_override_checkbox_<?php echo $i; ?>" 
-                                                               name="file[<?php echo $i; ?>][issue_status_override]" value="1" /> 
+                                                                    name="file[<?php echo $i; ?>][issue_status_override]" value="1"
+                                                                    <?php if (
+                                                                        isset(
+                                                                            $file->issue_status_override
+                                                                        ) &&
+                                                                        $file->issue_status_override ==
+                                                                            1
+                                                                    ) {
+                                                                        echo " checked";
+                                                                    } ?> /> 
                                                         <?php _e(
                                                             "Issue Status Override (use custom status for this file only)",
                                                             "cftp_admin"
@@ -678,49 +643,51 @@ EOL;
                                                     </label>
                                                 </div>
 
-                                                <!-- Custom Issue Status Field (initially hidden) -->
-                                                <div class="form-group issue-status-override-field" id="issue_override_field_<?php echo $i; ?>" style="display: none; margin-top: 10px;">
-                                                    <label for="custom_issue_status_<?php echo $i; ?>"><?php _e(
+                                                <div class="form-group issue-status-override-field" id="issue_override_field_<?php echo $i; ?>" 
+     style="display: <?php echo isset($file->issue_status_override) &&
+     $file->issue_status_override == 1
+         ? "block"
+         : "none"; ?>; margin-top: 10px;">
+    <label for="custom_issue_status_<?php echo $i; ?>"><?php _e(
     "Custom Issue Status",
     "cftp_admin"
 ); ?></label>
-                                                    <select id="custom_issue_status_<?php echo $i; ?>" name="file[<?php echo $i; ?>][custom_issue_status]" class="form-select">
-                                                        <option value=""><?php _e(
-                                                            "Select Custom Issue Status",
-                                                            "cftp_admin"
-                                                        ); ?></option>
-                                                        <?php try {
-                                                            $helper = new \ProjectSend\Classes\TransmittalHelper();
-                                                            $statuses = $helper->getDropdownOptions(
-                                                                "issue_status"
-                                                            );
-                                                            foreach (
-                                                                $statuses
-                                                                as $status
-                                                            ) {
-                                                                echo '<option value="' .
-                                                                    htmlspecialchars(
-                                                                        $status
-                                                                    ) .
-                                                                    '">' .
-                                                                    htmlspecialchars(
-                                                                        $status
-                                                                    ) .
-                                                                    "</option>";
-                                                            }
-                                                        } catch (Exception $e) {
-                                                            error_log(
-                                                                "Error loading issue statuses: " .
-                                                                    $e->getMessage()
-                                                            );
-                                                            echo '<option value="">Error loading statuses</option>';
-                                                        } ?>
-                                                    </select>
-                                                    <p class="field_note form-text"><?php _e(
-                                                        "This will override the transmittal-level issue status for this specific file.",
-                                                        "cftp_admin"
-                                                    ); ?></p>
-                                                </div>
+    <select id="custom_issue_status_<?php echo $i; ?>" name="file[<?php echo $i; ?>][custom_issue_status]" class="form-select">
+        <option value=""><?php _e(
+            "Select Custom Issue Status",
+            "cftp_admin"
+        ); ?></option>
+        <?php try {
+            $helper = new \ProjectSend\Classes\TransmittalHelper();
+            $statuses = $helper->getDropdownOptions("issue_status");
+            foreach ($statuses as $status) {
+                $selected = "";
+                // If override is enabled and this status matches the file's current issue_status, select it
+                if (
+                    isset($file->issue_status_override) &&
+                    $file->issue_status_override == 1 &&
+                    $status == ($file->issue_status ?? "")
+                ) {
+                    $selected = " selected";
+                }
+                echo '<option value="' .
+                    htmlspecialchars($status) .
+                    '"' .
+                    $selected .
+                    ">" .
+                    htmlspecialchars($status) .
+                    "</option>";
+            }
+        } catch (Exception $e) {
+            error_log("Error loading issue statuses: " . $e->getMessage());
+            echo '<option value="">Error loading statuses</option>';
+        } ?>
+    </select>
+    <p class="field_note form-text"><?php _e(
+        "This will override the transmittal-level issue status for this specific file.",
+        "cftp_admin"
+    ); ?></p>
+</div>
                                             </div>
                                         </div>
                                     <?php } ?>
@@ -796,6 +763,20 @@ EOL;
                                             "data" => [
                                                 "copy-from" =>
                                                     "custom_download_" . $i,
+                                            ],
+                                        ];
+
+                                        // Issue Status Override Button (ADD THIS)
+                                        $copy_buttons["issue_override"] = [
+                                            "label" => __(
+                                                "Issue Status Override",
+                                                "cftp_admin"
+                                            ),
+                                            "class" => "copy-issue-override",
+                                            "data" => [
+                                                "copy-from" =>
+                                                    "issue_override_checkbox_" .
+                                                    $i,
                                             ],
                                         ];
                                     }
@@ -908,7 +889,6 @@ EOL;
         ?>
     </div>
 
-    <!-- Styling for the form buttons -->
     <div class="after_form_buttons">
         <button type="submit" name="save" class="btn btn-wide btn-primary" id="upload-continue"><?php _e(
             "Save",
@@ -930,264 +910,539 @@ EOL;
         border-color: #dee2e6 !important;
         box-shadow: none !important;
     }
+
+    /* Issue Status Override styling */
+.issue-status-override-field {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 4px;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+.checkbox_setting_issue_override:checked + label {
+    font-weight: bold;
+    color: #856404;
+}
+
+.issue-status-override-field select {
+    border-color: #ffc107;
+}
+
+.issue-status-override-field label {
+    font-weight: bold;
+    color: #856404;
+}
+
+.issue-status-override-field .field_note {
+    font-style: italic;
+    color: #856404;
+    margin-top: 5px;
+}
     </style>
 
-    <?php if (CURRENT_USER_LEVEL != 0): ?>
-    <!-- JavaScript only for admin users -->
+   <?php if (CURRENT_USER_LEVEL != 0): ?>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-    // Auto-populate from filename parsing - only run on first load, not when editing
-    if (!document.querySelector('input[name="project_number"]').value) {
-        parseFilenamesAndPopulate();
-    }
-    });
-    document.addEventListener('DOMContentLoaded', function() {
-        // NEW: JavaScript for transmittal-level discipline/deliverable type dependency
-        const transmittalDisciplineSelect = document.getElementById('transmittal_discipline');
-        const transmittalDeliverableTypeSelect = document.getElementById('transmittal_deliverable_type');
+            // Auto-populate from filename parsing - only run on first load, not when editing
+            if (!document.querySelector('input[name="project_number"]').value) {
+                parseFilenamesAndPopulate();
+            }
+        });
         
-        if (transmittalDisciplineSelect && transmittalDeliverableTypeSelect) {
-            transmittalDisciplineSelect.addEventListener('change', function() {
-                const selectedDiscipline = this.value;
-                transmittalDeliverableTypeSelect.innerHTML = '<option value="">Loading...</option>';
-                transmittalDeliverableTypeSelect.disabled = true;
+        document.addEventListener('DOMContentLoaded', function() {
+            // NEW: JavaScript for transmittal-level discipline/deliverable type dependency
+            const transmittalDisciplineSelect = document.getElementById('transmittal_discipline');
+            const transmittalDeliverableTypeSelect = document.getElementById('transmittal_deliverable_type');
+            
+            if (transmittalDisciplineSelect && transmittalDeliverableTypeSelect) {
+                transmittalDisciplineSelect.addEventListener('change', function() {
+                    const selectedDiscipline = this.value;
+                    transmittalDeliverableTypeSelect.innerHTML = '<option value="">Loading...</option>';
+                    transmittalDeliverableTypeSelect.disabled = true;
 
-                if (!selectedDiscipline) {
-                    transmittalDeliverableTypeSelect.innerHTML = '<option value="">Select Discipline First</option>';
-                    transmittalDeliverableTypeSelect.disabled = false;
-                    return;
+                    if (!selectedDiscipline) {
+                        transmittalDeliverableTypeSelect.innerHTML = '<option value="">Select Discipline First</option>';
+                        transmittalDeliverableTypeSelect.disabled = false;
+                        return;
+                    }
+
+                    fetch(`get_deliverable_types.php?discipline=${encodeURIComponent(selectedDiscipline)}`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            transmittalDeliverableTypeSelect.innerHTML = '<option value="">Select Deliverable Type</option>';
+
+                            if (Array.isArray(data) && data.length > 0) {
+                                data.forEach(item => {
+                                    const option = document.createElement('option');
+                                    option.value = item.value;
+                                    option.textContent = item.text;
+                                    transmittalDeliverableTypeSelect.appendChild(option);
+                                });
+                            } else {
+                                transmittalDeliverableTypeSelect.innerHTML = '<option value="">No types available</option>';
+                            }
+
+                            transmittalDeliverableTypeSelect.disabled = false;
+                        })
+                        .catch(error => {
+                            console.error('Error fetching deliverable types:', error);
+                            transmittalDeliverableTypeSelect.innerHTML = '<option value="">Error loading types</option>';
+                            transmittalDeliverableTypeSelect.disabled = false;
+                        });
+                });
+
+                // Trigger change event on page load if discipline is already selected
+                if (transmittalDisciplineSelect.value) {
+                    transmittalDisciplineSelect.dispatchEvent(new Event('change'));
                 }
+            }
 
-                fetch(`get_deliverable_types.php?discipline=${encodeURIComponent(selectedDiscipline)}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        transmittalDeliverableTypeSelect.innerHTML = '<option value="">Select Deliverable Type</option>';
-
-                        if (Array.isArray(data) && data.length > 0) {
-                            data.forEach(item => {
-                                const option = document.createElement('option');
-                                option.value = item.value;
-                                option.textContent = item.text;
-                                transmittalDeliverableTypeSelect.appendChild(option);
-                            });
-                        } else {
-                            transmittalDeliverableTypeSelect.innerHTML = '<option value="">No types available</option>';
-                        }
-
-                        transmittalDeliverableTypeSelect.disabled = false;
-                    })
-                    .catch(error => {
-                        console.error('Error fetching deliverable types:', error);
-                        transmittalDeliverableTypeSelect.innerHTML = '<option value="">Error loading types</option>';
-                        transmittalDeliverableTypeSelect.disabled = false;
+            // "Apply to All Files" button functionality
+            
+            // Hidden Status
+            document.querySelectorAll('.copy-hidden-settings').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    const sourceId = this.getAttribute('data-copy-from');
+                    const sourceCheckbox = document.getElementById(sourceId);
+                    if (!sourceCheckbox) return;
+                    
+                    // Apply to all hidden checkboxes
+                    document.querySelectorAll('[id^="hid_checkbox_"]').forEach(function(checkbox) {
+                        checkbox.checked = sourceCheckbox.checked;
                     });
+                    
+                    alert('Hidden status applied to all files');
+                });
             });
 
-            // Trigger change event on page load if discipline is already selected
-            if (transmittalDisciplineSelect.value) {
-                transmittalDisciplineSelect.dispatchEvent(new Event('change'));
+            // Revision
+            document.querySelectorAll('.copy-revision').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    const sourceId = this.getAttribute('data-copy-from');
+                    const sourceInput = document.getElementById(sourceId);
+                    if (!sourceInput) return;
+                    
+                    const sourceValue = sourceInput.value;
+                    
+                    // Apply to all revision inputs
+                    document.querySelectorAll('[id^="revision_number_"]').forEach(function(input) {
+                        input.value = sourceValue;
+                    });
+                    
+                    alert('Revision number applied to all files');
+                });
+            });
+
+            // Custom Download Alias
+            document.querySelectorAll('.copy-custom-download').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    // Find the first custom download input as source
+                    const firstCustomDownloadInput = document.querySelector('[id^="custom_download_input_1_"]');
+                    if (!firstCustomDownloadInput) return;
+                    
+                    const sourceValue = firstCustomDownloadInput.value;
+                    
+                    // Apply to all custom download inputs (but with unique suffixes)
+                    document.querySelectorAll('[id^="custom_download_input_"]').forEach(function(input, index) {
+                        if (sourceValue && index > 0) {
+                            // Add index suffix to make unique
+                            input.value = sourceValue + '-' + (index + 1);
+                        } else {
+                            input.value = sourceValue;
+                        }
+                    });
+                    
+                    alert('Custom download alias applied to all files (with unique suffixes)');
+                });
+            });
+
+            // Client Document Number (now implemented)
+            document.querySelectorAll('.copy-client-doc-number').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    const sourceId = this.getAttribute('data-copy-from');
+                    const sourceInput = document.getElementById(sourceId);
+                    if (!sourceInput) return;
+                    
+                    const sourceValue = sourceInput.value;
+                    
+                    // Apply to all client document number inputs
+                    document.querySelectorAll('[id^="client_document_number_"]').forEach(function(input) {
+                        input.value = sourceValue;
+                    });
+                    
+                    alert('Client Document Number applied to all files');
+                });
+            });
+
+            // Issue Status Override
+            document.querySelectorAll('.copy-issue-override').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    const sourceId = this.getAttribute('data-copy-from');
+                    const sourceCheckbox = document.getElementById(sourceId);
+                    if (!sourceCheckbox) return;
+                    
+                    // Apply to all issue override checkboxes
+                    document.querySelectorAll('[id^="issue_override_checkbox_"]').forEach(function(checkbox) {
+                        checkbox.checked = sourceCheckbox.checked;
+                    });
+                    
+                    alert('Issue Status Override applied to all files');
+                });
+            });
+        });
+
+        // Add this inside the existing <script> tag, after the other "Apply to All Files" functions
+
+        // Issue Status Override functionality
+        document.querySelectorAll('.checkbox_setting_issue_override').forEach(function(checkbox) {
+            checkbox.addEventListener('change', function() {
+                const fileIndex = this.id.replace('issue_override_checkbox_', '');
+                const overrideField = document.getElementById('issue_override_field_' + fileIndex);
+                const customStatusSelect = document.getElementById('custom_issue_status_' + fileIndex);
+                
+                if (this.checked) {
+                    // Show the override field
+                    overrideField.style.display = 'block';
+                    customStatusSelect.required = true;
+                } else {
+                    // Hide the override field and clear selection
+                    overrideField.style.display = 'none';
+                    customStatusSelect.value = '';
+                    customStatusSelect.required = false;
+                }
+            });
+            
+            // Check initial state on page load
+            const fileIndex = checkbox.id.replace('issue_override_checkbox_', '');
+            const overrideField = document.getElementById('issue_override_field_' + fileIndex);
+            if (checkbox.checked) {
+                overrideField.style.display = 'block';
             }
-        }
+        });
 
-        // REMOVED: File-specific discipline/deliverable type JavaScript (no longer needed)
-
-        // "Apply to All Files" button functionality
-        
-        // Hidden Status
-        document.querySelectorAll('.copy-hidden-settings').forEach(function(button) {
+        // Apply Issue Status Override to All Files
+        document.querySelectorAll('.copy-issue-override').forEach(function(button) {
             button.addEventListener('click', function() {
                 const sourceId = this.getAttribute('data-copy-from');
                 const sourceCheckbox = document.getElementById(sourceId);
+                const sourceFileIndex = sourceId.replace('issue_override_checkbox_', '');
+                const sourceCustomStatus = document.getElementById('custom_issue_status_' + sourceFileIndex);
+                
                 if (!sourceCheckbox) return;
                 
-                // Apply to all hidden checkboxes
-                document.querySelectorAll('[id^="hid_checkbox_"]').forEach(function(checkbox) {
-                    checkbox.checked = sourceCheckbox.checked;
-                });
+                const isChecked = sourceCheckbox.checked;
+                const customStatusValue = sourceCustomStatus ? sourceCustomStatus.value : '';
                 
-                alert('Hidden status applied to all files');
-            });
-        });
-
-        // Revision
-        document.querySelectorAll('.copy-revision').forEach(function(button) {
-            button.addEventListener('click', function() {
-                const sourceId = this.getAttribute('data-copy-from');
-                const sourceInput = document.getElementById(sourceId);
-                if (!sourceInput) return;
-                
-                const sourceValue = sourceInput.value;
-                
-                // Apply to all revision inputs
-                document.querySelectorAll('[id^="revision_number_"]').forEach(function(input) {
-                    input.value = sourceValue;
-                });
-                
-                alert('Revision number applied to all files');
-            });
-        });
-
-        // Custom Download Alias
-        document.querySelectorAll('.copy-custom-download').forEach(function(button) {
-            button.addEventListener('click', function() {
-                // Find the first custom download input as source
-                const firstCustomDownloadInput = document.querySelector('[id^="custom_download_input_1_"]');
-                if (!firstCustomDownloadInput) return;
-                
-                const sourceValue = firstCustomDownloadInput.value;
-                
-                // Apply to all custom download inputs (but with unique suffixes)
-                document.querySelectorAll('[id^="custom_download_input_"]').forEach(function(input, index) {
-                    if (sourceValue && index > 0) {
-                        // Add index suffix to make unique
-                        input.value = sourceValue + '-' + (index + 1);
-                    } else {
-                        input.value = sourceValue;
-                    }
-                });
-                
-                alert('Custom download alias applied to all files (with unique suffixes)');
-            });
-        });
-
-        // File Comments 
-        document.querySelectorAll('.copy-file-comments').forEach(function(button) {
-            button.addEventListener('click', function() {
-                alert('File Comments feature coming soon - database field needs to be created first');
-            });
-        });
-
-        // Client Document Number (now implemented)
-        document.querySelectorAll('.copy-client-doc-number').forEach(function(button) {
-            button.addEventListener('click', function() {
-                const sourceId = this.getAttribute('data-copy-from');
-                const sourceInput = document.getElementById(sourceId);
-                if (!sourceInput) return;
-                
-                const sourceValue = sourceInput.value;
-                
-                // Apply to all client document number inputs
-                document.querySelectorAll('[id^="client_document_number_"]').forEach(function(input) {
-                    input.value = sourceValue;
-                });
-                
-                alert('Client Document Number applied to all files');
-            });
-        });
-    });
-    function parseFilenamesAndPopulate() {
-    // Get all file original names from the form
-    const fileInputs = document.querySelectorAll('input[name*="[original]"]');
-    
-    if (fileInputs.length === 0) return;
-    
-    // Use the first file to extract project-level data
-    const firstFilename = fileInputs[0].value;
-    
-    // Send AJAX request to parse filename
-    fetch('parse_filename.php', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            filename: firstFilename,
-            action: 'parse_filename'
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success && data.parsed_successfully) {
-            // Populate transmittal-level fields
-            if (data.project_number) {
-                const projectNumberField = document.getElementById('project_number');
-                if (projectNumberField && !projectNumberField.value) {
-                    projectNumberField.value = data.project_number;
-                }
-            }
-            
-            if (data.discipline) {
-                const disciplineField = document.getElementById('transmittal_discipline');
-                if (disciplineField && !disciplineField.value) {
-                    disciplineField.value = data.discipline;
-                    // Trigger change event to load deliverable types
-                    disciplineField.dispatchEvent(new Event('change'));
+                // Apply to all issue override checkboxes and custom status dropdowns
+                document.querySelectorAll('[id^="issue_override_checkbox_"]').forEach(function(checkbox) {
+                    const fileIndex = checkbox.id.replace('issue_override_checkbox_', '');
+                    const overrideField = document.getElementById('issue_override_field_' + fileIndex);
+                    const customStatusSelect = document.getElementById('custom_issue_status_' + fileIndex);
                     
-                    // Set deliverable type after a short delay to allow loading
-                    if (data.deliverable_type) {
-                        setTimeout(() => {
-                            const deliverableField = document.getElementById('transmittal_deliverable_type');
-                            if (deliverableField) {
-                                deliverableField.value = data.deliverable_type;
+                    // Set checkbox state
+                    checkbox.checked = isChecked;
+                    
+                    // Show/hide override field
+                    if (isChecked) {
+                        overrideField.style.display = 'block';
+                        customStatusSelect.required = true;
+                        if (customStatusValue) {
+                            customStatusSelect.value = customStatusValue;
+                        }
+                    } else {
+                        overrideField.style.display = 'none';
+                        customStatusSelect.value = '';
+                        customStatusSelect.required = false;
+                    }
+                });
+                
+                alert('Issue Status Override applied to all files');
+            });
+        });
+        
+        function parseFilenamesAndPopulate() {
+            // Get all file original names from the form
+            const fileInputs = document.querySelectorAll('input[name*="[original]"]');
+            
+            if (fileInputs.length === 0) return;
+            
+            // Use the first file to extract project-level data
+            const firstFilename = fileInputs[0].value;
+            
+            // Send AJAX request to parse filename
+            fetch('parse_filename.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    filename: firstFilename,
+                    action: 'parse_filename'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.parsed_successfully) {
+                    // Populate transmittal-level fields
+                    if (data.project_number) {
+                        const projectNumberField = document.getElementById('project_number');
+                        if (projectNumberField && !projectNumberField.value) {
+                            projectNumberField.value = data.project_number;
+                        }
+                    }
+                    
+                    // NEW: Auto-populate project name from centralized table
+                    fetch(`api/get_project_name.php?project_number=${encodeURIComponent(data.project_number)}`)
+                    .then(response => response.json())
+                    .then(projectData => {
+                        if (projectData.success && projectData.project_name) {
+                            const projectNameField = document.getElementById('project_name');
+                            if (projectNameField && !projectNameField.value) {
+                                projectNameField.value = projectData.project_name;
+                                showParsingMessage('success', `Project name populated: ${projectData.project_name}`);
                             }
-                        }, 500);
+                        }
+                    })
+                    .catch(error => console.error('Error fetching project name:', error));
+                    
+                    if (data.discipline) {
+                        const disciplineField = document.getElementById('transmittal_discipline');
+                        if (disciplineField && !disciplineField.value) {
+                            disciplineField.value = data.discipline;
+                            // Trigger change event to load deliverable types
+                            disciplineField.dispatchEvent(new Event('change'));
+                            
+                            // Set deliverable type after a short delay to allow loading
+                            if (data.deliverable_type) {
+                                setTimeout(() => {
+                                    const deliverableField = document.getElementById('transmittal_deliverable_type');
+                                    if (deliverableField) {
+                                        deliverableField.value = data.deliverable_type;
+                                    }
+                                }, 500);
+                            }
+                        }
+                    }
+
+                    // NEW: Auto-populate Project Contacts based on project number  
+                    if (data.project_number) {
+                        // Look up the group_id from the project_number
+                        fetch(`api/get_group_id.php?project_number=${encodeURIComponent(data.project_number)}`)
+                        .then(response => response.json())
+                        .then(groupData => {
+                            console.log('Group data received:', groupData);
+                            if (groupData.success && groupData.group_id) {
+                                // Now that we have the group ID, fetch the members using updated API
+                                fetch(`api/get_group_members.php?group_id=${groupData.group_id}`)
+                                .then(response => {
+                                    console.log('Members API response status:', response.status);
+                                    return response.json();
+                                })
+                                .then(membersData => {
+                                    console.log('Members data received:', membersData);
+                                    if (membersData.success && membersData.members && membersData.members.length > 0) {
+                                        const clientsSelect = document.getElementById('transmittal_clients');
+                                        if (clientsSelect) {
+                                            // Clear existing selections if using Select2
+                                            if (typeof $ !== 'undefined' && $(clientsSelect).data('select2')) {
+                                                $(clientsSelect).val(null).trigger('change');
+                                            }
+
+                                            // Select the group members
+                                            let selectedValues = [];
+                                            membersData.members.forEach(memberId => {
+                                                const option = clientsSelect.querySelector(`option[value="${memberId}"]`);
+                                                if (option) {
+                                                    option.selected = true;
+                                                    selectedValues.push(memberId.toString());
+                                                    console.log(`Selected contact: ${option.textContent} (ID: ${memberId})`);
+                                                } else {
+                                                    console.warn(`No option found for member ID: ${memberId}`);
+                                                }
+                                            });
+                                            
+                                            // Trigger Select2 update if available
+                                            if (typeof $ !== 'undefined' && $(clientsSelect).data('select2')) {
+                                                $(clientsSelect).val(selectedValues).trigger('change');
+                                            }
+                                            
+                                            showParsingMessage('success', `Auto-selected ${membersData.count} project contacts`);
+                                        }
+                                    } else {
+                                        console.error('Error fetching group members:', membersData.error || 'No members found');
+                                        showParsingMessage('info', 'No project contacts found for this project');
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error fetching group members:', error);
+                                    showParsingMessage('warning', 'Could not load project contacts');
+                                });
+                            } else {
+                                console.warn('Group ID not found for project number:', data.project_number);
+                                showParsingMessage('info', 'No group found for this project number');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching group ID:', error);
+                            showParsingMessage('warning', 'Could not look up project group');
+                        });
+                    }
+                    
+// NEW: Auto-populate categories based on parsed discipline + deliverable
+if (data.discipline && data.deliverable_type) {
+    setTimeout(() => {
+        const categoryField = document.getElementById('transmittal_categories');
+        const selectedDiscipline = data.discipline;
+        const selectedDeliverable = data.deliverable_type;
+        
+        if (categoryField) {
+            // Make AJAX call to find the specific category ID for this discipline + deliverable combination
+            fetch('api/get_category_by_discipline_deliverable.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    discipline: selectedDiscipline,
+                    deliverable_type: selectedDeliverable
+                })
+            })
+            .then(response => response.json())
+            .then(categoryData => {
+                if (categoryData.success && categoryData.category_id) {
+                    if (typeof $ !== 'undefined' && $(categoryField).data('select2')) {
+                        let currentValues = $(categoryField).val() || [];
+                        if (!currentValues.includes(categoryData.category_id.toString())) {
+                            currentValues.push(categoryData.category_id.toString());
+                            $(categoryField).val(currentValues).trigger('change');
+                        }
+                    }
+                    showParsingMessage('success', `Selected specific category: ${categoryData.category_name}`);
+                }
+            })
+            .catch(error => {
+                console.error('Error finding specific category:', error);
+            });
+        }
+    }, 750);
+}
+                    
+                    // Show success message
+                    let message = `Filename parsed successfully! Project: ${data.project_number}, Discipline: ${data.discipline}`;
+                    if (data.category_ids && data.category_ids.length > 0) {
+                        message += ', Categories auto-selected';
+                    }
+                    showParsingMessage('success', message);
+                    
+                } else {
+                    // Show partial success or info message
+                    let message = 'Could not fully parse filename. ';
+                    if (data.project_number) {
+                        message += `Found project number: ${data.project_number}`;
+                    } else {
+                        message += 'Please fill in project information manually.';
+                    }
+                    showParsingMessage('info', message);
+                }
+            })
+            .catch(error => {
+                console.error('Error parsing filename:', error);
+                showParsingMessage('warning', 'Could not parse filename automatically. Please fill in fields manually.');
+            });
+        }
+
+        // Enhanced manual category selection when discipline/deliverable changes
+        document.addEventListener('DOMContentLoaded', function() {
+            const disciplineSelect = document.getElementById('transmittal_discipline');
+            const deliverableSelect = document.getElementById('transmittal_deliverable_type');
+            const categorySelect = document.getElementById('transmittal_categories');
+            
+            // Function to suggest category based on current discipline + deliverable selection
+            function suggestCategory() {
+                const discipline = disciplineSelect?.value;
+                const deliverable = deliverableSelect?.value;
+                
+                if (discipline && deliverable && categorySelect) {
+                    // Look for category option that matches the discipline + deliverable pattern
+                    const options = categorySelect.querySelectorAll('option');
+                    
+                    for (let option of options) {
+                        const optionText = option.textContent.toLowerCase();
+                        const disciplineLower = discipline.toLowerCase();
+                        const deliverableLower = deliverable.toLowerCase();
+                        
+                        // Check if option text contains both discipline and deliverable
+                        if (optionText.includes(disciplineLower) && optionText.includes(deliverableLower)) {
+                            if (typeof $ !== 'undefined' && $(categorySelect).data('select2')) {
+                                // Select2 multi-select
+                                let currentValues = $(categorySelect).val() || [];
+                                if (!currentValues.includes(option.value)) {
+                                    currentValues.push(option.value);
+                                    $(categorySelect).val(currentValues).trigger('change');
+                                }
+                            } else {
+                                // Standard multi-select
+                                if (!option.selected) {
+                                    option.selected = true;
+                                }
+                            }
+                            break;
+                        }
                     }
                 }
             }
             
-            // Show success message
-            showParsingMessage('success', `Filename parsed successfully! Project: ${data.project_number}, Discipline: ${data.discipline}`);
-        } else {
-            // Show partial success or info message
-            let message = 'Could not fully parse filename. ';
-            if (data.project_number) {
-                message += `Found project number: ${data.project_number}`;
-            } else {
-                message += 'Please fill in project information manually.';
+            // Suggest category when deliverable type changes
+            if (deliverableSelect) {
+                deliverableSelect.addEventListener('change', suggestCategory);
             }
-            showParsingMessage('info', message);
-        }
-    })
-    .catch(error => {
-        console.error('Error parsing filename:', error);
-        showParsingMessage('warning', 'Could not parse filename automatically. Please fill in fields manually.');
-    });
-}
+        });
 
-function showParsingMessage(type, message) {
-    // Create or update parsing message div
-    let messageDiv = document.getElementById('filename-parsing-message');
-    if (!messageDiv) {
-        messageDiv = document.createElement('div');
-        messageDiv.id = 'filename-parsing-message';
-        messageDiv.style.margin = '10px 0';
-        messageDiv.style.padding = '10px';
-        messageDiv.style.borderRadius = '4px';
-        
-        // Insert after the first form header
-        const firstHeader = document.querySelector('h3');
-        if (firstHeader) {
-            firstHeader.parentNode.insertBefore(messageDiv, firstHeader.nextSibling);
+        function showParsingMessage(type, message) {
+            // Create or update parsing message div
+            let messageDiv = document.getElementById('filename-parsing-message');
+            if (!messageDiv) {
+                messageDiv = document.createElement('div');
+                messageDiv.id = 'filename-parsing-message';
+                messageDiv.style.margin = '10px 0';
+                messageDiv.style.padding = '10px';
+                messageDiv.style.borderRadius = '4px';
+                
+                // Insert after the first form header
+                const firstHeader = document.querySelector('h3');
+                if (firstHeader) {
+                    firstHeader.parentNode.insertBefore(messageDiv, firstHeader.nextSibling);
+                }
+            }
+            
+            // Set message style based on type
+            const styles = {
+                'success': { background: '#d4edda', border: '#c3e6cb', color: '#155724' },
+                'info': { background: '#d1ecf1', border: '#bee5eb', color: '#0c5460' },
+                'warning': { background: '#fff3cd', border: '#ffeaa7', color: '#856404' }
+            };
+            
+            const style = styles[type] || styles['info'];
+            messageDiv.style.backgroundColor = style.background;
+            messageDiv.style.borderColor = style.border;
+            messageDiv.style.color = style.color;
+            messageDiv.style.border = `1px solid ${style.border}`;
+            
+            messageDiv.innerHTML = `<i class="fa fa-info-circle"></i> ${message}`;
+            
+            // Auto-hide after 5 seconds for success messages
+            if (type === 'success') {
+                setTimeout(() => {
+                    messageDiv.style.display = 'none';
+                }, 5000);
+            }
         }
-    }
-    
-    // Set message style based on type
-    const styles = {
-        'success': { background: '#d4edda', border: '#c3e6cb', color: '#155724' },
-        'info': { background: '#d1ecf1', border: '#bee5eb', color: '#0c5460' },
-        'warning': { background: '#fff3cd', border: '#ffeaa7', color: '#856404' }
-    };
-    
-    const style = styles[type] || styles['info'];
-    messageDiv.style.backgroundColor = style.background;
-    messageDiv.style.borderColor = style.border;
-    messageDiv.style.color = style.color;
-    messageDiv.style.border = `1px solid ${style.border}`;
-    
-    messageDiv.innerHTML = `<i class="fa fa-info-circle"></i> ${message}`;
-    
-    // Auto-hide after 5 seconds for success messages
-    if (type === 'success') {
-        setTimeout(() => {
-            messageDiv.style.display = 'none';
-        }, 5000);
-    }
-}
     </script>
     <?php endif; ?>
 <?php endif; ?>

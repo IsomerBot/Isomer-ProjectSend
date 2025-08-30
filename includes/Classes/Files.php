@@ -55,7 +55,7 @@ class Files
     public $project_number;
     public $transmittal_name;
     public $file_bcc_addresses;
-    public $file_cc_addresses; 
+    public $file_cc_addresses;
     public $file_comments;
     public $client_document_number;
 
@@ -340,35 +340,100 @@ class Files
         return true;
     }
 
+    /**
+     * Get custom download aliases for this file
+     */
     public function getCustomDownloads()
     {
-        if (!empty($this->custom_downloads)) {
-            return $this->custom_downloads;
+        $custom_downloads = [];
+
+        try {
+            global $dbh;
+            $statement = $dbh->prepare(
+                "SELECT id, link FROM tbl_custom_downloads WHERE file_id = :file_id ORDER BY id"
+            );
+            $statement->bindParam(":file_id", $this->id, PDO::PARAM_INT);
+            $statement->execute();
+
+            while ($row = $statement->fetch(PDO::FETCH_ASSOC)) {
+                $custom_downloads[] = [
+                    "id" => $row["id"],
+                    "link" => $row["link"],
+                ];
+            }
+
+            // If no custom downloads exist, return empty array with one empty slot for the form
+            if (empty($custom_downloads)) {
+                $custom_downloads[] = [
+                    "id" => "",
+                    "link" => "",
+                ];
+            }
+        } catch (PDOException $e) {
+            error_log("Error getting custom downloads: " . $e->getMessage());
+            // Return empty array with one slot for the form
+            $custom_downloads[] = [
+                "id" => "",
+                "link" => "",
+            ];
         }
 
-        $statement = $this->dbh->prepare(
-            "SELECT * FROM " .
-                TABLE_CUSTOM_DOWNLOADS .
-                " WHERE file_id=:file_id"
-        );
-        $statement->bindParam(":file_id", $this->id);
-        $statement->execute();
-        $statement->setFetchMode(PDO::FETCH_ASSOC);
+        return $custom_downloads;
+    }
 
-        while ($row = $statement->fetch()) {
-            $this->custom_downloads[] = $row;
+    /**
+     * Save custom download aliases for this file
+     */
+    public function saveCustomDownloads($custom_downloads_data)
+    {
+        if (!is_array($custom_downloads_data)) {
+            return false;
         }
 
-        $this->custom_downloads[] = [
-            "link" => null,
-            "client_id" => null,
-            "file_id" => $this->id,
-            "timestamp" => (new \DateTime())->getTimestamp(),
-            "expiry_date" => null,
-            "visit_count" => 0,
-        ];
+        try {
+            global $dbh;
 
-        return $this->custom_downloads;
+            // First, delete existing custom downloads for this file
+            $delete_statement = $dbh->prepare(
+                "DELETE FROM tbl_custom_downloads WHERE file_id = :file_id"
+            );
+            $delete_statement->bindParam(":file_id", $this->id, PDO::PARAM_INT);
+            $delete_statement->execute();
+
+            // Then insert new ones
+            $insert_statement = $dbh->prepare(
+                "INSERT INTO tbl_custom_downloads (file_id, link, timestamp) VALUES (:file_id, :link, NOW())"
+            );
+
+            foreach ($custom_downloads_data as $download_data) {
+                if (
+                    isset($download_data["link"]) &&
+                    !empty(trim($download_data["link"]))
+                ) {
+                    $link = trim($download_data["link"]);
+
+                    // Validate link format (alphanumeric, hyphens, underscores only)
+                    if (preg_match('/^[a-zA-Z0-9\-_]+$/', $link)) {
+                        $insert_statement->bindParam(
+                            ":file_id",
+                            $this->id,
+                            PDO::PARAM_INT
+                        );
+                        $insert_statement->bindParam(
+                            ":link",
+                            $link,
+                            PDO::PARAM_STR
+                        );
+                        $insert_statement->execute();
+                    }
+                }
+            }
+
+            return true;
+        } catch (PDOException $e) {
+            error_log("Error saving custom downloads: " . $e->getMessage());
+            return false;
+        }
     }
 
     public function recordExists()

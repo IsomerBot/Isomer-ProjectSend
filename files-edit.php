@@ -153,16 +153,42 @@ if (isset($_POST["save"])) {
                            project_number = :project_number,
                            package_description = :package_description,
                            issue_status = :issue_status,
+                           issue_status_override = :issue_status_override,
+                           original_issue_status = :original_issue_status,
                            deliverable_type = :deliverable_type,
-                            discipline = :discipline,
+                           discipline = :discipline,
                            document_title = :document_title,
                            revision_number = :revision_number,
                            comments = :comments,
                            file_bcc_addresses = :file_bcc_addresses,
                            file_cc_addresses = :file_cc_addresses,
                            file_comments = :file_comments,
-                            client_document_number = :client_document_number
+                           client_document_number = :client_document_number
                          WHERE id = :file_id";
+
+                    // FIXED: Ensure original_issue_status is ALWAYS set to transmittal-level status
+                    $original_issue_status = $global_issue_status; // This is the transmittal-level status
+                    $file_issue_status = $global_issue_status; // Default to transmittal-level status
+                    $issue_status_override = 0; // Default: no override
+
+                    // Check if this file has an issue status override
+                    if (
+                        isset($file_data_from_post["issue_status_override"]) &&
+                        $file_data_from_post["issue_status_override"] == "1" &&
+                        !empty($file_data_from_post["custom_issue_status"])
+                    ) {
+                        $file_issue_status =
+                            $file_data_from_post["custom_issue_status"];
+                        $issue_status_override = 1; // Mark as override
+
+                        error_log(
+                            "File {$file_data_from_post["id"]}: OVERRIDE - Transmittal: '{$original_issue_status}' → File: '{$file_issue_status}'"
+                        );
+                    } else {
+                        error_log(
+                            "File {$file_data_from_post["id"]}: Using transmittal issue status '{$file_issue_status}' (no override)"
+                        );
+                    }
 
                     $statement = $dbh->prepare($query);
                     $statement->execute([
@@ -172,7 +198,9 @@ if (isset($_POST["save"])) {
                         ":project_name" => $global_project_name,
                         ":project_number" => $global_project_number,
                         ":package_description" => $global_package_description,
-                        ":issue_status" => $global_issue_status,
+                        ":issue_status" => $file_issue_status, // Current status (override if set, otherwise global)
+                        ":issue_status_override" => $issue_status_override, // Track override status
+                        ":original_issue_status" => $original_issue_status, // ALWAYS store transmittal-level status
                         ":discipline" => $global_discipline,
                         ":deliverable_type" => $global_deliverable_type,
                         ":document_title" =>
@@ -201,6 +229,94 @@ if (isset($_POST["save"])) {
                     $next_transmittal_number
                 )
             );
+
+            // ADD THIS CODE RIGHT AFTER THE SUCCESS MESSAGE (around line 176)
+            // After the flash->success message and before the catch block
+
+            // *** TRANSMITTAL SUMMARY TABLE INTEGRATION ***
+            try {
+                // Instantiate the TransmittalSummaryManager
+                $transmittalManager = new \ProjectSend\Classes\TransmittalSummaryManager();
+
+                // Look up the discipline_id and deliverable_type_id from the text values
+                $discipline_id = null;
+                $deliverable_type_id = null;
+
+                if (!empty($global_discipline)) {
+                    $discipline_query =
+                        "SELECT id FROM tbl_discipline WHERE discipline_name = :discipline_name LIMIT 1";
+                    $discipline_stmt = $dbh->prepare($discipline_query);
+                    $discipline_stmt->execute([
+                        ":discipline_name" => $global_discipline,
+                    ]);
+                    $discipline_result = $discipline_stmt->fetch(
+                        PDO::FETCH_ASSOC
+                    );
+                    $discipline_id = $discipline_result
+                        ? $discipline_result["id"]
+                        : null;
+                }
+
+                if (!empty($global_deliverable_type) && $discipline_id) {
+                    $deliverable_query =
+                        "SELECT id FROM tbl_deliverable_type WHERE deliverable_type = :deliverable_type AND discipline_id = :discipline_id LIMIT 1";
+                    $deliverable_stmt = $dbh->prepare($deliverable_query);
+                    $deliverable_stmt->execute([
+                        ":deliverable_type" => $global_deliverable_type,
+                        ":discipline_id" => $discipline_id,
+                    ]);
+                    $deliverable_result = $deliverable_stmt->fetch(
+                        PDO::FETCH_ASSOC
+                    );
+                    $deliverable_type_id = $deliverable_result
+                        ? $deliverable_result["id"]
+                        : null;
+                }
+
+                // Look up group_id from project_number
+                $group_id = null;
+                if (!empty($global_project_number)) {
+                    $group_query =
+                        "SELECT id FROM tbl_groups WHERE name = :project_number LIMIT 1";
+                    $group_stmt = $dbh->prepare($group_query);
+                    $group_stmt->execute([
+                        ":project_number" => $global_project_number,
+                    ]);
+                    $group_result = $group_stmt->fetch(PDO::FETCH_ASSOC);
+                    $group_id = $group_result ? $group_result["id"] : null;
+                }
+
+                // Prepare transmittal summary data
+                $transmittal_data = [
+                    "project_number" => $global_project_number,
+                    "group_id" => $group_id,
+                    "discipline_id" => $discipline_id,
+                    "deliverable_type_id" => $deliverable_type_id,
+                    "uploader_user_id" => CURRENT_USER_ID,
+                    "project_name" => $global_project_name,
+                    "package_description" => $global_package_description,
+                    "comments" => $global_comments,
+                    "cc_addresses" => $global_file_cc_addresses,
+                    "bcc_addresses" => $global_file_bcc_addresses,
+                    "file_count" => count($_POST["file"]),
+                ];
+
+                // Save to the centralized summary table
+                $summary_saved = $transmittalManager->createOrUpdate(
+                    $generated_transmittal_name,
+                    $transmittal_data
+                );
+
+                if (!$summary_saved) {
+                    error_log(
+                        "Warning: Failed to save transmittal summary for " .
+                            $generated_transmittal_name
+                    );
+                }
+            } catch (Exception $e) {
+                // Log error but don't break the main flow
+                error_log("TransmittalSummary save error: " . $e->getMessage());
+            }
         } catch (Exception $e) {
             // Log error and show user-friendly message
             error_log("Transmittal save error: " . $e->getMessage());
@@ -453,6 +569,9 @@ include_once ADMIN_VIEWS_DIR . DS . "header.php";
                     "content" => __("File Name", "cftp_admin"),
                 ],
                 [
+                    "content" => __("Recipients", "cftp_admin"), // NEW: Added this header
+                ],
+                [
                     "content" => __("Actions", "cftp_admin"),
                     "hide" => "phone",
                 ],
@@ -464,14 +583,32 @@ include_once ADMIN_VIEWS_DIR . DS . "header.php";
                 if ($file->recordExists()) {
                     $table->addRow();
 
+                    // --- BEGIN: NEW RECIPIENT DISPLAY LOGIC ---
+                    $recipients_text = "All Recipients";
+                    if (!empty($file->transmittal_number)) {
+                        $transmittal_helper = new \ProjectSend\Classes\TransmittalHelper();
+                        $recipients = $transmittal_helper->getTransmittalRecipients(
+                            $file->transmittal_number
+                        );
+
+                        if (!empty($recipients)) {
+                            $recipient_names = [];
+                            foreach ($recipients as $recipient) {
+                                $recipient_names[] = $recipient["name"];
+                            }
+                            $recipients_text = implode(", ", $recipient_names);
+                        }
+                    }
+                    // --- END: NEW RECIPIENT DISPLAY LOGIC ---
+
                     $col_actions =
                         '<a href="files-edit.php?ids=' .
                         $file->id .
                         '" class="btn-primary btn btn-sm">
-                        <i class="fa fa-pencil"></i><span class="button_label">' .
+                <i class="fa fa-pencil"></i><span class="button_label">' .
                         __("Edit file", "cftp_admin") .
                         '</span>
-                    </a>';
+            </a>';
 
                     // Show the "My files" button only to clients
                     if (CURRENT_USER_LEVEL == 0) {
@@ -490,6 +627,9 @@ include_once ADMIN_VIEWS_DIR . DS . "header.php";
                         ],
                         [
                             "content" => $file->filename_original,
+                        ],
+                        [
+                            "content" => $recipients_text, // NEW: Displays the fetched recipient names
                         ],
                         [
                             "content" => $col_actions,
@@ -511,7 +651,6 @@ include_once ADMIN_VIEWS_DIR . DS . "header.php";
                 include_once FORMS_DIR . DS . "file_editor.php";
             }
         }
-        ?>
-    </div>
+        ?></div>
 </div>
 <?php include_once ADMIN_VIEWS_DIR . DS . "footer.php"; ?>

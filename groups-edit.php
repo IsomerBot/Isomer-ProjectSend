@@ -2,24 +2,24 @@
 /**
  * Show the form to edit an existing group.
  */
-$allowed_levels = array(9, 8);
-require_once 'bootstrap.php';
+$allowed_levels = [9, 8];
+require_once "bootstrap.php";
 log_in_required($allowed_levels);
 
-$active_nav = 'groups';
+$active_nav = "groups";
 
-$page_title = __('Edit group', 'cftp_admin');
+$page_title = __("Edit project", "cftp_admin");
 
-$page_id = 'group_form';
+$page_id = "group_form";
 
-include_once ADMIN_VIEWS_DIR . DS . 'header.php';
+include_once ADMIN_VIEWS_DIR . DS . "header.php";
 
 /** Check if the id parameter is on the URI. */
-if (!isset($_GET['id'])) {
+if (!isset($_GET["id"])) {
     exit_with_error_code(403);
 }
 
-$group_id = $_GET['id'];
+$group_id = $_GET["id"];
 if (!group_exists_id($group_id)) {
     exit_with_error_code(403);
 }
@@ -36,25 +36,24 @@ if ($_POST) {
      * validation failed, the new unsaved values are shown to avoid
      * having to type them again.
      */
-    $group_arguments = array(
-        'id' => $group_id,
-        'name' => $_POST['name'],
-        'description' => $_POST['description'],
-        'members' => (!empty($_POST["members"])) ? $_POST['members'] : null,
-        'public' => (isset($_POST["public"])) ? 1 : 0,
-    );
+    $group_arguments = [
+        "id" => $group_id,
+        "name" => $_POST["name"],
+        "description" => $_POST["description"],
+        "members" => !empty($_POST["members"]) ? $_POST["members"] : null,
+    ];
 
     /** Validate the information from the posted form. */
     $edit_group->set($group_arguments);
     $edit_response = $edit_group->edit();
 
-    if ($edit_response['query'] == 1) {
-        $flash->success(__('Group saved successfully'));
+    if ($edit_response["query"] == 1) {
+        $flash->success(__("Project saved successfully"));
     } else {
-        $flash->error(__('There was an error saving to the database'));
+        $flash->error(__("There was an error saving to the database"));
     }
 
-    $location = BASE_URI . 'groups-edit.php?id=' . $group_id;
+    $location = BASE_URI . "groups-edit.php?id=" . $group_id;
     ps_redirect($location);
 }
 ?>
@@ -66,12 +65,11 @@ if ($_POST) {
                 // If the form was submitted with errors, show them here.
                 echo $edit_group->getValidationErrors();
 
-                $groups_form_type = 'edit_group';
-                include_once FORMS_DIR . DS . 'groups.php';
+                $groups_form_type = "edit_group";
+                include_once FORMS_DIR . DS . "groups.php";
                 ?>
             </div>
         </div>
     </div>
 </div>
-<?php
-include_once ADMIN_VIEWS_DIR . DS . 'footer.php';
+<?php include_once ADMIN_VIEWS_DIR . DS . "footer.php";
