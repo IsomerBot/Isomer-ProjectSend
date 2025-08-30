@@ -1,2 +1,4 @@
 mariadb/
 docker-compose.yml
+vendor/
+.vscode/
