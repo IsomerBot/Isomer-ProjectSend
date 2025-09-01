@@ -37,15 +37,15 @@ if (current_role_in([9, 8, 7])) {
                 "divider" => true,
             ],
             [
-                "label" => __("Manage files", "cftp_admin"),
+                "label" => __("Manage Files", "cftp_admin"),
                 "link" => "manage-files.php",
             ],
             [
-                "label" => __("Manage downloads", "cftp_admin"),
+                "label" => __("Manage Downloads", "cftp_admin"),
                 "link" => "manage-downloads.php",
             ],
             [
-                "label" => __("Find orphan files", "cftp_admin"),
+                "label" => __("Find Orphan Files", "cftp_admin"),
                 "link" => "import-orphans.php",
             ],
             [
@@ -68,11 +68,11 @@ if (current_role_in([9, 8, 7])) {
         ],
         "sub" => [
             [
-                "label" => __("Add new", "cftp_admin"),
+                "label" => __("Add New", "cftp_admin"),
                 "link" => "clients-add.php",
             ],
             [
-                "label" => tm(__("Manage contacts", "cftp_admin")),
+                "label" => tm(__("Manage Contacts", "cftp_admin")),
                 "link" => "clients.php",
             ],
             [
@@ -91,11 +91,11 @@ if (current_role_in([9, 8, 7])) {
         ],
         "sub" => [
             [
-                "label" => __("Add new", "cftp_admin"),
+                "label" => __("Add New", "cftp_admin"),
                 "link" => "groups-add.php",
             ],
             [
-                "label" => __("Manage projects", "cftp_admin"),
+                "label" => __("Manage Projects", "cftp_admin"),
                 "link" => "groups.php",
             ],
             [
@@ -113,11 +113,11 @@ if (current_role_in([9, 8, 7])) {
         ],
         "sub" => [
             [
-                "label" => __("Add new", "cftp_admin"),
+                "label" => __("Add New", "cftp_admin"),
                 "link" => "users-add.php",
             ],
             [
-                "label" => __("Manage system users", "cftp_admin"),
+                "label" => __("Manage System Users", "cftp_admin"),
                 "link" => "users.php",
                 //'badge' => COUNT_USERS_INACTIVE,
             ],
@@ -150,7 +150,7 @@ if (current_role_in([9, 8, 7])) {
         ],
         "sub" => [
             [
-                "label" => __("General options", "cftp_admin"),
+                "label" => __("General Options", "cftp_admin"),
                 "link" => "options.php?section=general",
             ],
 
@@ -159,7 +159,7 @@ if (current_role_in([9, 8, 7])) {
                 "link" => "options.php?section=privacy",
             ],
             [
-                "label" => __("E-mail notifications", "cftp_admin"),
+                "label" => __("E-mail Notifications", "cftp_admin"),
                 "link" => "options.php?section=email",
             ],
             [
@@ -175,7 +175,7 @@ if (current_role_in([9, 8, 7])) {
                 "link" => "options.php?section=external_login",
             ],
             [
-                "label" => __("Scheduled tasks (cron)", "cftp_admin"),
+                "label" => __("Scheduled Tasks (Cron)", "cftp_admin"),
                 "link" => "options.php?section=cron",
             ],
         ],
@@ -185,52 +185,52 @@ if (current_role_in([9, 8, 7])) {
         "nav" => "emails",
         "level" => [9],
         "main" => [
-            "label" => __("E-mail templates", "cftp_admin"),
+            "label" => __("E-mail Templates", "cftp_admin"),
             "icon" => "envelope",
         ],
         "sub" => [
+            // [
+            //     "label" => __("Header / Footer", "cftp_admin"),
+            //     "link" => "email-templates.php?section=header_footer",
+            // ],
+            // [
+            //     "label" => __("New File by User", "cftp_admin"),
+            //     "link" => "email-templates.php?section=new_files_by_user",
+            // ],
+            // [
+            //     "label" => __("New file by client", "cftp_admin"),
+            //     "link" => "email-templates.php?section=new_files_by_client",
+            // ],
             [
-                "label" => __("Header / footer", "cftp_admin"),
-                "link" => "email-templates.php?section=header_footer",
-            ],
-            [
-                "label" => __("New file by user", "cftp_admin"),
-                "link" => "email-templates.php?section=new_files_by_user",
-            ],
-            [
-                "label" => __("New file by client", "cftp_admin"),
-                "link" => "email-templates.php?section=new_files_by_client",
-            ],
-            [
-                "label" => __("New client (welcome)", "cftp_admin"),
+                "label" => __("New Client (Welcome)", "cftp_admin"),
                 "link" => "email-templates.php?section=new_client",
             ],
+            // [
+            //     "label" => __("New client (self-registered)", "cftp_admin"),
+            //     "link" => "email-templates.php?section=new_client_self",
+            // ],
+            // [
+            //     "label" => __("Approve client account", "cftp_admin"),
+            //     "link" => "email-templates.php?section=account_approve",
+            // ],
+            // [
+            //     "label" => __("Deny client account", "cftp_admin"),
+            //     "link" => "email-templates.php?section=account_deny",
+            // ],
+            // [
+            //     "label" => __("Client updated memberships", "cftp_admin"),
+            //     "link" => "email-templates.php?section=client_edited",
+            // ],
+            // [
+            //     "label" => __("New User (Welcome)", "cftp_admin"),
+            //     "link" => "email-templates.php?section=new_user",
+            // ],
             [
-                "label" => __("New client (self-registered)", "cftp_admin"),
-                "link" => "email-templates.php?section=new_client_self",
-            ],
-            [
-                "label" => __("Approve client account", "cftp_admin"),
-                "link" => "email-templates.php?section=account_approve",
-            ],
-            [
-                "label" => __("Deny client account", "cftp_admin"),
-                "link" => "email-templates.php?section=account_deny",
-            ],
-            [
-                "label" => __("Client updated memberships", "cftp_admin"),
-                "link" => "email-templates.php?section=client_edited",
-            ],
-            [
-                "label" => __("New user (welcome)", "cftp_admin"),
-                "link" => "email-templates.php?section=new_user",
-            ],
-            [
-                "label" => __("Password reset", "cftp_admin"),
+                "label" => __("Password Reset", "cftp_admin"),
                 "link" => "email-templates.php?section=password_reset",
             ],
             [
-                "label" => __("Login authorization code", "cftp_admin"),
+                "label" => __("Login Authorization Code", "cftp_admin"),
                 "link" => "email-templates.php?section=2fa_code",
             ],
         ],
@@ -247,15 +247,15 @@ if (current_role_in([9, 8, 7])) {
         ],
         "sub" => [
             [
-                "label" => __("Actions log", "cftp_admin"),
+                "label" => __("Actions Log", "cftp_admin"),
                 "link" => "actions-log.php",
             ],
             [
-                "label" => __("Cron log", "cftp_admin"),
+                "label" => __("Cron Log", "cftp_admin"),
                 "link" => "cron-log.php",
             ],
             [
-                "label" => __("Test email configuration", "cftp_admin"),
+                "label" => __("Test Email Configuration", "cftp_admin"),
                 "link" => "email-test.php",
             ],
             [
@@ -279,7 +279,7 @@ else {
         "nav" => "upload",
         "level" => [9, 8, 7, 0],
         "main" => [
-            "label" => __("View my files", "cftp_admin"),
+            "label" => __("View My Files", "cftp_admin"),
             "link" => CLIENT_VIEW_FILE_LIST_URL_PATH,
             "icon" => "th-list",
         ],
