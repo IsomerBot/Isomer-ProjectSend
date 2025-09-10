@@ -10,13 +10,11 @@ RUN npm ci
 
 # Build tooling & sources
 COPY gulpfile.js ./
-COPY assets ./assets
-COPY . .        # if gulp reads templates/partials/etc.
-
+COPY . .        # gulp often reads templates/partials; safe to copy
 # Build optimized assets -> emits into /app/assets/{css,js,lib,img,...}
 RUN npx gulp prod || npx gulp build
 
-# Expose CKEditor file at the path the app requests (/node_modules/...)
+# Expose CKEditor file at the exact URL your pages request (/node_modules/...)
 RUN set -eux; \
   if [ -f node_modules/@ckeditor/ckeditor5-build-classic/build/ckeditor.js ]; then \
     mkdir -p /ckeditor-export/node_modules/@ckeditor/ckeditor5-build-classic/build; \
@@ -26,20 +24,7 @@ RUN set -eux; \
 
 
 # -----------------------------------------------------------------------------
-# Stage 2: Composer deps (vendor/)
-# -----------------------------------------------------------------------------
-FROM composer:2 AS composer_deps
-WORKDIR /app
-COPY composer.json composer.lock ./
-# Ignore platform reqs here; extensions will exist in the runtime stage
-RUN composer install \
-    --no-dev --prefer-dist --no-interaction --no-scripts \
-    --ignore-platform-req=ext-exif \
-    --ignore-platform-req=ext-gd
-
-
-# -----------------------------------------------------------------------------
-# Stage 3: Runtime (PHP 8.2 + Apache)
+# Stage 2: Runtime (PHP 8.2 + Apache)
 # -----------------------------------------------------------------------------
 FROM php:8.2-apache
 
@@ -60,8 +45,11 @@ WORKDIR /var/www/html
 # App code
 COPY . .
 
-# Vendor from composer stage
-COPY --from=composer_deps /app/vendor ./vendor
+# Install PHP deps AFTER code is present so classmap ("includes/") is found
+# (extensions are available in this stage, so no ignore-platform flags needed)
+RUN php -v && composer --version || true
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+RUN composer install --no-dev --prefer-dist --no-interaction --no-scripts
 
 # Built assets from Node stage
 COPY --from=assets /app/assets/css ./assets/css
