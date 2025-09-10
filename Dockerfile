@@ -4,21 +4,19 @@
 FROM node:20 AS assets
 WORKDIR /app
 
-# Install node deps (root-level package.json has gulp & deps)
+# Node deps
 COPY package*.json ./
 RUN npm ci
 
-# Copy build tooling and sources, then run gulp
+# Build tooling & sources
 COPY gulpfile.js ./
 COPY assets ./assets
-# If your gulp tasks read other files (templates), copy the rest too:
-COPY . .
+COPY . .        # if gulp reads templates/partials/etc.
 
-# Build optimized assets -> emits into /app/assets/{css,js,lib,...}
+# Build optimized assets -> emits into /app/assets/{css,js,lib,img,...}
 RUN npx gulp prod || npx gulp build
 
-# Also expose CKEditor where the app expects it (prevents 404 to /node_modules/...)
-# Only copies that single file path to keep image slim.
+# Expose CKEditor file at the path the app requests (/node_modules/...)
 RUN set -eux; \
   if [ -f node_modules/@ckeditor/ckeditor5-build-classic/build/ckeditor.js ]; then \
     mkdir -p /ckeditor-export/node_modules/@ckeditor/ckeditor5-build-classic/build; \
@@ -33,7 +31,11 @@ RUN set -eux; \
 FROM composer:2 AS composer_deps
 WORKDIR /app
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --prefer-dist --no-interaction --no-scripts
+# Ignore platform reqs here; extensions will exist in the runtime stage
+RUN composer install \
+    --no-dev --prefer-dist --no-interaction --no-scripts \
+    --ignore-platform-req=ext-exif \
+    --ignore-platform-req=ext-gd
 
 
 # -----------------------------------------------------------------------------
@@ -41,7 +43,7 @@ RUN composer install --no-dev --prefer-dist --no-interaction --no-scripts
 # -----------------------------------------------------------------------------
 FROM php:8.2-apache
 
-# System libs + PHP extensions (adds mbstring to avoid white screen)
+# System libs + PHP extensions (include mbstring to avoid blank page)
 RUN apt-get update && apt-get install -y --no-install-recommends \
       libzip-dev unzip git libpng-dev libjpeg-dev libfreetype6-dev \
   && docker-php-ext-configure gd --with-freetype --with-jpeg \
@@ -55,20 +57,19 @@ RUN printf "ServerName localhost\n" > /etc/apache2/conf-available/servername.con
 
 WORKDIR /var/www/html
 
-# Copy application code
+# App code
 COPY . .
 
-# Composer vendor from build stage
+# Vendor from composer stage
 COPY --from=composer_deps /app/vendor ./vendor
 
-# Copy built assets from Node stage
+# Built assets from Node stage
 COPY --from=assets /app/assets/css ./assets/css
 COPY --from=assets /app/assets/js  ./assets/js
 COPY --from=assets /app/assets/lib ./assets/lib
-# (Optional) If your gulp adds fonts/images into assets/, bring them too:
 COPY --from=assets /app/assets/img ./assets/img
 
-# Expose CKEditor file at the path templates request
+# CKEditor file at requested URL path
 COPY --from=assets /ckeditor-export/node_modules /var/www/html/node_modules
 
 # Permissions
