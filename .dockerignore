@@ -1,7 +1,11 @@
 .git
-.github
-node_modules
-vendor
-.cache
-__MACOSX
-.DS_Store
+.gitignore
+Dockerfile
+**/node_modules
+# KEEP these (do NOT ignore):
+# package.json
+# package-lock.json
+# gulpfile.js
+# assets/**
+# composer.json
+# composer.lock
