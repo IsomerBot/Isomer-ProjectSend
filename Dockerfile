@@ -1,38 +1,38 @@
 # -----------------------------------------------------------------------------
-# Stage 1: Frontend assets (build CSS/JS and provide CKEditor file expected by UI)
+# Stage 1: Frontend assets (Node + Gulp at repo root)
 # -----------------------------------------------------------------------------
 FROM node:20 AS assets
 WORKDIR /app
 
-# Copy only what we need first for better caching
-# (Adjust paths if your package.json is not under assets/)
-COPY assets/package*.json ./assets/
+# Install node deps (root-level package.json has gulp & deps)
+COPY package*.json ./
+RUN npm ci
 
-# Install deps if package.json exists (no-op otherwise)
-RUN [ -f ./assets/package.json ] && cd assets && npm ci || true
-
-# Copy sources and run build (no-op if no package.json)
+# Copy build tooling and sources, then run gulp
+COPY gulpfile.js ./
 COPY assets ./assets
-RUN [ -f ./assets/package.json ] && cd assets && npm run build || true
+# If your gulp tasks read other files (templates), copy the rest too:
+COPY . .
 
-# CKEditor: some templates request it from /node_modules/...
-# We’ll expose ONLY the ckeditor build at the expected path to avoid 404s.
-# (If your build bundles CKEditor elsewhere, this is harmless.)
+# Build optimized assets -> emits into /app/assets/{css,js,lib,...}
+RUN npx gulp prod || npx gulp build
+
+# Also expose CKEditor where the app expects it (prevents 404 to /node_modules/...)
+# Only copies that single file path to keep image slim.
 RUN set -eux; \
-  if [ -f assets/node_modules/@ckeditor/ckeditor5-build-classic/build/ckeditor.js ]; then \
+  if [ -f node_modules/@ckeditor/ckeditor5-build-classic/build/ckeditor.js ]; then \
     mkdir -p /ckeditor-export/node_modules/@ckeditor/ckeditor5-build-classic/build; \
-    cp assets/node_modules/@ckeditor/ckeditor5-build-classic/build/ckeditor.js \
+    cp node_modules/@ckeditor/ckeditor5-build-classic/build/ckeditor.js \
        /ckeditor-export/node_modules/@ckeditor/ckeditor5-build-classic/build/ckeditor.js; \
   fi
 
 
 # -----------------------------------------------------------------------------
-# Stage 2: PHP dependencies (composer install to vendor/)
+# Stage 2: Composer deps (vendor/)
 # -----------------------------------------------------------------------------
 FROM composer:2 AS composer_deps
 WORKDIR /app
 COPY composer.json composer.lock ./
-# If your app uses private repos, add auth here as needed
 RUN composer install --no-dev --prefer-dist --no-interaction --no-scripts
 
 
@@ -41,7 +41,7 @@ RUN composer install --no-dev --prefer-dist --no-interaction --no-scripts
 # -----------------------------------------------------------------------------
 FROM php:8.2-apache
 
-# System libs + PHP extensions
+# System libs + PHP extensions (adds mbstring to avoid white screen)
 RUN apt-get update && apt-get install -y --no-install-recommends \
       libzip-dev unzip git libpng-dev libjpeg-dev libfreetype6-dev \
   && docker-php-ext-configure gd --with-freetype --with-jpeg \
@@ -58,18 +58,20 @@ WORKDIR /var/www/html
 # Copy application code
 COPY . .
 
-# Bring in vendor from composer stage (faster, reproducible)
+# Composer vendor from build stage
 COPY --from=composer_deps /app/vendor ./vendor
 
-# Bring in built assets (copy only if present)
-# Adjust these lines if your build outputs to different dirs
+# Copy built assets from Node stage
 COPY --from=assets /app/assets/css ./assets/css
 COPY --from=assets /app/assets/js  ./assets/js
+COPY --from=assets /app/assets/lib ./assets/lib
+# (Optional) If your gulp adds fonts/images into assets/, bring them too:
+COPY --from=assets /app/assets/img ./assets/img
 
-# Expose CKEditor file at the path your pages request (prevents 404)
+# Expose CKEditor file at the path templates request
 COPY --from=assets /ckeditor-export/node_modules /var/www/html/node_modules
 
-# Permissions for www-data
+# Permissions
 RUN chown -R www-data:www-data /var/www/html
 
 EXPOSE 80
