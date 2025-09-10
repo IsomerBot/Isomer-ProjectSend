@@ -11,6 +11,7 @@ RUN npm ci
 # Build tooling & sources
 COPY gulpfile.js ./
 COPY . .        # gulp often reads templates/partials; safe to copy
+
 # Build optimized assets -> emits into /app/assets/{css,js,lib,img,...}
 RUN npx gulp prod || npx gulp build
 
@@ -22,17 +23,18 @@ RUN set -eux; \
        /ckeditor-export/node_modules/@ckeditor/ckeditor5-build-classic/build/ckeditor.js; \
   fi
 
-
 # -----------------------------------------------------------------------------
 # Stage 2: Runtime (PHP 8.2 + Apache)
 # -----------------------------------------------------------------------------
 FROM php:8.2-apache
 
 # System libs + PHP extensions (include mbstring to avoid blank page)
+# NOTE: add libonig-dev + pkg-config so mbstring can compile
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      libzip-dev unzip git libpng-dev libjpeg-dev libfreetype6-dev \
+      libzip-dev unzip git pkg-config libonig-dev \
+      libpng-dev libjpeg-dev libfreetype6-dev \
   && docker-php-ext-configure gd --with-freetype --with-jpeg \
-  && docker-php-ext-install pdo pdo_mysql zip gd exif mbstring \
+  && docker-php-ext-install -j"$(nproc)" pdo pdo_mysql zip gd exif mbstring \
   && a2enmod rewrite headers expires \
   && rm -rf /var/lib/apt/lists/*
 
@@ -45,9 +47,7 @@ WORKDIR /var/www/html
 # App code
 COPY . .
 
-# Install PHP deps AFTER code is present so classmap ("includes/") is found
-# (extensions are available in this stage, so no ignore-platform flags needed)
-RUN php -v && composer --version || true
+# Install Composer and PHP deps after code is present (classmap sees includes/)
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --prefer-dist --no-interaction --no-scripts
 
