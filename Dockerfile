@@ -46,12 +46,12 @@ RUN set -eux; \
 # -----------------------------------------------------------------------------
 FROM php:8.2-apache
 
-# System libs + PHP extensions (mbstring needs libonig-dev)
+# System libs + PHP extensions (ADD: mysqli)
 RUN apt-get update && apt-get install -y --no-install-recommends \
       libzip-dev unzip git pkg-config libonig-dev \
       libpng-dev libjpeg-dev libfreetype6-dev \
   && docker-php-ext-configure gd --with-freetype --with-jpeg \
-  && docker-php-ext-install -j"$(nproc)" pdo pdo_mysql zip gd exif mbstring \
+  && docker-php-ext-install -j"$(nproc)" pdo pdo_mysql mysqli zip gd exif mbstring \
   && a2enmod rewrite headers expires \
   && rm -rf /var/lib/apt/lists/*
 
@@ -68,14 +68,22 @@ COPY . .
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --prefer-dist --no-interaction --no-scripts
 
-# Bring built assets from the assets stage
-COPY --from=assets /app/assets/css ./assets/css
-COPY --from=assets /app/assets/js  ./assets/js
-COPY --from=assets /app/assets/lib ./assets/lib
-COPY --from=assets /app/assets/img ./assets/img
+# Bring built assets from the assets stage (include fonts to avoid 404s)
+COPY --from=assets /app/assets/css    ./assets/css
+COPY --from=assets /app/assets/js     ./assets/js
+COPY --from=assets /app/assets/lib    ./assets/lib
+COPY --from=assets /app/assets/img    ./assets/img
+COPY --from=assets /app/assets/fonts  ./assets/fonts
 
 # CKEditor at requested URL path
 COPY --from=assets /ckeditor-export/node_modules /var/www/html/node_modules
+
+# Ensure writable upload/temp/session directories
+RUN mkdir -p /var/www/html/upload/files /var/www/html/upload/temp /var/www/html/temp/php-sessions \
+ && chown -R www-data:www-data /var/www/html/upload /var/www/html/temp
+
+# PHP runtime defaults (writable session path; safe limits)
+RUN printf "session.save_path=/var/www/html/temp/php-sessions\nmemory_limit=256M\n" > /usr/local/etc/php/conf.d/zz-projectsend.ini
 
 # Permissions
 RUN chown -R www-data:www-data /var/www/html
