@@ -1,11 +1,10 @@
 # -----------------------------------------------------------------------------
-# Stage 0: Composer deps just to provide vendor/ to the Gulp build
+# Stage 0: Composer deps to provide vendor/ for the asset pipeline (no autoloader)
 # -----------------------------------------------------------------------------
 FROM composer:2 AS composer_for_assets
 WORKDIR /app
 COPY composer.json composer.lock ./
-# We only need vendor files for the asset pipeline; ignore ext reqs here.
-RUN composer install --no-dev --prefer-dist --no-interaction --no-scripts \
+RUN composer install --no-dev --prefer-dist --no-interaction --no-scripts --no-autoloader \
     --ignore-platform-req=ext-exif \
     --ignore-platform-req=ext-gd
 
@@ -15,27 +14,26 @@ RUN composer install --no-dev --prefer-dist --no-interaction --no-scripts \
 FROM node:16-bullseye AS assets
 WORKDIR /app
 
-# Tooling that older gulp/node-sass stacks sometimes need
-RUN apt-get update && apt-get install -y --no-install-recommends \
-      python3 make g++ \
-  && rm -rf /var/lib/apt/lists/*
+# Tooling for older gulp/node-sass stacks
+RUN apt-get update && apt-get install -y --no-install-recommends python3 make g++ \
+ && rm -rf /var/lib/apt/lists/*
 
 # Node deps + gulp-cli
 COPY package*.json ./
 RUN npm ci || npm install
 RUN npm i -g gulp-cli
 
-# Bring vendor/ from composer stage so Gulp globs resolve (plupload css path)
+# Provide vendor/ so gulp globs like vendor/moxiecode/... resolve
 COPY --from=composer_for_assets /app/vendor ./vendor
 
 # Copy sources the gulpfile reads
 COPY gulpfile.js ./
 COPY . .
 
-# Build ONLY (avoid 'prod' and 'watch' which cause your errors)
+# Build ONLY (avoid prod/watch to dodge cleanCSS error)
 RUN gulp build
 
-# Also expose CKEditor file under the URL your pages request
+# Expose CKEditor at the path requested by the UI (/node_modules/...)
 RUN set -eux; \
   if [ -f node_modules/@ckeditor/ckeditor5-build-classic/build/ckeditor.js ]; then \
     mkdir -p /ckeditor-export/node_modules/@ckeditor/ckeditor5-build-classic/build; \
@@ -48,7 +46,7 @@ RUN set -eux; \
 # -----------------------------------------------------------------------------
 FROM php:8.2-apache
 
-# System libs + PHP extensions (mbstring requires libonig-dev)
+# System libs + PHP extensions (mbstring needs libonig-dev)
 RUN apt-get update && apt-get install -y --no-install-recommends \
       libzip-dev unzip git pkg-config libonig-dev \
       libpng-dev libjpeg-dev libfreetype6-dev \
@@ -66,17 +64,17 @@ WORKDIR /var/www/html
 # App code
 COPY . .
 
-# Install Composer deps in the runtime image (proper extensions present)
+# Composer (full install WITH autoloader now that code is present)
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --prefer-dist --no-interaction --no-scripts
 
-# Copy the built assets from the assets stage
+# Bring built assets from the assets stage
 COPY --from=assets /app/assets/css ./assets/css
 COPY --from=assets /app/assets/js  ./assets/js
 COPY --from=assets /app/assets/lib ./assets/lib
 COPY --from=assets /app/assets/img ./assets/img
 
-# Provide CKEditor at the requested /node_modules/... path
+# CKEditor at requested URL path
 COPY --from=assets /ckeditor-export/node_modules /var/www/html/node_modules
 
 # Permissions
