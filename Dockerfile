@@ -10,7 +10,8 @@ RUN npm ci
 
 # Build tooling & sources
 COPY gulpfile.js ./
-COPY . .        # gulp often reads templates/partials; safe to copy
+# Copy the whole repo so gulp can read templates/partials as needed
+COPY . .
 
 # Build optimized assets -> emits into /app/assets/{css,js,lib,img,...}
 RUN npx gulp prod || npx gulp build
@@ -28,8 +29,7 @@ RUN set -eux; \
 # -----------------------------------------------------------------------------
 FROM php:8.2-apache
 
-# System libs + PHP extensions (include mbstring to avoid blank page)
-# NOTE: add libonig-dev + pkg-config so mbstring can compile
+# System libs + PHP extensions (include mbstring + oniguruma)
 RUN apt-get update && apt-get install -y --no-install-recommends \
       libzip-dev unzip git pkg-config libonig-dev \
       libpng-dev libjpeg-dev libfreetype6-dev \
