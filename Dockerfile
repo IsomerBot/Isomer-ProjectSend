@@ -1,22 +1,30 @@
 # -----------------------------------------------------------------------------
-# Stage 1: Frontend assets (Node + Gulp at repo root)
+# Stage 1: Frontend assets (Node 16 + Gulp at repo root)
 # -----------------------------------------------------------------------------
-FROM node:20 AS assets
+FROM node:16-bullseye AS assets
 WORKDIR /app
 
-# Node deps
-COPY package*.json ./
-RUN npm ci
+# Build tools sometimes needed by older node-sass / gulp stacks
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      python3 make g++ \
+  && rm -rf /var/lib/apt/lists/*
 
-# Build tooling & sources
+# Node deps and gulp-cli
+COPY package*.json ./
+RUN npm ci || npm install
+RUN npm i -g gulp-cli
+
+# Copy sources (gulp often reads templates/partials)
 COPY gulpfile.js ./
-# Copy the whole repo so gulp can read templates/partials as needed
 COPY . .
 
 # Build optimized assets -> emits into /app/assets/{css,js,lib,img,...}
-RUN npx gulp prod || npx gulp build
+# Try common task names; stop on first that succeeds
+RUN set -eux; \
+  (gulp --version && (gulp prod || gulp build || gulp default || gulp)) \
+  || (npx gulp prod || npx gulp build || npx gulp)
 
-# Expose CKEditor file at the exact URL your pages request (/node_modules/...)
+# Expose CKEditor file at the URL your pages request (/node_modules/...)
 RUN set -eux; \
   if [ -f node_modules/@ckeditor/ckeditor5-build-classic/build/ckeditor.js ]; then \
     mkdir -p /ckeditor-export/node_modules/@ckeditor/ckeditor5-build-classic/build; \
@@ -24,12 +32,13 @@ RUN set -eux; \
        /ckeditor-export/node_modules/@ckeditor/ckeditor5-build-classic/build/ckeditor.js; \
   fi
 
+
 # -----------------------------------------------------------------------------
 # Stage 2: Runtime (PHP 8.2 + Apache)
 # -----------------------------------------------------------------------------
 FROM php:8.2-apache
 
-# System libs + PHP extensions (include mbstring + oniguruma)
+# System libs + PHP extensions (mbstring requires libonig-dev)
 RUN apt-get update && apt-get install -y --no-install-recommends \
       libzip-dev unzip git pkg-config libonig-dev \
       libpng-dev libjpeg-dev libfreetype6-dev \
@@ -47,7 +56,7 @@ WORKDIR /var/www/html
 # App code
 COPY . .
 
-# Install Composer and PHP deps after code is present (classmap sees includes/)
+# Composer (run after code is present so classmap sees includes/)
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --prefer-dist --no-interaction --no-scripts
 
