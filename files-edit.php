@@ -461,7 +461,10 @@ if (isset($_POST["save"])) {
         }
         if (!empty($notifications->getNotificationsFailed())) {
             $flash->error(
-                __("One or more notifications couldn't be sent.", "cftp_admin")
+                __(
+                    "One or more notifications couldn't be sent. Please confirm all email addresses and try again.",
+                    "cftp_admin"
+                )
             );
         }
         if (!empty($notifications->getNotificationsInactiveAccounts())) {
@@ -513,30 +516,9 @@ if (isset($_POST["save"])) {
 if (!empty($editable) && !isset($_GET["saved"])) {
     if (CURRENT_USER_LEVEL != 0) {
         $flash->info(
-            __(
-                "You can skip assigning if you want. The files are retained and you may add them to clients or groups later.",
-                "cftp_admin"
-            )
+            __("Please complete all red required fields.", "cftp_admin")
         );
     }
-}
-
-if (count($editable) > 1) {
-    // Header buttons
-    $header_action_buttons = [
-        [
-            "url" => "#",
-            "id" => "files_collapse_all",
-            "icon" => "fa fa-chevron-right",
-            "label" => __("Collapse all", "cftp_admin"),
-        ],
-        [
-            "url" => "#",
-            "id" => "files_expand_all",
-            "icon" => "fa fa-chevron-down",
-            "label" => __("Expand all", "cftp_admin"),
-        ],
-    ];
 }
 
 // Include layout files
