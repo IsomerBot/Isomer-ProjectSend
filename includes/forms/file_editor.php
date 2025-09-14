@@ -194,6 +194,10 @@ if (isset($_GET["confirm"])) {
                                 echo '<option value="">Error loading disciplines</option>';
                             } ?>
                         </select>
+                        <p class="field_note form-text"><?php _e(
+                            "All files in this transmittal will use this discipline.",
+                            "cftp_admin"
+                        ); ?></p>
                     </div>
 
                     <div class="form-group">
@@ -256,11 +260,14 @@ if (isset($_GET["confirm"])) {
                                 }
                             } ?>
                         </select>
+                        <p class="field_note form-text"><?php _e(
+                            "All files in this transmittal will use this deliverable type.",
+                            "cftp_admin"
+                        ); ?></p>
                     </div>
                 </div>
 
-
-                    <div class="col-md-6">
+                <div class="col-md-6">
                     <div class="form-group">
                         <label for="comments"><?php _e(
                             "Transmittal Comments*",
@@ -303,12 +310,16 @@ if (isset($_GET["confirm"])) {
                         ); ?>"><?php echo htmlspecialchars(
     $existing_transmittal_data["file_bcc_addresses"] ?? ""
 ); ?></textarea>
+                        <p class="field_note form-text"><?php _e(
+                            "These email addresses will receive a hidden copy of the notification for this specific transmittal.",
+                            "cftp_admin"
+                        ); ?></p>
                     </div>
 
                     <h3><?php _e("Assignments", "cftp_admin"); ?></h3>
                     
                     <div class="form-group">
-                        
+                      
                             <?php
                             // Get all groups for transmittal assignment
                             $me = new \ProjectSend\Classes\Users(
@@ -332,7 +343,7 @@ if (isset($_GET["confirm"])) {
                         <select class="form-select select2 none" multiple="multiple" 
                                  id="transmittal_clients" name="transmittal_clients[]" 
                                  data-placeholder="<?php _e(
-                                     "Type to search and select",
+                                     "Confirm or revise Project Contacts. Type to search.",
                                      "cftp_admin"
                                  ); ?>">
                             <?php
@@ -365,7 +376,7 @@ if (isset($_GET["confirm"])) {
                         <select class="form-select select2 none" multiple="multiple" 
                                  id="transmittal_categories" name="transmittal_categories[]" 
                                  data-placeholder="<?php _e(
-                                     "Type to search",
+                                     "Confirm or revise Categories.",
                                      "cftp_admin"
                                  ); ?>">
                             <?php if (!empty($get_categories["arranged"])) {
@@ -439,11 +450,14 @@ if (isset($_GET["confirm"])) {
                                     <button type="button" class="btn btn-md btn-secondary toggle_file_editor">
                                         <i class="fa fa-chevron-right" aria-hidden="true"></i>
                                     </button>
-<p><?php
-// Remove file extension for display
-$display_filename = pathinfo($file->filename_original, PATHINFO_FILENAME);
-echo htmlspecialchars($display_filename);
-?></p>
+                                    <p><?php
+                                    // Remove file extension for display
+                                    $display_filename = pathinfo(
+                                        $file->filename_original,
+                                        PATHINFO_FILENAME
+                                    );
+                                    echo htmlspecialchars($display_filename);
+                                    ?></p>
                                 </div>
                             </div>
                         </div>
@@ -496,7 +510,7 @@ echo htmlspecialchars($display_filename);
                                                                )
                                                            ); ?>"  
                                                            placeholder="<?php _e(
-                                                               "Optional, enter a document title",
+                                                               "Enter Document Title",
                                                                "cftp_admin"
                                                            ); ?>" />
                                                 </div>
@@ -567,10 +581,13 @@ echo htmlspecialchars($display_filename);
                                                                    ""
                                                            ); ?>"  
                                                            placeholder="<?php _e(
-                                                               "Optional, enter a client document number",
+                                                               "Enter Client Document Number",
                                                                "cftp_admin"
                                                            ); ?>" />
-                                                  
+                                                    <p class="field_note form-text"><?php _e(
+                                                        "Optional: Enter the client's reference number for this document.",
+                                                        "cftp_admin"
+                                                    ); ?></p>
                                                 </div>
 
                                                 <div class="form-group">
@@ -584,7 +601,7 @@ echo htmlspecialchars($display_filename);
                                                             $custom_download
                                                     ) {
                                                         $trans = __(
-                                                            "Example: my-first-file",
+                                                            "Enter a custom download link.",
                                                             "cftp_admin"
                                                         );
                                                         $custom_download_uri = get_option(
@@ -614,7 +631,7 @@ EOL;
                                                     <p class="field_note form-text">
                                                         <?php echo sprintf(
                                                             __(
-                                                                "Optional, enter an alias to use as a custom download link to send to others"
+                                                                'Optional: enter an alias to use on the custom download link. Ej: "my-first-file" will let you download this file from %s'
                                                             ),
                                                             BASE_URI .
                                                                 "custom-download.php?link=my-first-file"
@@ -1016,6 +1033,45 @@ EOL;
         background-color: #4c2ab6 !important;
     }
 
+    /* File controls styling */
+    .file-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .collapse-expand-controls {
+        display: flex;
+        gap: 10px;
+    }
+
+    /* File title styling */
+    .file_title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .file_title p {
+        margin: 0;
+        font-weight: bold;
+        color: #333;
+    }
+
+    /* Message styling for automation feedback */
+    #filename-parsing-message {
+        margin: 15px 0;
+        padding: 12px;
+        border-radius: 6px;
+        border: 1px solid;
+        font-size: 14px;
+    }
+
+    #filename-parsing-message i {
+        margin-right: 8px;
+    }
     </style>
 
    <?php if (CURRENT_USER_LEVEL != 0): ?>
@@ -1059,14 +1115,40 @@ EOL;
                 });
             }
 
-            // Auto-populate from filename parsing - only run on first load, not when editing
+            // Individual file toggle functionality
+            document.querySelectorAll('.toggle_file_editor').forEach(function(button) {
+                button.addEventListener('click', function() {
+                    const wrapper = this.closest('.file_editor_wrapper');
+                    const editor = wrapper.querySelector('.file_editor');
+                    const icon = this.querySelector('i');
+                    
+                    if (editor.style.display === 'none' || editor.style.display === '') {
+                        // Expand this file
+                        editor.style.display = 'block';
+                        icon.classList.remove('fa-chevron-right');
+                        icon.classList.add('fa-chevron-down');
+                    } else {
+                        // Collapse this file
+                        editor.style.display = 'none';
+                        icon.classList.remove('fa-chevron-down');
+                        icon.classList.add('fa-chevron-right');
+                    }
+                });
+            });
+
+            // Initialize all files as collapsed on page load
+            document.querySelectorAll('.file_editor').forEach(function(editor) {
+                editor.style.display = 'none';
+            });
+
+            // **CRITICAL AUTOMATION TRIGGER** - Auto-populate from filename parsing - only run on first load, not when editing
             if (!document.querySelector('input[name="project_number"]').value) {
                 parseFilenamesAndPopulate();
             }
         });
         
         document.addEventListener('DOMContentLoaded', function() {
-            // NEW: JavaScript for transmittal-level discipline/deliverable type dependency
+            // JavaScript for transmittal-level discipline/deliverable type dependency
             const transmittalDisciplineSelect = document.getElementById('transmittal_discipline');
             const transmittalDeliverableTypeSelect = document.getElementById('transmittal_deliverable_type');
             
@@ -1117,6 +1199,78 @@ EOL;
                     transmittalDisciplineSelect.dispatchEvent(new Event('change'));
                 }
             }
+
+            // Enhanced manual category selection when discipline/deliverable changes
+            const disciplineSelect = document.getElementById('transmittal_discipline');
+            const deliverableSelect = document.getElementById('transmittal_deliverable_type');
+            const categorySelect = document.getElementById('transmittal_categories');
+            
+            // Function to suggest category based on current discipline + deliverable selection
+            function suggestCategory() {
+                const discipline = disciplineSelect?.value;
+                const deliverable = deliverableSelect?.value;
+                
+                if (discipline && deliverable && categorySelect) {
+                    // Look for category option that matches the discipline + deliverable pattern
+                    const options = categorySelect.querySelectorAll('option');
+                    
+                    for (let option of options) {
+                        const optionText = option.textContent.toLowerCase();
+                        const disciplineLower = discipline.toLowerCase();
+                        const deliverableLower = deliverable.toLowerCase();
+                        
+                        // Check if option text contains both discipline and deliverable
+                        if (optionText.includes(disciplineLower) && optionText.includes(deliverableLower)) {
+                            if (typeof $ !== 'undefined' && $(categorySelect).data('select2')) {
+                                // Select2 multi-select
+                                let currentValues = $(categorySelect).val() || [];
+                                if (!currentValues.includes(option.value)) {
+                                    currentValues.push(option.value);
+                                    $(categorySelect).val(currentValues).trigger('change');
+                                }
+                            } else {
+                                // Standard multi-select
+                                if (!option.selected) {
+                                    option.selected = true;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            // Suggest category when deliverable type changes
+            if (deliverableSelect) {
+                deliverableSelect.addEventListener('change', suggestCategory);
+            }
+
+            // Issue Status Override functionality
+            document.querySelectorAll('.checkbox_setting_issue_override').forEach(function(checkbox) {
+                checkbox.addEventListener('change', function() {
+                    const fileIndex = this.id.replace('issue_override_checkbox_', '');
+                    const overrideField = document.getElementById('issue_override_field_' + fileIndex);
+                    const customStatusSelect = document.getElementById('custom_issue_status_' + fileIndex);
+                    
+                    if (this.checked) {
+                        // Show the override field
+                        overrideField.style.display = 'block';
+                        customStatusSelect.required = true;
+                    } else {
+                        // Hide the override field and clear selection
+                        overrideField.style.display = 'none';
+                        customStatusSelect.value = '';
+                        customStatusSelect.required = false;
+                    }
+                });
+                
+                // Check initial state on page load
+                const fileIndex = checkbox.id.replace('issue_override_checkbox_', '');
+                const overrideField = document.getElementById('issue_override_field_' + fileIndex);
+                if (checkbox.checked) {
+                    overrideField.style.display = 'block';
+                }
+            });
 
             // "Apply to All Files" button functionality
             
@@ -1177,7 +1331,7 @@ EOL;
                 });
             });
 
-            // Client Document Number (now implemented)
+            // Client Document Number
             document.querySelectorAll('.copy-client-doc-number').forEach(function(button) {
                 button.addEventListener('click', function() {
                     const sourceId = this.getAttribute('data-copy-from');
@@ -1200,11 +1354,35 @@ EOL;
                 button.addEventListener('click', function() {
                     const sourceId = this.getAttribute('data-copy-from');
                     const sourceCheckbox = document.getElementById(sourceId);
+                    const sourceFileIndex = sourceId.replace('issue_override_checkbox_', '');
+                    const sourceCustomStatus = document.getElementById('custom_issue_status_' + sourceFileIndex);
+                    
                     if (!sourceCheckbox) return;
                     
-                    // Apply to all issue override checkboxes
+                    const isChecked = sourceCheckbox.checked;
+                    const customStatusValue = sourceCustomStatus ? sourceCustomStatus.value : '';
+                    
+                    // Apply to all issue override checkboxes and custom status dropdowns
                     document.querySelectorAll('[id^="issue_override_checkbox_"]').forEach(function(checkbox) {
-                        checkbox.checked = sourceCheckbox.checked;
+                        const fileIndex = checkbox.id.replace('issue_override_checkbox_', '');
+                        const overrideField = document.getElementById('issue_override_field_' + fileIndex);
+                        const customStatusSelect = document.getElementById('custom_issue_status_' + fileIndex);
+
+                        // Set checkbox state
+                        checkbox.checked = isChecked;
+
+                        // Show/hide override field
+                        if (isChecked) {
+                            overrideField.style.display = 'block';
+                            customStatusSelect.required = true;
+                            if (customStatusValue) {
+                                customStatusSelect.value = customStatusValue;
+                            }
+                        } else {
+                            overrideField.style.display = 'none';
+                            customStatusSelect.value = '';
+                            customStatusSelect.required = false;
+                        }
                     });
                     
                     alert('Issue Status Override applied to all files');
@@ -1217,9 +1395,9 @@ EOL;
                     const sourceId = this.getAttribute('data-copy-from');
                     const sourceTextarea = document.getElementById(sourceId);
                     if (!sourceTextarea) return;
-                    
+
                     const sourceValue = sourceTextarea.value;
-                    
+
                     // Apply to all file comments textareas
                     document.querySelectorAll('[id^="file_comments_"]').forEach(function(textarea) {
                         textarea.value = sourceValue;
@@ -1239,14 +1417,14 @@ EOL;
                     const sourceId = this.getAttribute('data-copy-from');
                     const sourceInput = document.getElementById(sourceId);
                     if (!sourceInput) return;
-                    
+
                     const sourceValue = sourceInput.value;
-                    
+
                     // Apply to all document title inputs
                     document.querySelectorAll('[id^="document_title_"]').forEach(function(input) {
                         input.value = sourceValue;
                     });
-                    
+
                     alert('Document title applied to all files');
                 });
             });
@@ -1257,7 +1435,7 @@ EOL;
                     const sourceId = this.getAttribute('data-copy-from');
                     const sourceSelect = document.getElementById(sourceId);
                     if (!sourceSelect) return;
-                    
+
                     const sourceValue = sourceSelect.value;
                     
                     // Apply to all custom issue status selects
@@ -1270,34 +1448,240 @@ EOL;
             });
         });
 
-        // Add this inside the existing <script> tag, after the expand/collapse all functionality:
+        // **CORE AUTOMATION FUNCTION** - This is the main filename parsing automation
+        function parseFilenamesAndPopulate() {
+            // Get all file original names from the form
+            const fileInputs = document.querySelectorAll('input[name*="[original]"]');
+            
+            if (fileInputs.length === 0) return;
+            
+            // Use the first file to extract project-level data
+            const firstFilename = fileInputs[0].value;
+            
+            // Send AJAX request to parse filename
+            fetch('parse_filename.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    filename: firstFilename,
+                    action: 'parse_filename'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.parsed_successfully) {
+                    // Populate transmittal-level fields
+                    if (data.project_number) {
+                        const projectNumberField = document.getElementById('project_number');
+                        if (projectNumberField && !projectNumberField.value) {
+                            projectNumberField.value = data.project_number;
+                        }
+                    }
+                    
+                    // Auto-populate project name from centralized table
+                    if (data.project_number) {
+                        fetch(`api/get_project_name.php?project_number=${encodeURIComponent(data.project_number)}`)
+                        .then(response => response.json())
+                        .then(projectData => {
+                            if (projectData.success && projectData.project_name) {
+                                const projectNameField = document.getElementById('project_name');
+                                if (projectNameField && !projectNameField.value) {
+                                    projectNameField.value = projectData.project_name;
+                                    showParsingMessage('success', `Project name populated: ${projectData.project_name}`);
+                                }
+                            }
+                        })
+                        .catch(error => console.error('Error fetching project name:', error));
+                    }
+                    
+                    if (data.discipline) {
+                        const disciplineField = document.getElementById('transmittal_discipline');
+                        if (disciplineField && !disciplineField.value) {
+                            disciplineField.value = data.discipline;
+                            // Trigger change event to load deliverable types
+                            disciplineField.dispatchEvent(new Event('change'));
+                            
+                            // Set deliverable type after a short delay to allow loading
+                            if (data.deliverable_type) {
+                                setTimeout(() => {
+                                    const deliverableField = document.getElementById('transmittal_deliverable_type');
+                                    if (deliverableField) {
+                                        deliverableField.value = data.deliverable_type;
+                                    }
+                                }, 500);
+                            }
+                        }
+                    }
 
-        // Individual file toggle functionality
-        document.querySelectorAll('.toggle_file_editor').forEach(function(button) {
-    button.addEventListener('click', function() {
-        const wrapper = this.closest('.file_editor_wrapper');
-        const editor = wrapper.querySelector('.file_editor');
-        const icon = this.querySelector('i');
-        
-        if (editor.style.display === 'none' || editor.style.display === '') {
-            // Expand this file
-            editor.style.display = 'block';
-            icon.classList.remove('fa-chevron-right');
-            icon.classList.add('fa-chevron-down');
-        } else {
-            // Collapse this file
-            editor.style.display = 'none';
-            icon.classList.remove('fa-chevron-down');
-            icon.classList.add('fa-chevron-right');
+                    // Auto-populate Project Contacts based on project number  
+                    if (data.project_number) {
+                        // Look up the group_id from the project_number
+                        fetch(`api/get_group_id.php?project_number=${encodeURIComponent(data.project_number)}`)
+                        .then(response => response.json())
+                        .then(groupData => {
+                            console.log('Group data received:', groupData);
+                            if (groupData.success && groupData.group_id) {
+                                // Now that we have the group ID, fetch the members using updated API
+                                fetch(`api/get_group_members.php?group_id=${groupData.group_id}`)
+                                .then(response => {
+                                    console.log('Members API response status:', response.status);
+                                    return response.json();
+                                })
+                                .then(membersData => {
+                                    console.log('Members data received:', membersData);
+                                    if (membersData.success && membersData.members && membersData.members.length > 0) {
+                                        const clientsSelect = document.getElementById('transmittal_clients');
+                                        if (clientsSelect) {
+                                            // Clear existing selections if using Select2
+                                            if (typeof $ !== 'undefined' && $(clientsSelect).data('select2')) {
+                                                $(clientsSelect).val(null).trigger('change');
+                                            }
+
+                                            // Select the group members
+                                            let selectedValues = [];
+                                            membersData.members.forEach(memberId => {
+                                                const option = clientsSelect.querySelector(`option[value="${memberId}"]`);
+                                                if (option) {
+                                                    option.selected = true;
+                                                    selectedValues.push(memberId.toString());
+                                                    console.log(`Selected contact: ${option.textContent} (ID: ${memberId})`);
+                                                } else {
+                                                    console.warn(`No option found for member ID: ${memberId}`);
+                                                }
+                                            });
+                                            
+                                            // Trigger Select2 update if available
+                                            if (typeof $ !== 'undefined' && $(clientsSelect).data('select2')) {
+                                                $(clientsSelect).val(selectedValues).trigger('change');
+                                            }
+                                            
+                                            showParsingMessage('success', `Auto-selected ${membersData.count} project contacts`);
+                                        }
+                                    } else {
+                                        console.error('Error fetching group members:', membersData.error || 'No members found');
+                                        showParsingMessage('info', 'No project contacts found for this project');
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error fetching group members:', error);
+                                    showParsingMessage('warning', 'Could not load project contacts');
+                                });
+                            } else {
+                                console.warn('Group ID not found for project number:', data.project_number);
+                                showParsingMessage('info', 'No group found for this project number');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching group ID:', error);
+                            showParsingMessage('warning', 'Could not look up project group');
+                        });
+                    }
+
+                    // Auto-populate categories based on parsed discipline + deliverable
+                    if (data.discipline && data.deliverable_type) {
+                        setTimeout(() => {
+                            const categoryField = document.getElementById('transmittal_categories');
+                            const selectedDiscipline = data.discipline;
+                            const selectedDeliverable = data.deliverable_type;
+                            
+                            if (categoryField) {
+                                // Make AJAX call to find the specific category ID for this discipline + deliverable combination
+                                fetch('api/get_category_by_discipline_deliverable.php', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        discipline: selectedDiscipline,
+                                        deliverable_type: selectedDeliverable
+                                    })
+                                })
+                                .then(response => response.json())
+                                .then(categoryData => {
+                                    if (categoryData.success && categoryData.category_id) {
+                                        if (typeof $ !== 'undefined' && $(categoryField).data('select2')) {
+                                            let currentValues = $(categoryField).val() || [];
+                                            if (!currentValues.includes(categoryData.category_id.toString())) {
+                                                currentValues.push(categoryData.category_id.toString());
+                                                $(categoryField).val(currentValues).trigger('change');
+                                            }
+                                        }
+                                        showParsingMessage('success', `Selected specific category: ${categoryData.category_name}`);
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error finding specific category:', error);
+                                });
+                            }
+                        }, 750);
+                    }
+
+                    // Show success message
+                    let message = `Filename parsed successfully! Project: ${data.project_number}, Discipline: ${data.discipline}`;
+                    if (data.category_ids && data.category_ids.length > 0) {
+                        message += ', Categories auto-selected';
+                    }
+                    showParsingMessage('success', message);
+
+                } else {
+                    // Show partial success or info message
+                    let message = 'Could not fully parse filename. ';
+                    if (data.project_number) {
+                        message += `Found project number: ${data.project_number}`;
+                    } else {
+                        message += 'Please fill in project information manually.';
+                    }
+                    showParsingMessage('info', message);
+                }
+            })
+            .catch(error => {
+                console.error('Error parsing filename:', error);
+                showParsingMessage('warning', 'Could not parse filename automatically. Please fill in fields manually.');
+            });
         }
-    });
-});
 
-// Initialize all files as collapsed on page load
-document.querySelectorAll('.file_editor').forEach(function(editor) {
-    editor.style.display = 'none';
-});
+        function showParsingMessage(type, message) {
+            // Create or update parsing message div
+            let messageDiv = document.getElementById('filename-parsing-message');
+            if (!messageDiv) {
+                messageDiv = document.createElement('div');
+                messageDiv.id = 'filename-parsing-message';
+                messageDiv.style.margin = '10px 0';
+                messageDiv.style.padding = '10px';
+                messageDiv.style.borderRadius = '4px';
+                
+                // Insert after the first form header
+                const firstHeader = document.querySelector('h3');
+                if (firstHeader) {
+                    firstHeader.parentNode.insertBefore(messageDiv, firstHeader.nextSibling);
+                }
+            }
+            
+            // Set message style based on type
+            const styles = {
+                'success': { background: '#d4edda', border: '#c3e6cb', color: '#155724' },
+                'info': { background: '#d1ecf1', border: '#bee5eb', color: '#0c5460' },
+                'warning': { background: '#fff3cd', border: '#ffeaa7', color: '#856404' }
+            };
+            
+            const style = styles[type] || styles['info'];
+            messageDiv.style.backgroundColor = style.background;
+            messageDiv.style.borderColor = style.border;
+            messageDiv.style.color = style.color;
+            messageDiv.style.border = `1px solid ${style.border}`;
+            
+            messageDiv.innerHTML = `<i class="fa fa-info-circle"></i> ${message}`;
+            
+            // Auto-hide after 5 seconds for success messages
+            if (type === 'success') {
+                setTimeout(() => {
+                    messageDiv.style.display = 'none';
+                }, 5000);
+            }
+        }
     </script>
         <?php endif; ?>
     <?php endif; ?>
-        </form>
+</form>

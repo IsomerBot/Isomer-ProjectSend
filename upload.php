@@ -36,12 +36,21 @@ if (LOADED_LANG != "en") {
 
 message_no_clients();
 
+// if (defined("UPLOAD_MAX_FILESIZE")) {
+//     $msg =
+//         __(
+//             // "Click on Add files to select all the files that you want to upload, and then click continue. On the next step, you will be able to set a name and description for each uploaded file. Remember that the maximum allowed file size (in mb.) is ",
+//             "cftp_admin"
+//         ) .
+//         " <strong>" .
+//         UPLOAD_MAX_FILESIZE .
+//         "</strong>";
+//     $flash->info($msg);
+// }
+
 include_once ADMIN_VIEWS_DIR . DS . "header.php";
 $chunk_size = get_option("upload_chunk_size");
 ?>
-
-<!-- Ensure Plupload CSS is loaded -->
-<link rel="stylesheet" type="text/css" href="vendor/moxiecode/plupload/js/plupload.queue.css" />
 
 <div class="row">
     <div class="col-12">
@@ -64,58 +73,51 @@ $chunk_size = get_option("upload_chunk_size");
         </div>
         
         <!-- Upload form container -->
-        <div id="uploader">
+        <!-- <div id="uploader">
             <p>Your browser doesn't have Flash, Silverlight or HTML5 support.</p>
-        </div>
-        
-        <!-- Upload form -->
-        <form action="files-edit.php" name="upload_form" id="upload_form" method="post" enctype="multipart/form-data">
-            <?php addCsrf(); ?>
-            <input type="hidden" name="uploaded_files" id="uploaded_files" value="" />
-            <input type="hidden" name="editor_type" value="new_files" />
-            
-            <div class="after_form_buttons" id="continue-section" style="margin-top: 20px;">
-                <button type="submit" name="Submit" class="btn btn-wide btn-primary" id="btn-submit">
-                    <?php _e("Continue to file details", "cftp_admin"); ?>
-                </button>
-            </div>
-            
-            <div class="message message_info message_uploading" style="display: none;">
-                <p><?php _e(
-                    "Your files are being uploaded! Progress indicators may take a while to update, but work is still being done behind the scenes.",
-                    "cftp_admin"
-                ); ?></p>
-            </div>
-        </form>
+        </div> -->
         
         <style>
-        /* Only hide upload control buttons */
+        /* Hide upload control buttons */
         .plupload_start, .plupload_stop {
             display: none !important;
         }
 
-        /* Simple remove button styling */
+        /* Enhanced remove button styling */
         .custom-remove-btn {
             display: inline-block !important;
-            color: #666 !important;
-            padding: 4px 8px !important;
-            margin-right: 10px !important;
+            color: #d9534f !important;
+            background: #fff !important;
+            border: 1px solid #d9534f !important;
+            padding: 2px 6px !important;
+            margin-right: 8px !important;
             cursor: pointer !important;
             font-weight: bold !important;
-            font-size: 16px !important;
+            font-size: 14px !important;
             text-decoration: none !important;
+            border-radius: 3px !important;
+            line-height: 1 !important;
         }
 
         .custom-remove-btn:hover {
-            background: #f0f0f0 !important;
-            color: #333 !important;
-            border-radius: 3px !important;
+            background: #d9534f !important;
+            color: #fff !important;
+        }
+
+        /* Style the file list for better visibility */
+        .plupload_filelist .plupload_file {
+            border-bottom: 1px solid #eee;
+            padding: 8px 0;
+        }
+
+        .plupload_filelist .plupload_file:hover {
+            background-color: #f9f9f9;
         }
         </style>
         
         <script type="text/javascript">
-        $(document).ready(function() {
-            var uploadedFiles = []; // Array to track uploaded files
+        $(function() {
+            var uploadedFileIds = []; // Track uploaded file IDs for redirect
             
             // Function to add remove buttons to all files
             function addRemoveButtons(up) {
@@ -144,6 +146,11 @@ $chunk_size = get_option("upload_chunk_size");
                                 var file = up.getFile(fileId);
                                 if (file) {
                                     up.removeFile(file);
+                                    
+                                    // Remove from our tracking array if it was uploaded
+                                    uploadedFileIds = uploadedFileIds.filter(function(id) {
+                                        return true; // Keep for now, will be filtered on redirect
+                                    });
                                 } else {
                                     $fileRow.remove();
                                 }
@@ -166,7 +173,8 @@ $chunk_size = get_option("upload_chunk_size");
                     ? $chunk_size
                     : "1"; ?>mb',
                 rename: true,
-                sortable: true,
+                dragdrop: true,
+                multipart: true,
                 
                 filters: {
                     max_file_size: '<?php echo UPLOAD_MAX_FILESIZE; ?>mb'
@@ -174,7 +182,7 @@ $chunk_size = get_option("upload_chunk_size");
                         !user_can_upload_any_file_type(CURRENT_USER_ID)
                     ) { ?>,
                         mime_types: [{
-                            title: "Allowed files", 
+                            title: "Allowed files",
                             extensions: "<?php echo get_option(
                                 "allowed_file_types"
                             ); ?>"
@@ -183,50 +191,59 @@ $chunk_size = get_option("upload_chunk_size");
                 },
                 
                 init: {
-                    PostInit: function(up) {
-                        // Hide start/stop buttons
-                        $('.plupload_start, .plupload_stop').hide();
-                    },
-                    
                     FilesAdded: function(up, files) {
                         addRemoveButtons(up);
                     },
                     
                     FilesRemoved: function(up, files) {
-                        // Re-add remove buttons after files are removed
-                        addRemoveButtons(up);
+                        // Files removed from queue
                     },
                     
                     FileUploaded: function(up, file, response) {
-                        // Track successfully uploaded files
-                        uploadedFiles.push(file.name);
+                        // Clean the response - remove any HTML that might be mixed in
+                        var cleanResponse = response.response.trim();
                         
-                        // Update the hidden field with uploaded file names
-                        $('#uploaded_files').val(uploadedFiles.join(','));
+                        // Find the JSON part (should start with { and end with })
+                        var jsonStart = cleanResponse.indexOf('{');
+                        var jsonEnd = cleanResponse.lastIndexOf('}');
                         
-                        // Show continue button when files are uploaded and queue is empty
-                        if (up.files.length === uploadedFiles.length) {
-                            $('#continue-section').show();
-                            $('.message_uploading').hide();
+                        if (jsonStart !== -1 && jsonEnd !== -1 && jsonEnd > jsonStart) {
+                            cleanResponse = cleanResponse.substring(jsonStart, jsonEnd + 1);
                         }
-                    },
-                    
-                    Error: function(up, err) {
-                        console.error('Upload error:', err);
-                    },
-                    
-                    UploadComplete: function(uploader, files) {
-                        if (successful > 0) {
-                            if (errors == 0) {
-                                // Auto-redirect logic here if needed
+                        
+                        try {
+                            var result = JSON.parse(cleanResponse);
+                            
+                            if (result.OK && result.info && result.info.id) {
+                                uploadedFileIds.push(result.info.id);
                             }
+                        } catch (e) {
+                            // Handle parse error silently
                         }
-                    }
+                    },
+                    
+                   UploadComplete: function(up, files) {
+    debugLog('All uploads complete. Files processed: ' + files.length);
+    debugLog('Uploaded file IDs: ' + uploadedFileIds.join(','));
+    
+    // Simply check if we have any uploaded file IDs at all
+    if (uploadedFileIds.length > 0) {
+        var redirectUrl = 'files-edit.php?ids=' + uploadedFileIds.join(',');
+        debugLog('Redirecting to: ' + redirectUrl);
+        window.location.href = redirectUrl;
+    } else {
+        debugLog('ERROR: No uploaded files to process');
+        alert('Error: No files were successfully uploaded. Please try again.');
+    }
+}
                 }
             });
         });
         </script>
+        
+        <?php include_once FORMS_DIR . DS . "upload.php"; ?>
     </div>
 </div>
 
-<?php include_once ADMIN_VIEWS_DIR . DS . "footer.php"; ?>
+<?php include_once ADMIN_VIEWS_DIR . DS . "footer.php";
+?>
