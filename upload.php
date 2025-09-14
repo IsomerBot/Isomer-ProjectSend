@@ -68,6 +68,26 @@ $chunk_size = get_option("upload_chunk_size");
             <p>Your browser doesn't have Flash, Silverlight or HTML5 support.</p>
         </div>
         
+        <!-- Upload form -->
+        <form action="files-edit.php" name="upload_form" id="upload_form" method="post" enctype="multipart/form-data">
+            <?php addCsrf(); ?>
+            <input type="hidden" name="uploaded_files" id="uploaded_files" value="" />
+            <input type="hidden" name="editor_type" value="new_files" />
+            
+            <div class="after_form_buttons" id="continue-section" style="margin-top: 20px;">
+                <button type="submit" name="Submit" class="btn btn-wide btn-primary" id="btn-submit">
+                    <?php _e("Continue to file details", "cftp_admin"); ?>
+                </button>
+            </div>
+            
+            <div class="message message_info message_uploading" style="display: none;">
+                <p><?php _e(
+                    "Your files are being uploaded! Progress indicators may take a while to update, but work is still being done behind the scenes.",
+                    "cftp_admin"
+                ); ?></p>
+            </div>
+        </form>
+        
         <style>
         /* Only hide upload control buttons */
         .plupload_start, .plupload_stop {
@@ -95,6 +115,8 @@ $chunk_size = get_option("upload_chunk_size");
         
         <script type="text/javascript">
         $(document).ready(function() {
+            var uploadedFiles = []; // Array to track uploaded files
+            
             $("#uploader").pluploadQueue({
                 runtimes: 'html5',
                 url: 'includes/upload.process.php',
@@ -162,8 +184,30 @@ $chunk_size = get_option("upload_chunk_size");
                         }, 500);
                     },
                     
+                    FileUploaded: function(up, file, response) {
+                        // Track successfully uploaded files
+                        uploadedFiles.push(file.name);
+                        
+                        // Update the hidden field with uploaded file names
+                        $('#uploaded_files').val(uploadedFiles.join(','));
+                        
+                        // Show continue button when files are uploaded and queue is empty
+                        if (up.files.length === uploadedFiles.length) {
+                            $('#continue-section').show();
+                            $('.message_uploading').hide();
+                        }
+                    },
+                    
                     Error: function(up, err) {
                         console.error('Upload error:', err);
+                    },
+                    
+                    UploadComplete: function(uploader, files) {
+                        if (successful > 0) {
+                            if (errors == 0) {
+                                // Auto-redirect logic here if needed
+                            }
+                        }
                     }
                 }
             });
