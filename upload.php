@@ -117,6 +117,48 @@ $chunk_size = get_option("upload_chunk_size");
         $(document).ready(function() {
             var uploadedFiles = []; // Array to track uploaded files
             
+            // Function to add remove buttons to all files
+            function addRemoveButtons(up) {
+                setTimeout(function() {
+                    $('#uploader_filelist li[id^="o_"]').each(function() {
+                        var $fileRow = $(this);
+                        var fileId = $fileRow.attr('id');
+                        
+                        // Skip if already processed
+                        if ($fileRow.find('.custom-remove-btn').length > 0) {
+                            return;
+                        }
+                        
+                        // Find the filename span
+                        var $fileNameSpan = $fileRow.find('.plupload_file_name span');
+                        
+                        if ($fileNameSpan.length > 0) {
+                            // Create remove button
+                            var $removeBtn = $('<span class="custom-remove-btn" title="Remove file">×</span>');
+                            
+                            // Add click handler
+                            $removeBtn.on('click', function(e) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                
+                                var file = up.getFile(fileId);
+                                if (file) {
+                                    up.removeFile(file);
+                                } else {
+                                    $fileRow.remove();
+                                }
+                                
+                                // Re-add remove buttons after removal
+                                addRemoveButtons(up);
+                            });
+                            
+                            // Insert the remove button before the filename
+                            $fileNameSpan.before($removeBtn);
+                        }
+                    });
+                }, 100);
+            }
+            
             $("#uploader").pluploadQueue({
                 runtimes: 'html5',
                 url: 'includes/upload.process.php',
@@ -147,41 +189,12 @@ $chunk_size = get_option("upload_chunk_size");
                     },
                     
                     FilesAdded: function(up, files) {
-                        setTimeout(function() {
-                            $('#uploader_filelist li[id^="o_"]').each(function() {
-                                var $fileRow = $(this);
-                                var fileId = $fileRow.attr('id');
-                                
-                                // Skip if already processed
-                                if ($fileRow.find('.custom-remove-btn').length > 0) {
-                                    return;
-                                }
-                                
-                                // Find the filename span
-                                var $fileNameSpan = $fileRow.find('.plupload_file_name span');
-                                
-                                if ($fileNameSpan.length > 0) {
-                                    // Create remove button
-                                    var $removeBtn = $('<span class="custom-remove-btn" title="Remove file">×</span>');
-                                    
-                                    // Add click handler
-                                    $removeBtn.on('click', function(e) {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        
-                                        var file = up.getFile(fileId);
-                                        if (file) {
-                                            up.removeFile(file);
-                                        } else {
-                                            $fileRow.remove();
-                                        }
-                                    });
-                                    
-                                    // Insert the remove button before the filename
-                                    $fileNameSpan.before($removeBtn);
-                                }
-                            });
-                        }, 500);
+                        addRemoveButtons(up);
+                    },
+                    
+                    FilesRemoved: function(up, files) {
+                        // Re-add remove buttons after files are removed
+                        addRemoveButtons(up);
                     },
                     
                     FileUploaded: function(up, file, response) {
